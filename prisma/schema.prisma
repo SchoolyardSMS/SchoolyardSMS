@@ -15,21 +15,47 @@ enum Role {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
+  id             String  @id @default(cuid())
+  email          String  @unique
   name           String
-  role           Role     @default(STUDENT)
+  role           Role    @default(STUDENT)
   hashedPassword String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 
-  // Role-specific profiles (One-to-One)
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   studentProfile Student?
   teacherProfile Teacher?
   parentProfile  Parent?
 
-  // Uploaded documents
-  uploadedDocuments Document[] @relation("UploadedDocuments")
+  uploadedDocuments Document[]        @relation("UploadedDocuments")
+  reportedIncidents Incident[]        @relation("ReportedIncidents")
+  incidentComments  IncidentComment[]
+
+  sentMessages      Message[]          @relation("SentMessages")
+  receivedMessages  Message[]          @relation("ReceivedMessages")
+  broadcasts        Broadcast[]
+  announcements     Announcement[]
+  pushSubscriptions PushSubscription[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Student {
@@ -39,14 +65,24 @@ model Student {
   dateOfBirth DateTime
   gradeLevel  Int
 
-  enrollments Enrollment[]
-  attendance  Attendance[]
-  grades      Grade[]
-  documents   Document[]      @relation("StudentDocuments")
-  parents     ParentStudent[]
+  enrollments             Enrollment[]
+  attendance              Attendance[]
+  grades                  Grade[]
+  reportCards             ReportCard[]             @relation("StudentReportCards")
+  documents               Document[]               @relation("StudentDocuments")
+  parents                 ParentStudent[]
+  incidents               Incident[]
+  submissions             SubmissionRecord[]
+  attendanceNotifications AttendanceNotification[]
+  communityEnrollments    CommunityEnrollment[]
+
+  medicalAlerts  String? @db.Text
+  accommodations String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([gradeLevel])
 }
 
 model Parent {
@@ -55,7 +91,8 @@ model Parent {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   phone  String?
 
-  children ParentStudent[]
+  children                ParentStudent[]
+  attendanceNotifications AttendanceNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,7 +113,8 @@ model Teacher {
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   department String?
 
-  sections Section[]
+  sections          Section[]
+  communitySessions CommunitySession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,22 +133,96 @@ model Course {
   updatedAt DateTime @updatedAt
 }
 
+model SchoolYear {
+  id        String   @id @default(cuid())
+  name      String   @unique // e.g., "2025-2026"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+
+  terms Term[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TermType {
+  YEAR
+  SEMESTER
+  QUARTER
+  TRIMESTER
+  OTHER
+}
+
+model Term {
+  id           String     @id @default(cuid())
+  schoolYearId String
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
+  name         String // e.g., "Fall Semester"
+  type         TermType   @default(SEMESTER)
+
+  parentId String?
+  parent   Term?   @relation("TermHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Term[]  @relation("TermHierarchy")
+
+  startDate DateTime
+  endDate   DateTime
+
+  sections    Section[]
+  termGrades  TermGrade[]
+  reportCards         ReportCard[]
+  archivedAssignments Assignment[] @relation("ArchivedAssignments")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolYearId, name])
+}
+
 model Section {
   id        String  @id @default(cuid())
   courseId  String
   course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Restrict)
-  term      String // e.g., "Fall 2026"
-  schedule  String // e.g., "Mon/Wed/Fri 10:00 AM"
-  room      String?
 
-  enrollments Enrollment[]
-  assignments Assignment[]
-  attendance  Attendance[]
+  termId     String?
+  term       Term?   @relation(fields: [termId], references: [id], onDelete: SetNull)
+  // Legacy term string for migration
+  legacyTerm String? @map("term")
+
+  schedule     String // e.g., "Mon/Wed/Fri 10:00 AM"
+  room         String?
+  bellPeriodId String?
+  bellPeriod   BellPeriod? @relation(fields: [bellPeriodId], references: [id], onDelete: SetNull)
+
+  enrollments   Enrollment[]
+  assignments   Assignment[]
+  attendance    Attendance[]
+  documents     Document[]     @relation("SectionDocuments")
+  topics        Topic[]
+  announcements Announcement[]
+
+  weightingConfig Json? // e.g., {"HOMEWORK": 20, "TEST": 50, "QUIZ": 30}
+  isArchived      Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Announcement {
+  id        String  @id @default(cuid())
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId])
+  @@index([authorId])
 }
 
 model Enrollment {
@@ -121,10 +233,14 @@ model Enrollment {
   section   Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   status    EnrollmentStatus @default(ENROLLED)
 
+  termGrades TermGrade[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, sectionId])
+  @@index([sectionId])
+  @@index([studentId])
 }
 
 enum EnrollmentStatus {
@@ -133,20 +249,46 @@ enum EnrollmentStatus {
   COMPLETED
 }
 
-model Assignment {
-  id          String   @id @default(cuid())
-  sectionId   String
-  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  dueDate     DateTime
-  maxScore    Float
+enum AssignmentType {
+  HOMEWORK
+  QUIZ
+  TEST
+  PROJECT
+  LAB
+  OTHER
+}
 
-  grades    Grade[]
-  documents Document[] @relation("AssignmentDocuments")
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+model Assignment {
+  id          String           @id @default(cuid())
+  sectionId   String
+  section     Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title       String
+  description String?          @db.Text
+  dueDate     DateTime
+  maxScore    Float?
+  allowUpload Boolean          @default(true)
+  type        AssignmentType   @default(HOMEWORK)
+  status      AssignmentStatus @default(PUBLISHED)
+  publishDate DateTime? // "Go Live" date
+  isArchived       Boolean          @default(false)
+  archivedInTermId String?
+  archivedInTerm   Term?            @relation("ArchivedAssignments", fields: [archivedInTermId], references: [id], onDelete: SetNull)
+
+  grades      Grade[]
+  documents   Document[]         @relation("AssignmentDocuments")
+  submissions SubmissionRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([sectionId])
+  @@index([dueDate])
 }
 
 model Grade {
@@ -163,22 +305,72 @@ model Grade {
   updatedAt DateTime @updatedAt
 
   @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
+}
+
+model TermGrade {
+  id           String     @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  termId       String
+  term         Term       @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  calculatedScore Float?
+  overrideScore   Float?
+  letterGrade     String?
+  comments        String? @db.Text
+
+  isPosted Boolean   @default(false)
+  postedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([enrollmentId, termId])
+  @@index([enrollmentId])
+  @@index([termId])
+}
+
+model ReportCard {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation("StudentReportCards", fields: [studentId], references: [id], onDelete: Cascade)
+  termId    String
+  term      Term    @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  snapshot    Json?
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, termId])
 }
 
 model Attendance {
-  id        String           @id @default(cuid())
-  studentId String
-  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  sectionId String
-  section   Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  date      DateTime         @db.Date
-  status    AttendanceStatus
-  notes     String?
+  id         String           @id @default(cuid())
+  studentId  String
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sectionId  String
+  section    Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  date       DateTime         @db.Date
+  status     AttendanceStatus
+  notes      String?
+  isArchived Boolean          @default(false)
+
+  checkInTime    String? // e.g. "08:15 AM"
+  checkOutTime   String? // e.g. "02:30 PM"
+  excusedReason  String? // e.g. "Doctor's Appointment"
+  notifiedParent Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, sectionId, date])
+  @@index([sectionId])
+  @@index([studentId, date])
 }
 
 enum AttendanceStatus {
@@ -186,6 +378,21 @@ enum AttendanceStatus {
   ABSENT
   TARDY
   EXCUSED
+}
+
+model SubmissionRecord {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  submittedAt DateTime @default(now())
+  status      String   @default("COMPLETED")
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
 }
 
 model Document {
@@ -196,11 +403,14 @@ model Document {
   uploaderId String
   uploader   User         @relation("UploadedDocuments", fields: [uploaderId], references: [id], onDelete: Cascade)
 
-  // Optional relations contextualizing the document
   studentId    String?
   student      Student?    @relation("StudentDocuments", fields: [studentId], references: [id], onDelete: SetNull)
   assignmentId String?
   assignment   Assignment? @relation("AssignmentDocuments", fields: [assignmentId], references: [id], onDelete: SetNull)
+  sectionId    String?
+  section      Section?    @relation("SectionDocuments", fields: [sectionId], references: [id], onDelete: SetNull)
+  messageId    String?
+  message      Message?    @relation("MessageDocuments", fields: [messageId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -211,4 +421,355 @@ enum DocumentType {
   TRANSCRIPT
   ASSIGNMENT_SUBMISSION
   GENERAL
+}
+
+// ─── Incident / Discipline ────────────────────────────────────────────────────
+
+enum IncidentCategory {
+  BEHAVIOR
+  ACADEMIC_DISHONESTY
+  ATTENDANCE
+  BULLYING
+  PROPERTY_DAMAGE
+  SAFETY
+  OTHER
+}
+
+enum IncidentSeverity {
+  MINOR
+  MODERATE
+  SEVERE
+}
+
+enum IncidentStatus {
+  OPEN
+  UNDER_INVESTIGATION
+  RESOLVED
+  CLOSED
+}
+
+model Incident {
+  id           String           @id @default(cuid())
+  studentId    String
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User             @relation("ReportedIncidents", fields: [reporterId], references: [id])
+  date         DateTime         @default(now())
+  title        String
+  description  String           @db.Text
+  category     IncidentCategory @default(BEHAVIOR)
+  severity     IncidentSeverity @default(MINOR)
+  status       IncidentStatus   @default(OPEN)
+  actionTaken  String?          @db.Text
+  followUpDate DateTime?
+
+  comments IncidentComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model IncidentComment {
+  id         String   @id @default(cuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String   @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Messaging ────────────────────────────────────────────────────────────────
+
+model Message {
+  id         String  @id @default(cuid())
+  senderId   String
+  sender     User    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  subject    String
+  body       String? @db.Text
+  read       Boolean @default(false)
+
+  // Tracking & Scalability
+  resendId   String? @unique // Outbound Resend ID
+  externalId String? @unique // Inbound Resend Email ID (for lazy fetching)
+  status     String  @default("SENT") // SENT, DELIVERED, BOUNCED, COMPLAINED
+
+  // Deduplication
+  broadcastId String?
+  broadcast   Broadcast? @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  // Threading
+  parentId String?
+  parent   Message?  @relation("MessageThreads", fields: [parentId], references: [id])
+  replies  Message[] @relation("MessageThreads")
+
+  attachments Document[] @relation("MessageDocuments")
+
+  createdAt DateTime @default(now())
+}
+
+model Broadcast {
+  id        String    @id @default(cuid())
+  subject   String
+  body      String    @db.Text
+  audience  String
+  senderId  String
+  sender    User      @relation(fields: [senderId], references: [id])
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+// ─── Bell Schedule ────────────────────────────────────────────────────────────
+
+model BellPeriod {
+  id           String   @id @default(cuid())
+  name         String // e.g. "Period 1", "Advisory"
+  startTime    String // "08:00"
+  endTime      String // "08:55"
+  days         String[] // ["MON","TUE","WED","THU","FRI"]
+  periodNumber Int
+  schoolYear   String // "2025-2026"
+
+  sections Section[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── School Settings ──────────────────────────────────────────────────────────
+
+model SchoolSettings {
+  id             String  @id @default("singleton")
+  name           String  @default("Schoolyard Academy")
+  tagline        String  @default("Excellence in Education")
+  initials       String  @default("SA")
+  primaryColor   String  @default("#4f46e5")
+  secondaryColor String  @default("#6b7280")
+  logoUrl        String?
+  faviconUrl     String?
+
+  activeTerm          String @default("Fall 2025")
+  attendanceThreshold Int    @default(5)
+  passingGrade        Int    @default(65)
+  gpaScale            Float  @default(4.0)
+
+  // JSON configurations for deep behavioral & feature customization
+  featuresEnabled    Json? // e.g., {"lms": true, "discipline": true, "community": false}
+  incidentTypes      Json? // e.g., [{"id":"TARDY","label":"Tardiness","severity":"MINOR"}]
+  attendanceStatuses Json? // e.g., [{"id":"ABSENT","label":"Absent","isExcused":false}]
+  gradingScale       Json? // e.g., {"A": 90, "B": 80, "C": 70, "D": 60}
+  themeConfig        Json? // e.g., {"borderRadius": "0.5rem", "fontFamily": "Inter"}
+  rolePermissions    Json? // e.g., {"STUDENT": ["view_grades"], "TEACHER": ["edit_grades"]}
+
+  updatedAt DateTime @updatedAt
+}
+
+model ReportCardTemplate {
+  id        String  @id @default(cuid())
+  name      String
+  isDefault Boolean @default(false)
+  layout    Json // Configuration for sections, branding, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  role      Role     @default(STUDENT)
+  studentId String?
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+// NextAuth Required OAuth Adapters
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Topics (per Section) ─────────────────────────────────────────────────────
+
+model Topic {
+  id          String          @id @default(cuid())
+  sectionId   String
+  section     Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title       String
+  description String?         @db.Text
+  order       Int             @default(0)
+  materials   TopicMaterial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId])
+}
+
+model TopicMaterial {
+  id      String @id @default(cuid())
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  type    String // "LINK" | "FILE"
+  title   String
+  url     String
+
+  createdAt DateTime @default(now())
+
+  @@index([topicId])
+}
+
+// ─── Attendance Notifications (parent-reported) ───────────────────────────────
+
+enum AttendanceNotificationType {
+  SICK
+  LATE
+  EARLY_DISMISSAL
+}
+
+enum AttendanceNotificationStatus {
+  PENDING
+  ACKNOWLEDGED
+}
+
+model AttendanceNotification {
+  id             String                       @id @default(cuid())
+  parentId       String
+  parent         Parent                       @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student                      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type           AttendanceNotificationType
+  date           DateTime                     @db.Date
+  expectedTime   String? // e.g. "10:30 AM" for late/early dismissal
+  reason         String?                      @db.Text
+  status         AttendanceNotificationStatus @default(PENDING)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([parentId])
+  @@index([date])
+}
+
+// ─── Academic Calendar & Community Period ─────────────────────────────────────
+
+enum DayType {
+  INSTRUCTIONAL
+  HOLIDAY
+  STAFF_DEVELOPMENT
+  SNOW_DAY
+  OTHER
+}
+
+enum BlockDay {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+  NONE
+}
+
+model CalendarDay {
+  id                 String   @id @default(cuid())
+  date               DateTime @unique @db.Date
+  type               DayType  @default(INSTRUCTIONAL)
+  name               String? // e.g. "Thanksgiving Break", "Snow Day"
+  hasCommunityPeriod Boolean  @default(false)
+
+  blockDay  BlockDay @default(NONE)
+  isMidterm Boolean  @default(false)
+  isFinal   Boolean  @default(false)
+
+  sessions CommunitySession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CommunitySession {
+  id            String      @id @default(cuid())
+  calendarDayId String
+  calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
+  teacherId     String
+  teacher       Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?     @db.Text
+  room          String
+  capacity      Int         @default(30)
+  isRestricted  Boolean     @default(false) // If true, only pre-registered students can attend
+
+  enrollments CommunityEnrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([calendarDayId])
+  @@index([teacherId])
+}
+
+enum CommunityAttendanceStatus {
+  PENDING
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+model CommunityEnrollment {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   CommunitySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  isRequired Boolean                   @default(false) // If true, student was forced into it by teacher
+  attendance CommunityAttendanceStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+  @@index([studentId])
 }

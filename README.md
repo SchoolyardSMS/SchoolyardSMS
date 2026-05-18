@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏫 Schoolyard Student Information System (SIS)
 
-## Getting Started
+[![Framework](https://img.shields.io/badge/Framework-Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Runtime](https://img.shields.io/badge/Runtime-Bun-black?style=for-the-badge&logo=bun)](https://bun.sh)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL-blue?style=for-the-badge&logo=postgresql)](https://postgresql.org)
+[![ORM](https://img.shields.io/badge/ORM-Prisma-teal?style=for-the-badge&logo=prisma)](https://prisma.io)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-First, run the development server:
+**Schoolyard** is a next-generation, high-performance, and beautifully designed Student Information System (SIS) and Learning Management System (LMS) built with Next.js, React, TailwindCSS, Prisma, and PostgreSQL. It delivers a modern, premium experience for school administrators, teachers, parents, and students.
+
+---
+
+## ✨ Features Overview
+
+### 📚 Academics & Grading Systems
+- **Flexible Gradebooks**: Full support for weighted assignment groups (Homework, Quizzes, Tests, Projects) and configurable letter grade scales.
+- **Post Term Grades**: Teachers can review weighted averages, check against grading scales, and post final term grades with a single click inside an interactive grade assist drawer.
+- **School-Wide Quarter Resets**: Admins can audit teacher submissions school-wide, inspect sections with missing grades, and securely archive assignments to reset active gradebooks for the new term.
+- **Historic Snapshots**: Students, parents, and teachers can look back at read-only historic quarter/semester performance records.
+
+### 🗓️ Terms & Academic Calendar
+- **Recursive Term Hierarchy**: Setup semesters, quarters, or custom block systems recursively under school years.
+- **Attendance Systems**: Complete Orah-inspired attendance tracking with statuses (Present, Tardy, Excused, Unexcused) and real-time dashboard stats.
+
+### 💬 Unified Messaging Hub
+- **Broadcast Streams**: Send school-wide announcements or specific class messages.
+- **Email & Push Notifications**: Fully integrated with Resend for transactional emails, and browser push notifications for PWA alerts.
+
+### 📱 PWA & Mobile Optimization
+- **Offline Capabilities**: Full service-worker implementation allows the app to be added to mobile home-screens and handle offline situations gracefully.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Core Framework**: [Next.js (App Router)](https://nextjs.org)
+- **Runtime Environment**: [Bun](https://bun.sh)
+- **Database & ORM**: [PostgreSQL](https://www.postgresql.org/) & [Prisma ORM](https://www.prisma.io/)
+- **UI Styling**: Tailwind CSS, Shadcn UI, Framer Motion
+- **Icons**: Lucide React
+- **Email Delivery**: [Resend](https://resend.com/)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Ensure you have **Bun** and **PostgreSQL** installed on your system.
+
+### 1. Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/schoolyard.git
+cd schoolyard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Using **Bun** is highly recommended for faster builds and package resolution:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+bun install
+```
 
-## Learn More
+### 3. Setup Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy the `.env.example` file and populate it with your database credentials:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open `.env` and configure your database and authentication secrets:
 
-## Deploy on Vercel
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/schoolyard?schema=public"
+NEXTAUTH_SECRET="your-super-secret-random-key"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Database Setup & Seeding
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sync your database schema, apply Prisma migrations, and seed the initial administrative accounts and demo data:
+
+```bash
+# Push schema structure to PostgreSQL
+bunx prisma db push
+
+# Seed the database with terms, users, and administrative configurations
+bun run prisma/seed.ts
+```
+
+### 5. Start the Development Server
+
+```bash
+bun run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to experience **Schoolyard**.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
