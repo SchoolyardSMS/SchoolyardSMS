@@ -52,7 +52,7 @@ Ensure you have **Bun** and **PostgreSQL** installed on your system.
 
 ```bash
 git clone https://github.com/your-username/schoolyard.git
-cd schoolyard
+cd SchoolyardSMS
 ```
 
 ### 2. Install Dependencies
