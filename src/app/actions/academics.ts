@@ -7,6 +7,113 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { parseLocalDate, parseDateAsET, formatInET } from "@/lib/dates"
 import { sendSystemMessage, sendSystemBatchMessages } from "./messaging"
+import { z } from "zod"
+import type { Prisma } from "@prisma/client"
+
+const gradeUpdateSchema = z.object({
+  assignmentId: z.string().min(1),
+  studentId: z.string().min(1),
+  score: z.coerce.number().min(0),
+  feedback: z.string().trim().optional().nullable()
+})
+
+const assignmentFormSchema = z.object({
+  sectionId: z.string().min(1),
+  title: z.string().trim().min(1),
+  description: z.string().trim().optional().nullable(),
+  maxScore: z.preprocess((value) => {
+    if (value === null || value === undefined || String(value).trim() === "") return null
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : NaN
+  }, z.number().nonnegative().nullable()),
+  dueDate: z.string().trim().min(1),
+  allowUpload: z.preprocess((value) => value === "on", z.boolean()),
+  type: z.enum(["HOMEWORK", "QUIZ", "TEST", "PROJECT", "LAB", "OTHER"]),
+  status: z.enum(["DRAFT", "PUBLISHED", "CLOSED"]),
+  publishDate: z.string().optional().nullable(),
+  publishTime: z.string().optional().nullable(),
+})
+
+const assignmentUpdateSchema = assignmentFormSchema.extend({
+  assignmentId: z.string().min(1),
+  sectionId: z.string().min(1),
+})
+
+const courseFormSchema = z.object({
+  name: z.string().trim().min(1),
+  code: z.string().trim().min(1),
+  description: z.string().trim().optional().nullable(),
+  credits: z.preprocess((value) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : NaN
+  }, z.number().int().positive().optional()).nullable(),
+})
+
+const sectionFormSchema = z.object({
+  courseId: z.string().min(1),
+  teacherId: z.string().min(1),
+  termId: z.string().min(1),
+  room: z.string().trim().default("TBA"),
+  schedule: z.string().trim().default("TBA"),
+  bellPeriodId: z.string().trim().optional().nullable(),
+})
+
+async function assertTeacherSectionOwnership(userId: string, sectionId: string) {
+  const section = await db.section.findUnique({
+    where: { id: sectionId },
+    select: { id: true, courseId: true, teacher: { select: { userId: true } } }
+  })
+
+  if (!section) {
+    throw new Error("Section not found")
+  }
+
+  if (section.teacher.userId !== userId) {
+    throw new Error("Forbidden")
+  }
+
+  return section
+}
+
+async function assertTeacherAssignmentOwnership(userId: string, assignmentId: string) {
+  const assignment = await db.assignment.findUnique({
+    where: { id: assignmentId },
+    select: {
+      id: true,
+      sectionId: true,
+      section: { select: { courseId: true, teacher: { select: { userId: true } } } }
+    }
+  })
+
+  if (!assignment) {
+    throw new Error("Assignment not found")
+  }
+
+  if (assignment.section.teacher.userId !== userId) {
+    throw new Error("Forbidden")
+  }
+
+  return assignment
+}
+
+function createStudentWhereFilter(query?: string, gradeLevel?: number): Prisma.StudentWhereInput {
+  const and: Prisma.StudentWhereInput[] = []
+
+  if (query) {
+    and.push({
+      OR: [
+        { user: { name: { contains: query, mode: "insensitive" } } },
+        { user: { email: { contains: query, mode: "insensitive" } } }
+      ]
+    })
+  }
+
+  if (gradeLevel) {
+    and.push({ gradeLevel })
+  }
+
+  return and.length ? { AND: and } : {}
+}
 
 export async function mutateGrade(assignmentId: string, studentId: string, score: number) {
   const session = await getServerSession(authOptions)
@@ -61,14 +168,22 @@ export async function updateAssignmentGrade(formData: FormData) {
     throw new Error("Unauthorized")
   }
 
-  const assignmentId = formData.get("assignmentId") as string
-  const studentId    = formData.get("studentId") as string
-  const scoreStr     = formData.get("score") as string
-  const feedback     = (formData.get("feedback") as string)?.trim() || null
+  const parsed = gradeUpdateSchema.safeParse({
+    assignmentId: formData.get("assignmentId"),
+    studentId: formData.get("studentId"),
+    score: formData.get("score"),
+    feedback: formData.get("feedback")
+  })
 
-  if (!scoreStr) return // Skip if no score entered yet
+  if (!parsed.success) {
+    throw new Error("Invalid grade data")
+  }
 
-  const score = parseFloat(scoreStr)
+  const { assignmentId, studentId, score, feedback } = parsed.data
+
+  if (session.user.role === 'TEACHER') {
+    await assertTeacherAssignmentOwnership(session.user.id, assignmentId)
+  }
 
   await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
@@ -76,7 +191,7 @@ export async function updateAssignmentGrade(formData: FormData) {
     create: { assignmentId, studentId, score, feedback }
   })
 
-  const assignment = await db.assignment.findUnique({ where: { id: assignmentId } })
+  const assignment = await db.assignment.findUnique({ where: { id: assignmentId }, select: { sectionId: true } })
   if (assignment) {
     revalidatePath(`/dashboard/academics/sections/${assignment.sectionId}/assignments/${assignmentId}`)
     revalidatePath(`/dashboard/academics/sections/${assignment.sectionId}/gradebook`)
@@ -88,15 +203,20 @@ export async function createCourse(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
-  const name        = (formData.get("name") as string)?.trim()
-  const code        = (formData.get("code") as string)?.trim().toUpperCase()
-  const description = (formData.get("description") as string)?.trim()
-  const credits     = parseInt(formData.get("credits") as string, 10)
+  const parsed = courseFormSchema.safeParse({
+    name: formData.get("name"),
+    code: formData.get("code"),
+    description: formData.get("description"),
+    credits: formData.get("credits")
+  })
 
-  if (!name || !code) throw new Error("Name and code are required")
+  if (!parsed.success) {
+    throw new Error("Invalid course data")
+  }
 
+  const { name, code, description, credits } = parsed.data
   const course = await db.course.create({
-    data: { name, code, description, credits: isNaN(credits) ? 1 : credits }
+    data: { name, code: code.toUpperCase(), description, credits: credits ?? 1 }
   })
 
   revalidatePath("/dashboard/academics/courses")
@@ -110,25 +230,49 @@ export async function createAssignment(formData: FormData) {
     throw new Error("Unauthorized")
   }
 
-  const sectionId   = formData.get("sectionId") as string
-  const title       = (formData.get("title") as string)?.trim()
-  const description = (formData.get("description") as string)?.trim()
-  const maxScoreStr = formData.get("maxScore") as string
-  const maxScore    = maxScoreStr ? parseFloat(maxScoreStr) : null
-  const dueDate     = parseLocalDate(formData.get("dueDate") as string)
-  const allowUpload = formData.get("allowUpload") === "on"
-  const type        = (formData.get("type") as string) || "HOMEWORK"
-  const status      = (formData.get("status") as string) || "PUBLISHED"
-  
-  const pubDateStr = formData.get("publishDate") as string
-  const pubTimeStr = formData.get("publishTime") as string
-  const publishDate = pubDateStr ? parseDateAsET(pubDateStr, pubTimeStr || "00:00") : null
+  const parsed = assignmentFormSchema.safeParse({
+    sectionId: formData.get("sectionId"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    maxScore: formData.get("maxScore"),
+    dueDate: formData.get("dueDate"),
+    allowUpload: formData.get("allowUpload"),
+    type: formData.get("type"),
+    status: formData.get("status"),
+    publishDate: formData.get("publishDate"),
+    publishTime: formData.get("publishTime")
+  })
 
-  if (!title || !sectionId) throw new Error("Title and section are required")
+  if (!parsed.success) {
+    throw new Error("Invalid assignment data")
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db.assignment as any).create({
-    data: { title, description, maxScore, dueDate, sectionId, allowUpload, type, status, publishDate }
+  const { sectionId, title, description, maxScore, dueDate, allowUpload, type, status, publishDate, publishTime } = parsed.data
+  const publishDateValue = publishDate ? parseDateAsET(publishDate, publishTime || "00:00") : null
+  const dueDateValue = parseLocalDate(dueDate)
+
+  if (session.user.role === 'TEACHER') {
+    await assertTeacherSectionOwnership(session.user.id, sectionId)
+  }
+
+  const assignmentData: Prisma.AssignmentUncheckedCreateInput = {
+    title,
+    description,
+    maxScore,
+    dueDate: dueDateValue,
+    sectionId,
+    allowUpload,
+    type,
+    status,
+    publishDate: publishDateValue
+  }
+
+  if (dueDateValue !== undefined) {
+    assignmentData.dueDate = dueDateValue
+  }
+
+  await db.assignment.create({
+    data: assignmentData
   })
 
   revalidatePath(`/dashboard/academics/sections/${sectionId}`)
@@ -141,27 +285,49 @@ export async function updateAssignmentDetails(formData: FormData) {
     throw new Error("Unauthorized")
   }
 
-  const assignmentId = formData.get("assignmentId") as string
-  const sectionId    = formData.get("sectionId") as string
-  const title        = (formData.get("title") as string)?.trim()
-  const description  = (formData.get("description") as string)?.trim()
-  const maxScoreStr = formData.get("maxScore") as string
-  const maxScore    = maxScoreStr ? parseFloat(maxScoreStr) : null
-  const dueDate      = parseLocalDate(formData.get("dueDate") as string)
-  const allowUpload  = formData.get("allowUpload") === "on"
-  const type         = (formData.get("type") as string) || "HOMEWORK"
-  const status       = (formData.get("status") as string) || "PUBLISHED"
+  const parsed = assignmentUpdateSchema.safeParse({
+    assignmentId: formData.get("assignmentId"),
+    sectionId: formData.get("sectionId"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    maxScore: formData.get("maxScore"),
+    dueDate: formData.get("dueDate"),
+    allowUpload: formData.get("allowUpload"),
+    type: formData.get("type"),
+    status: formData.get("status"),
+    publishDate: formData.get("publishDate"),
+    publishTime: formData.get("publishTime")
+  })
 
-  const pubDateStr = formData.get("publishDate") as string
-  const pubTimeStr = formData.get("publishTime") as string
-  const publishDate = pubDateStr ? parseDateAsET(pubDateStr, pubTimeStr || "00:00") : null
+  if (!parsed.success) {
+    throw new Error("Invalid assignment data")
+  }
 
-  if (!title || !assignmentId) throw new Error("Title and assignment ID are required")
+  const { assignmentId, sectionId, title, description, maxScore, dueDate, allowUpload, type, status, publishDate, publishTime } = parsed.data
+  const publishDateValue = publishDate ? parseDateAsET(publishDate, publishTime || "00:00") : null
+  const dueDateValue = dueDate ? parseLocalDate(dueDate) : undefined
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db.assignment as any).update({
+  if (session.user.role === 'TEACHER') {
+    await assertTeacherAssignmentOwnership(session.user.id, assignmentId)
+  }
+
+  const updatedAssignmentData: Prisma.AssignmentUpdateInput = {
+    title,
+    description,
+    maxScore,
+    allowUpload,
+    type,
+    status,
+    publishDate: publishDateValue,
+  }
+
+  if (dueDateValue !== undefined) {
+    updatedAssignmentData.dueDate = dueDateValue
+  }
+
+  await db.assignment.update({
     where: { id: assignmentId },
-    data: { title, description, maxScore, dueDate, allowUpload, type, status, publishDate }
+    data: updatedAssignmentData
   })
 
   revalidatePath(`/dashboard/academics/sections/${sectionId}`)
@@ -174,23 +340,28 @@ export async function createSection(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
-  const courseId    = formData.get("courseId") as string
-  const teacherId   = formData.get("teacherId") as string
-  const termId      = formData.get("termId") as string
-  const room        = (formData.get("room") as string) || "TBA"
-  const schedule    = (formData.get("schedule") as string) || "TBA"
-  const bellPeriodId = formData.get("bellPeriodId") as string
+  const parsed = sectionFormSchema.safeParse({
+    courseId: formData.get("courseId"),
+    teacherId: formData.get("teacherId"),
+    termId: formData.get("termId"),
+    room: formData.get("room"),
+    schedule: formData.get("schedule"),
+    bellPeriodId: formData.get("bellPeriodId")
+  })
 
-  if (!courseId || !teacherId || !termId) throw new Error("Course, Teacher, and Term are required")
+  if (!parsed.success) {
+    throw new Error("Invalid section data")
+  }
 
-  const section = await (db.section as any).create({
+  const { courseId, teacherId, termId, room, schedule, bellPeriodId } = parsed.data
+  const section = await db.section.create({
     data: {
       courseId,
       teacherId,
       termId,
       room,
       schedule,
-      bellPeriodId: bellPeriodId === "NONE" ? null : (bellPeriodId || null),
+      bellPeriodId: bellPeriodId === "NONE" ? null : bellPeriodId
     }
   })
 
@@ -220,16 +391,21 @@ export async function updateCourse(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
-  const name        = (formData.get("name") as string)?.trim()
-  const code        = (formData.get("code") as string)?.trim().toUpperCase()
-  const description = (formData.get("description") as string)?.trim()
-  const credits     = parseInt(formData.get("credits") as string, 10)
+  const parsed = courseFormSchema.safeParse({
+    name: formData.get("name"),
+    code: formData.get("code"),
+    description: formData.get("description"),
+    credits: formData.get("credits")
+  })
 
-  if (!name || !code) throw new Error("Name and code are required")
+  if (!parsed.success) {
+    throw new Error("Invalid course data")
+  }
 
+  const { name, code, description, credits } = parsed.data
   await db.course.update({
     where: { id },
-    data: { name, code, description, credits: isNaN(credits) ? 1 : credits }
+    data: { name, code: code.toUpperCase(), description, credits: credits ?? 1 }
   })
 
   revalidatePath("/dashboard/academics/courses")
@@ -241,7 +417,10 @@ export async function deleteCourse(id: string) {
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
-  await db.course.delete({ where: { id } })
+  await db.course.update({
+    where: { id },
+    data: { isArchived: true }
+  })
 
   revalidatePath("/dashboard/academics/courses")
   redirect("/dashboard/academics/courses")
@@ -255,14 +434,27 @@ export async function deleteAssignment(assignmentId: string) {
   }
 
   const assignment = await db.assignment.findUnique({
-    where: { id: assignmentId }
+    where: { id: assignmentId },
+    select: {
+      sectionId: true,
+      section: { select: { teacher: { select: { userId: true } } } }
+    }
   })
-  
-  if (assignment) {
-    await db.assignment.delete({ where: { id: assignmentId } })
-    revalidatePath(`/dashboard/academics/sections/${assignment.sectionId}`)
+
+  if (!assignment) {
+    throw new Error("Assignment not found")
   }
 
+  if (session.user.role === "TEACHER" && assignment.section.teacher.userId !== session.user.id) {
+    throw new Error("Forbidden")
+  }
+
+  await db.assignment.update({
+    where: { id: assignmentId },
+    data: { isArchived: true }
+  })
+
+  revalidatePath(`/dashboard/academics/sections/${assignment.sectionId}`)
   return { success: true }
 }
 
@@ -304,20 +496,29 @@ export async function updateSection(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
-  const teacherId   = formData.get("teacherId") as string
-  const termId      = formData.get("termId") as string
-  const room        = (formData.get("room") as string) || "TBA"
-  const schedule    = (formData.get("schedule") as string) || "TBA"
-  const bellPeriodId = formData.get("bellPeriodId") as string
+  const parsed = sectionFormSchema.safeParse({
+    courseId: formData.get("courseId") ?? "", // courseId is not updated here, but schema can still validate the form shape
+    teacherId: formData.get("teacherId"),
+    termId: formData.get("termId"),
+    room: formData.get("room"),
+    schedule: formData.get("schedule"),
+    bellPeriodId: formData.get("bellPeriodId")
+  })
 
-  await (db.section as any).update({
+  if (!parsed.success) {
+    throw new Error("Invalid section data")
+  }
+
+  const { teacherId, termId, room, schedule, bellPeriodId } = parsed.data
+
+  await db.section.update({
     where: { id },
     data: {
       teacherId,
       termId,
       room,
       schedule,
-      bellPeriodId: bellPeriodId === "NONE" || bellPeriodId === "none" ? null : (bellPeriodId || null),
+      bellPeriodId: bellPeriodId === "NONE" || bellPeriodId === "none" ? null : bellPeriodId,
     }
   })
 
@@ -334,7 +535,7 @@ export async function deleteSection(id: string) {
   if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
 
   const section = await db.section.findUnique({ where: { id }, select: { courseId: true } })
-  await db.section.delete({ where: { id } })
+  await db.section.update({ where: { id }, data: { isArchived: true } })
 
   if (section) {
     revalidatePath(`/dashboard/academics/courses/${section.courseId}`)

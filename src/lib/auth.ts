@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
        * - Consider implementing account recovery mechanisms
        * - Log all account linking events for security audits
        */
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -83,26 +83,25 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
-        // Find existing user
+        const emailVerified = (profile as any)?.email_verified
+        if (emailVerified === false) {
+          return "/login?error=EmailNotVerified"
+        }
+
         const existingUser = await db.user.findUnique({
           where: { email: user.email! }
         })
 
-        // If user does not exist natively, reject the OAuth request securely
         if (!existingUser) {
           return "/login?error=AccessDenied"
         }
 
-        // If user already exists and has a role, synchronize the JWT and allow sign in
         if (existingUser.role) {
           user.role = existingUser.role
           return true
         }
 
-        // If user exists but lacks a role, deny entry and tell them their account is pending
-        if (!existingUser.role) {
-          return "/login?error=AccountPendingVerification"
-        }
+        return "/login?error=AccountPendingVerification"
       }
       return true
     },

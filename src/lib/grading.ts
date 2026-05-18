@@ -1,14 +1,39 @@
-import { Assignment, Grade, Section } from "@prisma/client"
+import { AssignmentType, Prisma } from "@prisma/client"
+
+export type GradingScaleEntry = {
+  min: number
+  letter: string
+}
+
+export type AssignmentSummary = {
+  id: string
+  type: AssignmentType
+  maxScore: number | null
+}
+
+export type GradeSummary = {
+  assignmentId: string
+  score: number
+}
 
 export function calculateGrade(
-  section: { weightingConfig?: any },
-  assignments: { id: string, type: string, maxScore: number }[],
-  grades: { assignmentId: string, score: number }[]
+  section: { weightingConfig?: Prisma.JsonValue | null },
+  assignments: AssignmentSummary[],
+  grades: GradeSummary[]
 ): number {
   if (!assignments || assignments.length === 0) return 0
 
-  const hasWeighting = section.weightingConfig && Object.keys(section.weightingConfig).length > 0
-  const config = section.weightingConfig as Record<string, number>
+  const config =
+    section.weightingConfig && typeof section.weightingConfig === "object" && !Array.isArray(section.weightingConfig)
+      ? Object.entries(section.weightingConfig as Record<string, unknown>).reduce<Record<string, number>>((acc, [key, value]) => {
+          if (typeof value === "number" && Number.isFinite(value)) {
+            acc[key] = value
+          }
+          return acc
+        }, {})
+      : {}
+
+  const hasWeighting = Object.keys(config).length > 0
 
   if (!hasWeighting) {
     // Unweighted standard calculation (total earned / total possible)
@@ -18,7 +43,7 @@ export function calculateGrade(
       const a = assignments.find((a) => a.id === g.assignmentId)
       if (a) {
         earned += g.score
-        possible += a.maxScore
+        possible += a.maxScore ?? 0
       }
     }
     return possible > 0 ? (earned / possible) * 100 : 0
@@ -42,7 +67,7 @@ export function calculateGrade(
       const g = grades.find((g) => g.assignmentId === a.id)
       if (g) {
         typeEarned += g.score
-        typePossible += a.maxScore
+        typePossible += a.maxScore ?? 0
       }
     }
 
@@ -61,11 +86,19 @@ export function calculateGrade(
   return finalPercentage
 }
 
+function isGradingScaleEntryArray(value: unknown): value is GradingScaleEntry[] {
+  return Array.isArray(value) && value.every(
+    (entry) => typeof entry === "object" && entry !== null &&
+      typeof (entry as any).min === "number" &&
+      typeof (entry as any).letter === "string"
+  )
+}
+
 export function getLetterGrade(
-  pct: number, 
-  gradingScale?: any
+  pct: number,
+  gradingScale?: Prisma.JsonValue | null
 ): string {
-  if (!gradingScale || !Array.isArray(gradingScale)) {
+  if (!isGradingScaleEntryArray(gradingScale)) {
     // Standard default scale
     if (pct >= 93) return "A"
     if (pct >= 90) return "A-"
@@ -88,9 +121,9 @@ export function getLetterGrade(
 }
 
 export function calculateGPA(
-  pct: number, 
+  pct: number,
   gpaMax: number = 4.0,
-  gradingScale?: any
+  gradingScale?: Prisma.JsonValue | null
 ): number {
   // Simple linear mapping for demo, usually scales are stepped (e.g. A=4.0, B=3.0)
   // Let's implement a stepped mapping based on the letter grade

@@ -126,6 +126,7 @@ model Course {
   name        String
   description String?
   credits     Float   @default(1.0)
+  isArchived  Boolean @default(false)
 
   sections Section[]
 

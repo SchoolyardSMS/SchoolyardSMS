@@ -20,7 +20,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 interface AssignmentActionsProps {
-  assignment: any
+  assignment: { id: string; title: string }
   sectionId: string
   isStaff: boolean
 }
@@ -36,8 +36,9 @@ export function AssignmentActions({ assignment, sectionId, isStaff }: Assignment
       await deleteAssignment(assignment.id)
       toast.success("Assignment deleted successfully")
       setShowDelete(false)
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete assignment")
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete assignment"
+      toast.error(message)
     } finally {
       setIsDeleting(false)
     }

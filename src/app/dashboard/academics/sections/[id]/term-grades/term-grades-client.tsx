@@ -8,12 +8,37 @@ import { saveTermGrade } from "@/app/actions/term-grades"
 import { Check, Loader2, Save, Search, X, ChevronLeft, ChevronRight, Wand2, BarChart3, BookOpen } from "lucide-react"
 import { toast } from "sonner"
 import { calculateGrade, getLetterGrade } from "@/lib/grading"
+import { type AssignmentType, type Prisma } from "@prisma/client"
+
+type GradingScaleEntry = { min: number; letter: string }
+
+type TermGradeRecord = {
+  isPosted?: boolean
+  overrideScore?: number | null
+  calculatedScore?: number | null
+  letterGrade?: string | null
+  comments?: string | null
+}
+
+type EnrollmentRecord = {
+  id: string
+  student: { user: { name: string } }
+  termGrades?: TermGradeRecord[]
+}
+
+type AssignmentRecord = { id: string; title: string; dueDate: string | Date; type: AssignmentType; maxScore: number | null }
+
+type GradeRecord = { studentId: string; assignmentId: string; score: number }
 
 // Client-side letter grade lookup — mirrors lib/grading.ts
-function resolveLetterGrade(score: string, gradingScale: any[]): string {
+function resolveLetterGrade(score: string, gradingScale: unknown): string {
   const pct = parseFloat(score)
-  if (isNaN(pct) || !gradingScale?.length) return ""
-  const sorted = [...gradingScale].sort((a, b) => b.min - a.min)
+  if (isNaN(pct) || !Array.isArray(gradingScale)) return ""
+  const sorted = [...gradingScale].filter((entry): entry is GradingScaleEntry =>
+    typeof entry === "object" && entry !== null &&
+    typeof (entry as any).min === "number" &&
+    typeof (entry as any).letter === "string"
+  ).sort((a, b) => b.min - a.min)
   for (const entry of sorted) {
     if (pct >= entry.min) return entry.letter
   }
@@ -33,13 +58,13 @@ export function TermGradesClient({
   weightingConfig = null,
 }: {
   sectionId: string
-  enrollments: any[]
+  enrollments: EnrollmentRecord[]
   termId: string
   termName: string
-  gradingScale: any[]
-  assignments?: any[]
-  grades?: any[]
-  weightingConfig?: any
+  gradingScale?: Prisma.JsonValue | undefined
+  assignments?: AssignmentRecord[]
+  grades?: GradeRecord[]
+  weightingConfig?: Prisma.JsonValue | undefined
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [search, setSearch] = useState("")
@@ -166,6 +191,14 @@ export function TermGradesClient({
 
   const postedCount = allEnrollments.filter(enr => enr.termGrades?.[0]?.isPosted).length
 
+  const normalizedGradingScale: GradingScaleEntry[] = Array.isArray(gradingScale)
+    ? (gradingScale as unknown[]).filter((entry): entry is GradingScaleEntry =>
+        typeof entry === "object" && entry !== null &&
+        typeof (entry as any).min === "number" &&
+        typeof (entry as any).letter === "string"
+      )
+    : []
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -177,7 +210,7 @@ export function TermGradesClient({
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
               {postedCount} of {allEnrollments.length} students graded
-              {gradingScale?.length > 0 && (
+              {normalizedGradingScale.length > 0 && (
                 <span className="ml-2 text-emerald-600 font-semibold">· Grading scale active</span>
               )}
             </p>
@@ -246,7 +279,7 @@ export function TermGradesClient({
               <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[130px]">Score (0–100)</th>
               <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[110px]">
                 Letter
-                {gradingScale?.length > 0 && <span className="ml-1 text-emerald-500">✦ auto</span>}
+                {normalizedGradingScale.length > 0 && <span className="ml-1 text-emerald-500">✦ auto</span>}
               </th>
               <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 pr-4">Teacher Comments</th>
               <th className="py-3 pr-6 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Save</th>
