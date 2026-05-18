@@ -1,17 +1,18 @@
 import { Resend } from 'resend';
+import { env } from './env';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(env.RESEND_API_KEY);
 
 export async function sendInviteEmail(email: string, inviteLink: string, role: string) {
   try {
     const { data, error } = await resend.emails.send({
-      from: `Schoolyard SMS <onboarding@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
+      from: `Schoolyard SMS <onboarding@${env.RESEND_DOMAIN}>`,
       to: [email],
-      replyTo: `support@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}`,
+      replyTo: `support@${env.RESEND_DOMAIN}`,
       subject: 'You are invited to Schoolyard',
       text: `Welcome to Schoolyard!\n\nYou have been invited to join the school as a ${role}.\n\nPlease set up your account by visiting:\n${inviteLink}\n\nIf you did not expect this invitation, please ignore this email.`,
       headers: {
-        'List-Unsubscribe': `<mailto:unsubscribe@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
+        'List-Unsubscribe': `<mailto:unsubscribe@${env.RESEND_DOMAIN}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         'Precedence': 'bulk'
       },
@@ -43,13 +44,13 @@ export async function sendInviteEmail(email: string, inviteLink: string, role: s
 export async function sendPasswordResetEmail(email: string, resetLink: string) {
   try {
     const { data, error } = await resend.emails.send({
-      from: `Schoolyard SMS <security@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
+      from: `Schoolyard SMS <security@${env.RESEND_DOMAIN}>`,
       to: [email],
-      replyTo: `security@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}`,
+      replyTo: `security@${env.RESEND_DOMAIN}`,
       subject: 'Reset your Schoolyard password',
       text: `Password Reset Request\n\nWe received a request to reset the password for your Schoolyard account.\n\nPlease reset your password by visiting:\n${resetLink}\n\nIf you did not request a password reset, please ignore this email or contact support if you have concerns.`,
       headers: {
-        'List-Unsubscribe': `<mailto:unsubscribe@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
+        'List-Unsubscribe': `<mailto:unsubscribe@${env.RESEND_DOMAIN}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         'Precedence': 'bulk'
       },

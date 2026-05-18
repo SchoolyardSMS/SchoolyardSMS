@@ -1,7 +1,8 @@
 import webpush from 'web-push'
+import { env } from './env'
 
-const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-const privateVapidKey = process.env.VAPID_PRIVATE_KEY!
+const publicVapidKey = env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+const privateVapidKey = env.VAPID_PRIVATE_KEY
 
 webpush.setVapidDetails(
   'mailto:support@schoolyard.qzz.io',

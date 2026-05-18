@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     // Basic Webhook Security
     const token = req.nextUrl.searchParams.get("token")
-    if (process.env.RESEND_WEBHOOK_SECRET && token !== process.env.RESEND_WEBHOOK_SECRET) {
+    if (!process.env.RESEND_WEBHOOK_SECRET || token !== process.env.RESEND_WEBHOOK_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -102,19 +102,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fallback: If no direct recipient, find the first ADMIN
+    // Fallback: If no direct recipient is found, do not forward it. 
     if (!receiverId) {
-      const fallbackAdmin = await db.user.findFirst({
-        where: { role: "ADMIN" },
-        orderBy: { createdAt: "asc" }
-      })
-      
-      if (fallbackAdmin) {
-        receiverId = fallbackAdmin.id
-      } else {
-        console.warn(`[Resend Webhook] Could not determine receiver and no admin found for: ${toEmail}`)
-        return NextResponse.json({ message: "No valid recipient found" }, { status: 200 })
-      }
+      console.warn(`[Resend Webhook] Dropped unroutable email to: ${toEmail}`)
+      return NextResponse.json({ message: "No valid recipient found. Email dropped." }, { status: 200 })
     }
 
     // 3. Threading Support (Headers & Body)
