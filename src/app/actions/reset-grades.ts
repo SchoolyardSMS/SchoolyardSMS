@@ -19,9 +19,22 @@ export async function checkSchoolWideGradesSubmission(termId: string) {
     })
     if (!term) return { success: false, error: "Term not found" }
 
-    // 2. Find all sections that are linked to this term
+    // Collect all ancestor term IDs recursively (e.g. Year 1 under which Q1 resides)
+    const ancestorIds: string[] = []
+    let currentParentId = term.parentId
+    while (currentParentId) {
+      ancestorIds.push(currentParentId)
+      const parentTerm = await db.term.findUnique({
+        where: { id: currentParentId }
+      })
+      currentParentId = parentTerm?.parentId || null
+    }
+
+    const relevantTermIds = [termId, ...ancestorIds]
+
+    // 2. Find all sections that are linked to any of these term IDs
     const sections = await db.section.findMany({
-      where: { termId: termId },
+      where: { termId: { in: relevantTermIds } },
       include: {
         course: true,
         teacher: { include: { user: true } },
@@ -88,9 +101,22 @@ export async function runSchoolWideReset(termId: string) {
     })
     if (!term) return { success: false, error: "Term not found" }
 
-    // 1. Fetch all active sections for this term
+    // Collect all ancestor term IDs recursively (e.g. Year 1 under which Q1 resides)
+    const ancestorIds: string[] = []
+    let currentParentId = term.parentId
+    while (currentParentId) {
+      ancestorIds.push(currentParentId)
+      const parentTerm = await db.term.findUnique({
+        where: { id: currentParentId }
+      })
+      currentParentId = parentTerm?.parentId || null
+    }
+
+    const relevantTermIds = [termId, ...ancestorIds]
+
+    // 1. Fetch all active sections for these term IDs
     const sections = await db.section.findMany({
-      where: { termId: termId },
+      where: { termId: { in: relevantTermIds } },
       include: {
         enrollments: {
           where: { status: "ENROLLED" },

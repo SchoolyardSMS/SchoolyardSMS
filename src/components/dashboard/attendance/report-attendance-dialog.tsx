@@ -11,13 +11,6 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { reportAttendance } from "@/app/actions/attendance"
 import { toast } from "sonner"
@@ -64,33 +57,32 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Student</label>
-            <Select value={studentId} onValueChange={(v) => v && setStudentId(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a child" />
-              </SelectTrigger>
-              <SelectContent>
-                {children.map((child) => (
-                  <SelectItem key={child.id} value={child.id}>
-                    {child.user.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select 
+              value={studentId} 
+              onChange={(e) => setStudentId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="" disabled>Select a child</option>
+              {children.map((child) => (
+                <option key={child.id} value={child.id}>
+                  {child.user.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Type</label>
-              <Select value={type} onValueChange={(v: any) => v && setType(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SICK">Sick (All Day)</SelectItem>
-                  <SelectItem value="LATE">Late Arrival</SelectItem>
-                  <SelectItem value="EARLY_DISMISSAL">Early Dismissal</SelectItem>
-                </SelectContent>
-              </Select>
+              <select 
+                value={type} 
+                onChange={(e) => setType(e.target.value as any)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="SICK">Sick (All Day)</option>
+                <option value="LATE">Late Arrival</option>
+                <option value="EARLY_DISMISSAL">Early Dismissal</option>
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Date</label>

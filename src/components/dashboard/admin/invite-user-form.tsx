@@ -72,18 +72,17 @@ export function InviteUserForm({ students = [] }: { students?: any[] }) {
       {role === "PARENT" && (
         <div className="space-y-2">
           <Label htmlFor="studentId" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Link to Student</Label>
-          <Select name="studentId">
-            <SelectTrigger className="rounded-xl">
-              <SelectValue placeholder="Select Student" />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.user.name} (Grade {s.gradeLevel})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select 
+            name="studentId"
+            className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="" disabled selected>Select Student</option>
+            {students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.user.name} (Grade {s.gradeLevel})
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
