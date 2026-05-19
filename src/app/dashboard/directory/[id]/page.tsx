@@ -74,11 +74,8 @@ export default async function StudentProfilePage({
   const isMyChild = student.parents.some(p => p.parent.userId === session.user.id)
   
   const canViewSensitive = isAdmin || isTeacher || isSelf || isMyChild
-
   // --- LMS Calculations (Academics) ---
   const activeEnrollments = student.enrollments.filter(e => e.status === "ENROLLED")
-  let totalGradeSum = 0
-  let coursesWithGrades = 0
 
   const coursesProgress = activeEnrollments.map(enr => {
     const assignments = enr.section.assignments
@@ -94,10 +91,6 @@ export default async function StudentProfilePage({
     })
 
     const percentage = possible > 0 ? (earned / possible) * 100 : null
-    if (percentage !== null) {
-      totalGradeSum += percentage
-      coursesWithGrades++
-    }
 
     return {
       courseName: enr.section.course.name,
@@ -106,6 +99,9 @@ export default async function StudentProfilePage({
     }
   })
 
+  const gradedCourses = coursesProgress.filter(cp => cp.percentage !== null)
+  const coursesWithGrades = gradedCourses.length
+  const totalGradeSum = gradedCourses.reduce((sum, cp) => sum + (cp.percentage ?? 0), 0)
   const overallGPA = coursesWithGrades > 0 ? (totalGradeSum / coursesWithGrades).toFixed(1) : "N/A"
 
   // --- SMS Calculations (Attendance & Behavior) ---

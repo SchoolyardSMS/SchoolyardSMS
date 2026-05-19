@@ -17,15 +17,19 @@ export function PWAInstallPrompt() {
     // Debug mode
     const searchParams = new URLSearchParams(window.location.search)
     if (searchParams.get('showInstall') === 'true') {
-      setShowPrompt(true)
+      requestAnimationFrame(() => {
+        setShowPrompt(true)
+      })
     }
 
     // iOS Detection
     const userAgent = window.navigator.userAgent.toLowerCase()
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent)
     if (isIOSDevice) {
-      setIsIOS(true)
-      setShowPrompt(true)
+      requestAnimationFrame(() => {
+        setIsIOS(true)
+        setShowPrompt(true)
+      })
       return
     }
 
