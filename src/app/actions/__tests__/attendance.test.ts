@@ -1,70 +1,154 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from "vitest"
+import { mockDb, resetDbMocks } from "@/test/mocks/db"
+import { adminSession, teacherSession, studentSession, mockSession } from "@/test/mocks/session"
 
-// Mocks must be registered before importing the module under test
-vi.mock('next-auth/next', () => ({
-  getServerSession: vi.fn()
+// Mock messaging module
+vi.mock("../messaging", () => ({
+  sendSystemBatchMessages: vi.fn(),
+  sendSystemMessage: vi.fn(),
 }))
 
-// Mock authOptions import used by getServerSession calls
-vi.mock('@/lib/auth', () => ({ authOptions: {} }))
-
-// Mock date helpers
-vi.mock('@/lib/dates', () => ({ formatInET: (d: any) => 'DATE', parseLocalDate: (s: string) => new Date(s) }))
-
-// Mock next/cache revalidatePath used in server actions
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-
-// Mock the messaging sendSystemBatchMessages used by attendance
-vi.mock('../messaging', () => ({
-  sendSystemBatchMessages: vi.fn()
+// Mock dates (already partially mocked in setup, but we need formatInET for attendance)
+vi.mock("@/lib/dates", () => ({
+  formatInET: vi.fn(() => "May 1, 2026"),
+  parseLocalDate: vi.fn((s: string) => new Date(s + "T12:00:00")),
 }))
 
-// Mock the Prisma db module
-vi.mock('@/lib/db', () => ({
-  db: {
-    attendance: {
-      upsert: vi.fn()
-    },
-    student: {
-      findUnique: vi.fn()
-    },
-    section: {
-      findUnique: vi.fn()
-    }
-  }
-}))
+import {
+  submitAttendance,
+  submitBulkAttendance,
+  archiveAttendanceDay,
+} from "../attendance"
 
-const { getServerSession } = await import('next-auth/next') as any
-const messaging = await import('../messaging') as any
-const db = (await import('@/lib/db')) as any
-const { submitAttendance } = await import('../attendance')
-
-describe('submitAttendance', () => {
+describe("submitAttendance", () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    resetDbMocks()
+    vi.clearAllMocks()
   })
 
-  it('rejects when teacher is not owner', async () => {
-    // Teacher session but not owner
-    ;(getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'TEACHER', name: 'Ms T' } })
-    ;(db.db.section.findUnique as any).mockResolvedValue({ teacher: { userId: 'other' } })
-
-    await expect(submitAttendance('sec1', 'stud1', new Date(), 'PRESENT' as any)).rejects.toThrow(/not the assigned teacher/)
+  it("rejects unauthenticated requests", async () => {
+    mockSession(null)
+    await expect(
+      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+    ).rejects.toThrow("Unauthorized")
   })
 
-  it('sends parent notifications when notifiedParent=true and admin user', async () => {
-    ;(getServerSession as any).mockResolvedValue({ user: { id: 'admin', role: 'ADMIN', name: 'Admin' } })
-    ;(db.db.attendance.upsert as any).mockResolvedValue({ id: 'a1' })
-    ;(db.db.student.findUnique as any).mockResolvedValue({
-      id: 'stud1',
-      user: { name: 'Student One' },
-      parents: [ { parent: { userId: 'p1', user: { email: 'p1@example.com', name: 'Parent One' } } } ]
+  it("rejects student role", async () => {
+    mockSession(studentSession())
+    await expect(
+      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+    ).rejects.toThrow()
+  })
+
+  it("rejects teacher who is not section owner", async () => {
+    mockSession(teacherSession())
+    mockDb.section.findUnique.mockResolvedValue({
+      teacher: { userId: "other-teacher" },
     })
-    ;(db.db.section.findUnique as any).mockResolvedValue({ course: { name: 'Biology' } })
 
-    await submitAttendance('sec1', 'stud1', new Date(), 'ABSENT' as any, { notifiedParent: true })
+    await expect(
+      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+    ).rejects.toThrow("not the assigned teacher")
+  })
 
-    expect(messaging.sendSystemBatchMessages).toHaveBeenCalled()
-    expect(db.db.attendance.upsert).toHaveBeenCalled()
+  it("allows admin to submit for any section", async () => {
+    mockSession(adminSession())
+    mockDb.attendance.upsert.mockResolvedValue({ id: "att1" })
+
+    await submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+
+    expect(mockDb.attendance.upsert).toHaveBeenCalledOnce()
+  })
+
+  it("allows teacher who owns section to submit", async () => {
+    mockSession(teacherSession())
+    mockDb.section.findUnique.mockResolvedValue({
+      teacher: { userId: "teacher-1", user: {} },
+    })
+    mockDb.attendance.upsert.mockResolvedValue({ id: "att1" })
+
+    await submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+
+    expect(mockDb.attendance.upsert).toHaveBeenCalledOnce()
+  })
+
+  it("sends parent notifications when notifiedParent=true", async () => {
+    mockSession(adminSession())
+    mockDb.attendance.upsert.mockResolvedValue({ id: "att1" })
+    mockDb.student.findUnique.mockResolvedValue({
+      id: "stud1",
+      user: { name: "Student One" },
+      parents: [
+        {
+          parent: {
+            userId: "p1",
+            user: { email: "parent@school.edu", name: "Parent One" },
+          },
+        },
+      ],
+    })
+    mockDb.section.findUnique.mockResolvedValue({ course: { name: "Biology" } })
+
+    const { sendSystemBatchMessages } = await import("../messaging")
+
+    await submitAttendance("sec1", "stud1", new Date(), "ABSENT" as any, {
+      notifiedParent: true,
+    })
+
+    expect(sendSystemBatchMessages).toHaveBeenCalled()
+  })
+})
+
+describe("submitBulkAttendance", () => {
+  beforeEach(() => {
+    resetDbMocks()
+    vi.clearAllMocks()
+  })
+
+  it("creates missing records and updates existing ones", async () => {
+    mockSession(adminSession())
+    mockDb.attendance.findMany.mockResolvedValue([
+      { studentId: "s1" }, // existing
+    ])
+    mockDb.attendance.updateMany.mockResolvedValue({ count: 1 })
+    mockDb.attendance.createMany.mockResolvedValue({ count: 1 })
+
+    await submitBulkAttendance(
+      "sec1",
+      ["s1", "s2"],
+      new Date(),
+      "PRESENT" as any
+    )
+
+    expect(mockDb.attendance.updateMany).toHaveBeenCalled()
+    expect(mockDb.attendance.createMany).toHaveBeenCalled()
+  })
+
+  it("rejects student role", async () => {
+    mockSession(studentSession())
+    await expect(
+      submitBulkAttendance("sec1", ["s1"], new Date(), "PRESENT" as any)
+    ).rejects.toThrow()
+  })
+})
+
+describe("archiveAttendanceDay", () => {
+  beforeEach(() => {
+    resetDbMocks()
+    vi.clearAllMocks()
+  })
+
+  it("marks attendance records as archived", async () => {
+    mockSession(adminSession())
+    mockDb.attendance.updateMany.mockResolvedValue({ count: 5 })
+
+    const result = await archiveAttendanceDay("sec1", new Date())
+
+    expect(mockDb.attendance.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { isArchived: true },
+      })
+    )
+    expect(result).toEqual({ success: true })
   })
 })

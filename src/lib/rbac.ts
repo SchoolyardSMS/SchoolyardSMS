@@ -1,8 +1,19 @@
 import { db } from "./db"
+import type { Session } from "next-auth"
 
-export function assertRole(session: any, roles: string[] = []) {
+/**
+ * Asserts the session is authenticated and the user holds one of the required
+ * roles. Throws "Unauthorized" otherwise.
+ *
+ * Returns the session narrowed to a non-nullable type so callers can safely
+ * access session.user.* without additional null checks.
+ */
+export function assertRole<T extends Session | null>(
+  session: T,
+  roles: string[] = []
+): asserts session is NonNullable<T> {
   if (!session?.user) throw new Error("Unauthorized")
-  if (!roles.includes(session.user.role)) {
+  if (!roles.includes((session as any).user.role)) {
     throw new Error("Unauthorized: insufficient role")
   }
 }

@@ -9,7 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest --globals",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --coverage --reporter=verbose",
     "bun:install": "bun install",
     "bun:dev": "bun run dev",
     "bun:test": "bun run test"
@@ -57,7 +60,6 @@
     "ioredis": "^5.3.2"
   },
   "devDependencies": {
-    "vitest": "^1.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
@@ -65,19 +67,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   },
-  "vitest": {
-    "globals": true,
-    "test": {
-      "watch": false,
-      "include": ["src/**/*.{test,spec}.{js,ts,tsx}", "src/**/__tests__/**/*.ts"]
-    }
-  },
+
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   }

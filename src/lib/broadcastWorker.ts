@@ -1,5 +1,6 @@
 import { db } from './db'
 import { Resend } from 'resend'
+import { BroadcastDelivery } from '@prisma/client'
 
 const resend = new Resend(process.env.RESEND_API_KEY || '')
 
@@ -17,7 +18,7 @@ export async function processBroadcast(broadcastId: string) {
   for (let i = 0; i < deliveries.length; i += batchSize) {
     const chunk = deliveries.slice(i, i + batchSize)
 
-    const batchData = chunk.map(d => ({
+    const batchData = chunk.map((d: BroadcastDelivery) => ({
       from: `Schoolyard SMS <messaging@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
       to: [ /* Will substitute recipient email later */ ],
       subject: broadcast.subject,
@@ -25,11 +26,11 @@ export async function processBroadcast(broadcastId: string) {
     }))
 
     // Resend batch requires emails; fetch recipient emails
-    const recipientIds = chunk.map(c => c.recipientId)
+    const recipientIds = chunk.map((c: BroadcastDelivery) => c.recipientId)
     const users = await db.user.findMany({ where: { id: { in: recipientIds } }, select: { id: true, email: true } })
     const emailById = new Map(users.map(u => [u.id, u.email]))
 
-    const batchPayload = chunk.map(d => ({
+    const batchPayload = chunk.map((d: BroadcastDelivery) => ({
       from: `Schoolyard SMS <messaging@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`,
       to: [emailById.get(d.recipientId)!],
       subject: broadcast.subject,
@@ -40,7 +41,7 @@ export async function processBroadcast(broadcastId: string) {
     const responses = Array.isArray(result.data) ? result.data : (result.data as any).data
 
     // Update each delivery with provider id and status
-    await Promise.all(chunk.map((d, idx) => {
+    await Promise.all(chunk.map((d: BroadcastDelivery, idx: number) => {
       const providerId = responses?.[idx]?.id || null
       const status = providerId ? 'SENT' : 'FAILED'
       return db.broadcastDelivery.update({ where: { id: d.id }, data: { providerId, status } })

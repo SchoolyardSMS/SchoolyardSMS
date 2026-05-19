@@ -27,18 +27,31 @@ const envSchema = z.object({
 
 export type Environment = z.infer<typeof envSchema>
 
+const isBuildOrTest = 
+  process.env.NEXT_PHASE === "phase-production-build" || 
+  process.env.NODE_ENV === "test" || 
+  process.env.SKIP_ENV_VALIDATION === "true"
+
+const getEnvValue = (key: string) => {
+  const val = process.env[key]
+  if (!val && isBuildOrTest) {
+    return "dummy_build_value"
+  }
+  return val
+}
+
 /**
  * Validated environment variables.
  * Throws at module load time if validation fails.
  */
 export const env = envSchema.parse({
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  RESEND_DOMAIN: process.env.RESEND_DOMAIN,
-  RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
-  NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+  NEXTAUTH_SECRET: getEnvValue("NEXTAUTH_SECRET"),
+  GOOGLE_CLIENT_ID: getEnvValue("GOOGLE_CLIENT_ID"),
+  GOOGLE_CLIENT_SECRET: getEnvValue("GOOGLE_CLIENT_SECRET"),
+  RESEND_API_KEY: getEnvValue("RESEND_API_KEY"),
+  RESEND_DOMAIN: getEnvValue("RESEND_DOMAIN"),
+  RESEND_WEBHOOK_SECRET: getEnvValue("RESEND_WEBHOOK_SECRET"),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: getEnvValue("NEXT_PUBLIC_VAPID_PUBLIC_KEY"),
+  VAPID_PRIVATE_KEY: getEnvValue("VAPID_PRIVATE_KEY"),
   NODE_ENV: process.env.NODE_ENV,
 })

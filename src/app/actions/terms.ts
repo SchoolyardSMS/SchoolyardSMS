@@ -125,10 +125,13 @@ export async function setSchoolYearActive(schoolYearId: string) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["ADMIN"])
 
-  await db.schoolYear.updateMany({ data: { isActive: false } })
-  await db.schoolYear.update({ where: { id: schoolYearId }, data: { isActive: true } })
-
-  revalidatePath("/dashboard/admin/calendar/terms")
-  return { success: true }
+  try {
+    await db.schoolYear.updateMany({ data: { isActive: false } })
+    await db.schoolYear.update({ where: { id: schoolYearId }, data: { isActive: true } })
+    revalidatePath("/dashboard/admin/calendar/terms")
+    return { success: true as const, error: undefined }
+  } catch (e: any) {
+    return { success: false as const, error: e.message || "Failed to set active year" }
+  }
 }
 

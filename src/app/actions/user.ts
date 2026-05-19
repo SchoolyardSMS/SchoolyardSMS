@@ -38,7 +38,7 @@ export async function updateUserProfile(formData: { name: string; email: string 
 
 export async function inviteUser(formData: FormData) {
   const session = await getServerSession(authOptions)
-  try { assertRole(session, ['ADMIN']) } catch (err) { throw new Error('Unauthorized: Only admins can invite users.') }
+  assertRole(session, ['ADMIN'])
 
   const email = (formData.get("email") as string)?.trim().toLowerCase()
   const name  = (formData.get("name") as string)?.trim()
@@ -112,7 +112,7 @@ export async function inviteUser(formData: FormData) {
 
 export async function bulkUploadUsers(csvContent: string) {
   const session = await getServerSession(authOptions)
-  try { assertRole(session, ['ADMIN']) } catch (err) { throw new Error('Unauthorized') }
+  assertRole(session, ['ADMIN'])
 
   const lines = csvContent.split('\n').filter(line => line.trim())
   if (lines.length <= 1) return { error: "CSV is empty or missing headers" }
@@ -212,7 +212,7 @@ export async function completeRegistration(formData: FormData) {
 
 export async function deleteUser(id: string) {
   const session = await getServerSession(authOptions)
-  try { assertRole(session, ['ADMIN']) } catch (err) { throw new Error('Unauthorized: Only admins can delete users.') }
+  assertRole(session, ['ADMIN'])
 
   // Prevent deleting oneself
   if (session.user.id === id) {
@@ -230,7 +230,7 @@ export async function deleteUser(id: string) {
 
 export async function editUser(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
-  try { assertRole(session, ['ADMIN']) } catch (err) { throw new Error('Unauthorized: Only admins can edit users.') }
+  assertRole(session, ['ADMIN'])
 
   const name = (formData.get("name") as string)?.trim()
   const email = (formData.get("email") as string)?.trim().toLowerCase()
@@ -282,7 +282,7 @@ export async function editUser(id: string, formData: FormData) {
 
 export async function getUsers(page: number = 1, pageSize: number = 20) {
   const session = await getServerSession(authOptions)
-  try { assertRole(session, ['ADMIN']) } catch (err) { throw new Error('Unauthorized') }
+  assertRole(session, ['ADMIN'])
 
   const skip = (page - 1) * pageSize
 

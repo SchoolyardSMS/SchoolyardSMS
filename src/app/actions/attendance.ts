@@ -8,7 +8,7 @@ import { z } from "zod"
 import { sendSystemBatchMessages } from "./messaging"
 import { AttendanceStatus } from "@prisma/client"
 import { assertRole } from "@/lib/rbac"
-import { formatInET } from "@/lib/dates"
+import { formatInET, parseLocalDate } from "@/lib/dates"
 
 export async function submitAttendance(
   sectionId: string, 
