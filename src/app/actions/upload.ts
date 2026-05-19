@@ -13,7 +13,12 @@ import { assertRole } from "@/lib/rbac"
 export async function uploadAssignmentSubmission(formData: FormData) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["STUDENT"])
-  
+
+  // Mock file uploads for demo/serverless environments
+  if (process.env.DISABLE_UPLOADS === "true") {
+    console.log("[UPLOAD MOCKED] Assignment submission would be uploaded")
+    return { success: true, url: "/placeholder-file.svg" }
+  }
 
   const file = formData.get("file") as File
   const assignmentId = formData.get("assignmentId") as string
@@ -66,6 +71,12 @@ export async function uploadBrandingFile(formData: FormData) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["ADMIN"])
 
+  // Mock file uploads for demo/serverless environments
+  if (process.env.DISABLE_UPLOADS === "true") {
+    console.log("[UPLOAD MOCKED] Branding file would be uploaded")
+    return { success: true, url: "/placeholder-branding.svg" }
+  }
+
   const file = formData.get("file") as File
   if (!file) throw new Error("No file provided")
 
@@ -89,6 +100,12 @@ export async function uploadBrandingFile(formData: FormData) {
 export async function uploadMaterialFile(formData: FormData) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["ADMIN", "TEACHER"])
+
+  // Mock file uploads for demo/serverless environments
+  if (process.env.DISABLE_UPLOADS === "true") {
+    console.log("[UPLOAD MOCKED] Material file would be uploaded")
+    return { success: true, url: "/placeholder-material.svg" }
+  }
 
   const file = formData.get("file") as File
   if (!file) throw new Error("No file provided")

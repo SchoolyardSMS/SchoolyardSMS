@@ -1,0 +1,40 @@
+name: Reset Demo Database Daily
+
+on:
+  schedule:
+    # Run every day at 4:00 AM EST (09:00 UTC)
+    - cron: '0 9 * * *'
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  reset-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Reset database and seed demo data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "🌱 Starting demo database reset..."
+          bunx prisma db push --force-reset --skip-generate
+          bunx prisma db seed
+          echo "✅ Demo database reset completed!"
+
+      - name: Notify on success
+        if: success()
+        run: echo "🎉 Demo database successfully reset with fresh seed data"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Demo database reset failed - check logs"
