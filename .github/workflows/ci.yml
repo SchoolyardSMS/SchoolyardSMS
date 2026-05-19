@@ -33,4 +33,4 @@ jobs:
         run: bun run test -- --run --reporter verbose
 
       - name: Lint
-        run: bun run lint --silent
+        run: bun run lint
