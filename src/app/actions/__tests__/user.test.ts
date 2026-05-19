@@ -225,11 +225,14 @@ describe("deleteUser", () => {
 
   it("allows admin to delete another user", async () => {
     mockSession(adminSession())
-    mockDb.user.delete.mockResolvedValue({ id: "other-user" })
+    mockDb.user.update.mockResolvedValue({ id: "other-user" })
 
     const result = await deleteUser("other-user")
 
-    expect(mockDb.user.delete).toHaveBeenCalledWith({ where: { id: "other-user" } })
+    expect(mockDb.user.update).toHaveBeenCalledWith({
+      where: { id: "other-user" },
+      data: { deletedAt: expect.any(Date) }
+    })
     expect(result).toEqual({ success: true })
   })
 

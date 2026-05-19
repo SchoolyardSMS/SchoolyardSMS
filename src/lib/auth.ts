@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
           }
         })
 
-        if (!user || !user.hashedPassword) {
+        if (!user || user.deletedAt || !user.hashedPassword) {
           throw new Error("Invalid academic credentials")
         }
 
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: user.email! }
         })
 
-        if (!existingUser) {
+        if (!existingUser || existingUser.deletedAt) {
           return "/login?error=AccessDenied"
         }
 
