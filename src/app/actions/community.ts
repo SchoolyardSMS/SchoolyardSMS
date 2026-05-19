@@ -210,7 +210,7 @@ export async function duplicateCommunitySession(sessionId: string, newCalendarDa
 
   if (!originalSession) throw new Error("Session not found")
   
-  let teacherId = originalSession.teacherId
+  const teacherId = originalSession.teacherId
   if (session.user.role === "TEACHER") {
     const teacher = await db.teacher.findUnique({ where: { userId: session.user.id } })
     if (originalSession.teacherId !== teacher?.id) {

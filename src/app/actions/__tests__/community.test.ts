@@ -6,6 +6,7 @@ import {
   studentSession,
   mockSession,
 } from "@/test/mocks/session"
+import { CommunityAttendanceStatus } from "@prisma/client"
 
 // Mock messaging
 vi.mock("../messaging", () => ({
@@ -211,7 +212,7 @@ describe("updateCommunityAttendance", () => {
     mockSession(adminSession())
     mockDb.communityEnrollment.update.mockResolvedValue({ id: "ce1" })
 
-    const result = await updateCommunityAttendance("ce1", "PRESENT" as any)
+    const result = await updateCommunityAttendance("ce1", CommunityAttendanceStatus.PRESENT)
 
     expect(mockDb.communityEnrollment.update).toHaveBeenCalledWith(
       expect.objectContaining({

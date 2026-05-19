@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { mockDb, resetDbMocks } from "@/test/mocks/db"
 import { adminSession, teacherSession, studentSession, mockSession } from "@/test/mocks/session"
+import { AttendanceStatus } from "@prisma/client"
 
 // Mock messaging module
 vi.mock("../messaging", () => ({
@@ -29,14 +30,14 @@ describe("submitAttendance", () => {
   it("rejects unauthenticated requests", async () => {
     mockSession(null)
     await expect(
-      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+      submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.PRESENT)
     ).rejects.toThrow("Unauthorized")
   })
 
   it("rejects student role", async () => {
     mockSession(studentSession())
     await expect(
-      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+      submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.PRESENT)
     ).rejects.toThrow()
   })
 
@@ -47,7 +48,7 @@ describe("submitAttendance", () => {
     })
 
     await expect(
-      submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+      submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.PRESENT)
     ).rejects.toThrow("not the assigned teacher")
   })
 
@@ -55,7 +56,7 @@ describe("submitAttendance", () => {
     mockSession(adminSession())
     mockDb.attendance.upsert.mockResolvedValue({ id: "att1" })
 
-    await submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+    await submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.PRESENT)
 
     expect(mockDb.attendance.upsert).toHaveBeenCalledOnce()
   })
@@ -67,7 +68,7 @@ describe("submitAttendance", () => {
     })
     mockDb.attendance.upsert.mockResolvedValue({ id: "att1" })
 
-    await submitAttendance("sec1", "stud1", new Date(), "PRESENT" as any)
+    await submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.PRESENT)
 
     expect(mockDb.attendance.upsert).toHaveBeenCalledOnce()
   })
@@ -91,7 +92,7 @@ describe("submitAttendance", () => {
 
     const { sendSystemBatchMessages } = await import("../messaging")
 
-    await submitAttendance("sec1", "stud1", new Date(), "ABSENT" as any, {
+    await submitAttendance("sec1", "stud1", new Date(), AttendanceStatus.ABSENT, {
       notifiedParent: true,
     })
 
@@ -117,7 +118,7 @@ describe("submitBulkAttendance", () => {
       "sec1",
       ["s1", "s2"],
       new Date(),
-      "PRESENT" as any
+      AttendanceStatus.PRESENT
     )
 
     expect(mockDb.attendance.updateMany).toHaveBeenCalled()
@@ -127,7 +128,7 @@ describe("submitBulkAttendance", () => {
   it("rejects student role", async () => {
     mockSession(studentSession())
     await expect(
-      submitBulkAttendance("sec1", ["s1"], new Date(), "PRESENT" as any)
+      submitBulkAttendance("sec1", ["s1"], new Date(), AttendanceStatus.PRESENT)
     ).rejects.toThrow()
   })
 })

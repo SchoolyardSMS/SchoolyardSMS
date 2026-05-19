@@ -23,7 +23,6 @@ vi.mock("@/lib/dates", () => ({
 import {
   mutateGrade,
   createCourse,
-  createAssignment,
   deleteAssignment,
   enrollStudents,
   updateGradingSettings,
@@ -208,7 +207,7 @@ describe("updateGradingSettings", () => {
 
   it("accepts weights totaling 100", async () => {
     mockSession(adminSession())
-    ;(mockDb.section as any).update = vi.fn().mockResolvedValue({ id: "s1" })
+    mockDb.section.update.mockResolvedValue({ id: "s1" })
 
     const result = await updateGradingSettings("s1", {
       HOMEWORK: 30,

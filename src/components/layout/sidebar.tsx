@@ -136,7 +136,8 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    const handle = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(handle)
   }, [])
 
   const visibleItems = navItems.filter(item => {
@@ -155,8 +156,6 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
     if (href === "/dashboard") return pathname === "/dashboard"
     return pathname.startsWith(href)
   }
-
-  const userInitials = user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
 
   const itemsToRender = mounted ? visibleItems : navItems.filter(item => !item.roles)
 

@@ -7,8 +7,10 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Only render after hydration to avoid SSR mismatch
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const handle = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(handle)
+  }, [])
   if (!mounted) return <div className="h-9 w-9" />
 
   const isDark = theme === "dark"

@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { mockDb, resetDbMocks } from "@/test/mocks/db"
-import { adminSession, teacherSession, mockSession } from "@/test/mocks/session"
+import { adminSession, mockSession } from "@/test/mocks/session"
 
 import {
   createSchoolYear,
   updateSchoolYear,
   deleteSchoolYear,
   createTerm,
-  updateTerm,
-  deleteTerm,
   setSchoolYearActive,
 } from "../terms"
 

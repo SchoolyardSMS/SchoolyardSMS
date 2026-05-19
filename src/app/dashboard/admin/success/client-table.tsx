@@ -19,6 +19,19 @@ type StudentData = {
   riskLevel: string
 }
 
+function SortIcon({
+  field,
+  sortField,
+  sortAsc,
+}: {
+  field: keyof StudentData
+  sortField: keyof StudentData
+  sortAsc: boolean
+}) {
+  if (sortField !== field) return <span className="ml-1 opacity-0 group-hover:opacity-50">↕</span>
+  return sortAsc ? <ChevronUp className="inline w-3 h-3 ml-1" /> : <ChevronDown className="inline w-3 h-3 ml-1" />
+}
+
 export function SuccessClientTable({ initialData }: { initialData: StudentData[] }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [sortField, setSortField] = useState<keyof StudentData>("riskScore")
@@ -30,8 +43,8 @@ export function SuccessClientTable({ initialData }: { initialData: StudentData[]
   )
 
   const sorted = [...filtered].sort((a, b) => {
-    let valA = a[sortField]
-    let valB = b[sortField]
+    const valA = a[sortField]
+    const valB = b[sortField]
     if (typeof valA === "string" && typeof valB === "string") {
       return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA)
     }
@@ -46,11 +59,6 @@ export function SuccessClientTable({ initialData }: { initialData: StudentData[]
       setSortField(field)
       setSortAsc(false) // Default descending for most metrics
     }
-  }
-
-  const SortIcon = ({ field }: { field: keyof StudentData }) => {
-    if (sortField !== field) return <span className="ml-1 opacity-0 group-hover:opacity-50">↕</span>
-    return sortAsc ? <ChevronUp className="inline w-3 h-3 ml-1" /> : <ChevronDown className="inline w-3 h-3 ml-1" />
   }
 
   return (
@@ -76,22 +84,22 @@ export function SuccessClientTable({ initialData }: { initialData: StudentData[]
           <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase tracking-wider font-bold text-[10px]">
             <tr>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("name")}>
-                Student <SortIcon field="name" />
+                Student <SortIcon field="name" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("grade")}>
-                Grade <SortIcon field="grade" />
+                Grade <SortIcon field="grade" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("absences")}>
-                Absences <SortIcon field="absences" />
+                Absences <SortIcon field="absences" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("incidents")}>
-                Incidents <SortIcon field="incidents" />
+                Incidents <SortIcon field="incidents" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("missingWork")}>
-                Missing Work <SortIcon field="missingWork" />
+                Missing Work <SortIcon field="missingWork" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => toggleSort("riskScore")}>
-                Risk Level <SortIcon field="riskScore" />
+                Risk Level <SortIcon field="riskScore" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
