@@ -4,6 +4,8 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import { sendSystemBatchMessages } from "./messaging"
 import { AttendanceStatus } from "@prisma/client"
 import { formatInET } from "@/lib/dates"
 
@@ -22,6 +24,41 @@ export async function submitAttendance(
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user) throw new Error("Unauthorized")
+
+  // Validate runtime inputs with Zod to avoid depending on TS-only types
+  const payloadSchema = z.object({
+    sectionId: z.string().min(1),
+    studentId: z.string().min(1),
+    date: z.date(),
+    status: z.nativeEnum(AttendanceStatus),
+    details: z.object({
+      checkInTime: z.string().optional(),
+      checkOutTime: z.string().optional(),
+      excusedReason: z.string().optional(),
+      notifiedParent: z.boolean().optional(),
+      notes: z.string().optional()
+    }).partial().optional()
+  })
+
+  payloadSchema.parse({ sectionId, studentId, date, status, details })
+
+  // Authorization: only ADMIN or the teacher assigned to the section may modify attendance
+  if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'TEACHER') {
+      throw new Error("Unauthorized: insufficient role to modify attendance")
+    }
+
+    // Confirm the teacher owns this section
+    const section = await db.section.findUnique({
+      where: { id: sectionId },
+      include: { teacher: { include: { user: true } } }
+    })
+
+    if (!section) throw new Error("Section not found")
+    if (section.teacher.userId !== session.user.id) {
+      throw new Error("Unauthorized: not the assigned teacher for this section")
+    }
+  }
 
   const attendance = await db.attendance.upsert({
     where: {
@@ -63,7 +100,6 @@ export async function submitAttendance(
     })
     
     if (student && student.parents.length > 0) {
-      const { sendSystemBatchMessages } = await import("./messaging")
       const recipients = student.parents.map(p => ({
         userId: p.parent.userId,
         email: p.parent.user.email,
@@ -115,7 +151,28 @@ export async function submitBulkAttendance(sectionId: string, studentIds: string
   const session = await getServerSession(authOptions)
   if (!session?.user) throw new Error("Unauthorized")
 
-  // Using a transaction to upsert all
+  // Validate inputs
+  const bulkSchema = z.object({
+    sectionId: z.string().min(1),
+    studentIds: z.array(z.string().min(1)).min(1),
+    date: z.date(),
+    status: z.nativeEnum(AttendanceStatus)
+  })
+  bulkSchema.parse({ sectionId, studentIds, date, status })
+
+  // Authorization: only ADMIN or the assigned TEACHER can perform bulk attendance
+  if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'TEACHER') throw new Error("Unauthorized: insufficient role")
+
+    const section = await db.section.findUnique({
+      where: { id: sectionId },
+      include: { teacher: { include: { user: true } } }
+    })
+    if (!section) throw new Error("Section not found")
+    if (section.teacher.userId !== session.user.id) throw new Error("Unauthorized: not the assigned teacher for this section")
+  }
+
+  // Using a transaction to upsert all (note: consider bulk SQL for large operations)
   const operations = studentIds.map(studentId => 
     db.attendance.upsert({
       where: {
