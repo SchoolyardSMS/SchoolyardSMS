@@ -12,18 +12,16 @@ import {
 } from "@/components/ui/dialog"
 import { bulkUploadUsers } from "@/app/actions/user"
 import { toast } from "sonner"
-import { Upload, Download, Loader2, AlertCircle } from "lucide-react"
+import { Upload, Download, Loader2 } from "lucide-react"
 
 export function BulkUploadDialog() {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const [results, setResults] = useState<{ success: number; errors: string[] } | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       setFile(e.target.files[0])
-      setResults(null)
     }
   }
 
@@ -33,16 +31,12 @@ export function BulkUploadDialog() {
     try {
       const text = await file.text()
       const res = await bulkUploadUsers(text)
-      if ("error" in res) {
+      if ("error" in res && res.error) {
         toast.error(res.error)
       } else {
-        setResults(res)
-        if (res.errors.length === 0) {
-          toast.success(`Successfully uploaded ${res.success} users`)
-          setTimeout(() => setOpen(false), 2000)
-        } else {
-          toast.warning(`Uploaded ${res.success} users with ${res.errors.length} errors`)
-        }
+        toast.success(res.message || "Bulk upload scheduled in the background.")
+        setFile(null)
+        setTimeout(() => setOpen(false), 2000)
       }
     } catch (err) {
       toast.error("Failed to process CSV file")
@@ -86,24 +80,6 @@ export function BulkUploadDialog() {
               />
             </div>
           </div>
-
-          {results && (
-            <div className="space-y-3 p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/50 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Success: {results.success}</span>
-                <span className="text-sm font-medium text-rose-600">Errors: {results.errors.length}</span>
-              </div>
-              {results.errors.length > 0 && (
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {results.errors.map((err, i) => (
-                    <p key={i} className="text-[10px] text-rose-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" /> {err}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -111,7 +87,7 @@ export function BulkUploadDialog() {
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                Scheduling...
               </>
             ) : "Start Upload"}
           </Button>

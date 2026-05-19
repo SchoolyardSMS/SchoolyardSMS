@@ -13,7 +13,7 @@ export default async function TemplatesPage() {
   const session = await getServerSession(authOptions)
   if (session?.user?.role !== "ADMIN") redirect("/dashboard")
 
-  const templates = await (db as any).reportCardTemplate.findMany({
+  const templates = await db.reportCardTemplate.findMany({
     orderBy: { updatedAt: "desc" }
   })
 

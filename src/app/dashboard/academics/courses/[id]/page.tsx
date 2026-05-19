@@ -60,7 +60,7 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
       include: { user: true },
       orderBy: { user: { name: 'asc' } }
     })
-    periods = await (db as any).bellPeriod.findMany({
+    periods = await db.bellPeriod.findMany({
       orderBy: { periodNumber: 'asc' }
     })
     terms = await db.term.findMany({

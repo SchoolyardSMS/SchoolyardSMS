@@ -19,28 +19,12 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       /**
-       * SECURITY NOTE: allowDangerousEmailAccountLinking is enabled
+       * SECURITY NOTE: allowDangerousEmailAccountLinking is disabled.
        * 
-       * This allows users to link their Google account to an existing account
-       * with the same email address, even if they didn't originally sign up with Google.
-       * 
-       * Why it's safe here (for now):
-       * - Google OAuth provider verifies email ownership before allowing sign-in,
-       *   so an attacker cannot spoof a Google login for someone else's email.
-       * 
-       * Why it could become dangerous:
-       * - If Credentials (username/password) authentication is added as a provider,
-       *   an attacker could potentially:
-       *   1. Guess/crack a user's password before they set up Google OAuth
-       *   2. Link their Google account to that compromised credential account
-       *   3. Lock the original user out if they can't recover their credentials
-       * 
-       * RECOMMENDATION:
-       * - If adding Credentials provider, either:
-       *   a) Disable this flag and require explicit account linking by the user, OR
-       *   b) Implement additional security (email verification, MFA) before linking
-       * - Consider implementing account recovery mechanisms
-       * - Log all account linking events for security audits
+       * Since we are using CredentialsProvider alongside Google OAuth, this flag
+       * must remain false. This prevents an attacker from hijacking a pre-registered
+       * user credentials account by signing up with a spoofed/unverified OAuth profile
+       * of the same email.
        */
       allowDangerousEmailAccountLinking: false,
     }),

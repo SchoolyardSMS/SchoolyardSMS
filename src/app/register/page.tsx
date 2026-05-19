@@ -33,7 +33,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   }
 
   // Verify token
-  const invite = await (db as any).userToken.findUnique({
+  const invite = await db.userToken.findUnique({
     where: { email_token: { email, token } }
   })
 

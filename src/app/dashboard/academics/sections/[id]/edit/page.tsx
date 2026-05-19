@@ -26,7 +26,7 @@ export default async function EditSectionPage({ params }: { params: Promise<{ id
   if (!section) notFound()
 
   const teachers = await db.teacher.findMany({ include: { user: true } })
-  const bellPeriods = await (db as any).bellPeriod.findMany()
+  const bellPeriods = await db.bellPeriod.findMany()
   const terms = await db.term.findMany({ include: { schoolYear: true }, orderBy: { startDate: 'desc' } })
 
   return (

@@ -23,9 +23,9 @@ export async function createReportCardTemplate(name: string) {
   assertRole(session, ["ADMIN"])
 
   // Set as default if it's the first template
-  const templateCount = await (db as any).reportCardTemplate.count()
+  const templateCount = await db.reportCardTemplate.count()
   
-  const template = await (db as any).reportCardTemplate.create({
+  const template = await db.reportCardTemplate.create({
     data: {
       name,
       layout: DEFAULT_LAYOUT,
@@ -43,13 +43,13 @@ export async function updateReportCardTemplate(id: string, data: { name?: string
 
   // If setting as default, unset others first
   if (data.isDefault) {
-    await (db as any).reportCardTemplate.updateMany({
+    await db.reportCardTemplate.updateMany({
       where: { isDefault: true },
       data: { isDefault: false }
     })
   }
 
-  const template = await (db as any).reportCardTemplate.update({
+  const template = await db.reportCardTemplate.update({
     where: { id },
     data
   })
@@ -63,17 +63,17 @@ export async function deleteReportCardTemplate(id: string) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["ADMIN"])
 
-  const template = await (db as any).reportCardTemplate.findUnique({ where: { id } })
+  const template = await db.reportCardTemplate.findUnique({ where: { id } })
   if (template?.isDefault) throw new Error("Cannot delete the default template")
 
-  await (db as any).reportCardTemplate.delete({ where: { id } })
+  await db.reportCardTemplate.delete({ where: { id } })
   
   revalidatePath("/dashboard/academics/reports")
   redirect("/dashboard/academics/reports")
 }
 
 export async function getActiveReportCardTemplate() {
-  const template = await (db as any).reportCardTemplate.findFirst({
+  const template = await db.reportCardTemplate.findFirst({
     where: { isDefault: true }
   })
   
@@ -88,7 +88,7 @@ export async function getActiveReportCardTemplate() {
 }
 
 export async function getSchoolSettings() {
-  const settings = await (db as any).schoolSettings.findUnique({
+  const settings = await db.schoolSettings.findUnique({
     where: { id: "singleton" }
   })
   

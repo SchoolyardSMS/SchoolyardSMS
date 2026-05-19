@@ -45,7 +45,7 @@ export async function publishReportCards(termId: string) {
     }
 
     // 2. Fetch school settings for GPA calculations
-    const schoolSettings = await (db as any).schoolSettings.findUnique({ where: { id: "singleton" } })
+    const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
 
     // 3. Create or update ReportCard for each student
     for (const [studentId, grades] of studentGradesMap.entries()) {

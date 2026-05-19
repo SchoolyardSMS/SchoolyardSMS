@@ -20,12 +20,23 @@ export async function updateUserProfile(formData: { name: string; email: string 
   }
 
   try {
+    const user = await db.user.findUnique({ where: { id: session.user.id } })
+    if (!user) return { error: "User not found" }
+
+    const updateData: { name?: string; email?: string } = {
+      name: formData.name,
+    }
+
+    // Only allow email change if the user is an ADMIN, or if it matches their current email
+    if (user.role === 'ADMIN') {
+      updateData.email = formData.email.trim().toLowerCase()
+    } else if (formData.email.trim().toLowerCase() !== user.email.toLowerCase()) {
+      return { error: "Email addresses can only be modified by a school administrator." }
+    }
+
     await db.user.update({
       where: { id: session.user.id },
-      data: {
-        name: formData.name,
-        email: formData.email,
-      }
+      data: updateData
     })
     
     revalidatePath("/profile")
@@ -92,7 +103,7 @@ export async function inviteUser(formData: FormData) {
   const token = randomUUID()
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-  await (db as any).userToken.upsert({
+  await db.userToken.upsert({
     where: { email_token: { email, token } },
     update: { token, expires, studentId: studentId || null },
     create: { email, token, role, expires, studentId: studentId || null }
@@ -114,40 +125,13 @@ export async function bulkUploadUsers(csvContent: string) {
   const session = await getServerSession(authOptions)
   assertRole(session, ['ADMIN'])
 
-  const lines = csvContent.split('\n').filter(line => line.trim())
-  if (lines.length <= 1) return { error: "CSV is empty or missing headers" }
-
-  const results = {
-    success: 0,
-    errors: [] as string[]
+  try {
+    const { enqueueBulkUpload } = await import("@/lib/queue")
+    await enqueueBulkUpload(csvContent)
+    return { success: true, message: "Bulk upload scheduled in the background." }
+  } catch (err: any) {
+    return { error: err.message || "Failed to start bulk upload." }
   }
-
-  // Skip header
-  for (let i = 1; i < lines.length; i++) {
-    const [name, email, role, gradeLevel, studentId] = lines[i].split(',').map(s => s.trim())
-    
-    if (!name || !email || !role) {
-      results.errors.push(`Row ${i + 1}: Missing name, email, or role`)
-      continue
-    }
-
-    try {
-      const formData = new FormData()
-      formData.append("name", name)
-      formData.append("email", email)
-      formData.append("role", role)
-      if (gradeLevel) formData.append("gradeLevel", gradeLevel)
-      if (studentId) formData.append("studentId", studentId)
-      
-      await inviteUser(formData)
-      results.success++
-    } catch (err: any) {
-      results.errors.push(`Row ${i + 1} (${email}): ${err.message}`)
-    }
-  }
-
-  revalidatePath("/dashboard/admin/users")
-  return results
 }
 
 export async function completeRegistration(formData: FormData) {
@@ -161,7 +145,7 @@ export async function completeRegistration(formData: FormData) {
   }
 
   // 1. Verify Token
-  const storedToken = await (db as any).userToken.findUnique({
+  const storedToken = await db.userToken.findUnique({
     where: { email_token: { email, token } }
   })
 
@@ -205,7 +189,7 @@ export async function completeRegistration(formData: FormData) {
   }
 
   // 4. Cleanup Token
-  await (db as any).userToken.delete({ where: { id: storedToken.id } })
+  await db.userToken.delete({ where: { id: storedToken.id } })
 
   redirect("/login?registered=true")
 }

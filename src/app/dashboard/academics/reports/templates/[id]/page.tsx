@@ -17,7 +17,7 @@ export default async function TemplateBuilderPage({
 
   const { id } = await params
 
-  const template = await (db as any).reportCardTemplate.findUnique({
+  const template = await db.reportCardTemplate.findUnique({
     where: { id }
   })
 
@@ -33,7 +33,7 @@ export default async function TemplateBuilderPage({
         </Button>
       </div>
 
-      <ReportCardEditor template={template} />
+      <ReportCardEditor template={template as any} />
     </div>
   )
 }

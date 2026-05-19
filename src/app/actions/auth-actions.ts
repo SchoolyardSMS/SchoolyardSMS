@@ -24,7 +24,7 @@ export async function forgotPassword(email: string) {
     const token = randomUUID()
     const expires = new Date(Date.now() + 3600000) // 1 hour
 
-    await (db as any).userToken.upsert({
+    await db.userToken.upsert({
       where: { email_token: { email: email.toLowerCase(), token } },
       update: { token, expires },
       create: { 
@@ -60,7 +60,7 @@ export async function resetPassword(formData: FormData) {
   }
 
   try {
-    const userToken = await (db as any).userToken.findFirst({
+    const userToken = await db.userToken.findFirst({
       where: {
         token,
         email: email.toLowerCase(),
@@ -80,7 +80,7 @@ export async function resetPassword(formData: FormData) {
     })
 
     // Delete the token after use
-    await (db as any).userToken.delete({
+    await db.userToken.delete({
       where: { id: userToken.id }
     })
 

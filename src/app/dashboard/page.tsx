@@ -46,7 +46,7 @@ export default async function DashboardPage() {
       db.student.count(),
       db.teacher.count(),
       db.course.count(),
-      (db as any).incident.count({ where: { status: "OPEN" } }),
+      db.incident.count({ where: { status: "OPEN" } }),
     ])
     stats = [
       { label: "Total Students", value: students, href: undefined, color: "indigo" },

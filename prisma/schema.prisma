@@ -511,6 +511,11 @@ model Message {
   attachments Document[] @relation("MessageDocuments")
 
   createdAt DateTime @default(now())
+
+  @@index([receiverId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([parentId])
+  @@index([broadcastId])
 }
 
 model Broadcast {
@@ -540,6 +545,7 @@ model BroadcastDelivery {
 
   @@index([broadcastId])
   @@index([recipientId])
+  @@index([status])
 }
 
 // ─── Bell Schedule ────────────────────────────────────────────────────────────

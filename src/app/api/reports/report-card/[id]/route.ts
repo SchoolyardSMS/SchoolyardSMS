@@ -76,7 +76,7 @@ export async function GET(
   const doc = new jsPDF()
   let currentY = 20
 
-  const schoolSettings = await (db as any).schoolSettings.findUnique({ where: { id: "singleton" } })
+  const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
   const schoolName = schoolSettings?.name || "Schoolyard Academy"
 
   for (const section of sections) {

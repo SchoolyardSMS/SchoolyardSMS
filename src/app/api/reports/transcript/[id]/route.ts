@@ -49,7 +49,7 @@ export async function GET(
 
   if (!student) return new NextResponse("Student not found", { status: 404 })
 
-  const schoolSettings = await (db as any).schoolSettings.findUnique({ where: { id: "singleton" } })
+  const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
   const schoolName = schoolSettings?.name || "Schoolyard Academy"
 
   // Calculate Cumulative GPA

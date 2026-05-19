@@ -1,12 +1,10 @@
 import { db } from "./db"
 import type { Session } from "next-auth"
+import { cache } from "react"
 
 /**
  * Asserts the session is authenticated and the user holds one of the required
  * roles. Throws "Unauthorized" otherwise.
- *
- * Returns the session narrowed to a non-nullable type so callers can safely
- * access session.user.* without additional null checks.
  */
 export function assertRole<T extends Session | null>(
   session: T,
@@ -18,6 +16,18 @@ export function assertRole<T extends Session | null>(
   }
 }
 
+// Memoized teacher profile lookup to prevent N+1 queries during a single request lifecycle
+const getTeacherIdByUserId = cache(async (userId: string) => {
+  const teacher = await db.teacher.findUnique({ where: { userId }, select: { id: true } })
+  return teacher?.id || null
+})
+
+// Memoized section lookup to prevent N+1 queries during a single request lifecycle
+const getSectionTeacherId = cache(async (sectionId: string) => {
+  const section = await db.section.findUnique({ where: { id: sectionId }, select: { teacherId: true } })
+  return section?.teacherId || null
+})
+
 export async function assertTeacherOrAdminForSection(
   session: { user: { id: string; role: string } } | null,
   sectionId: string
@@ -26,12 +36,15 @@ export async function assertTeacherOrAdminForSection(
   if (session.user.role === 'ADMIN') return
   if (session.user.role !== 'TEACHER') throw new Error("Unauthorized: insufficient role")
 
-  const section = await db.section.findUnique({ where: { id: sectionId }, select: { teacherId: true } })
-  if (!section) throw new Error("Section not found")
-  // teacherId refers to Teacher.id, but session.user.id is User.id — need to resolve teacher profile
-  const teacher = await db.teacher.findUnique({ where: { userId: session.user.id }, select: { id: true } })
-  if (!teacher) throw new Error("Unauthorized: teacher profile not found")
-  if (section.teacherId !== teacher.id) throw new Error("Unauthorized: not the assigned teacher for this section")
+  const sectionTeacherId = await getSectionTeacherId(sectionId)
+  if (!sectionTeacherId) throw new Error("Section not found")
+
+  const teacherId = await getTeacherIdByUserId(session.user.id)
+  if (!teacherId) throw new Error("Unauthorized: teacher profile not found")
+
+  if (sectionTeacherId !== teacherId) {
+    throw new Error("Unauthorized: not the assigned teacher for this section")
+  }
 }
 
 const rbac = {

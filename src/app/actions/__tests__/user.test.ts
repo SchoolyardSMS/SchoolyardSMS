@@ -10,6 +10,12 @@ import {
 // Mock mail module
 vi.mock("@/lib/mail", () => ({
   sendInviteEmail: vi.fn(),
+  sendPasswordResetEmail: vi.fn(),
+}))
+
+// Mock queue module
+vi.mock("@/lib/queue", () => ({
+  enqueueBulkUpload: vi.fn(),
 }))
 
 import {
@@ -23,6 +29,9 @@ import {
   searchUsers,
 } from "../user"
 
+import { processBulkUpload } from "@/lib/bulkUploadWorker"
+import { enqueueBulkUpload } from "@/lib/queue"
+
 describe("updateUserProfile", () => {
   beforeEach(() => {
     resetDbMocks()
@@ -31,22 +40,32 @@ describe("updateUserProfile", () => {
 
   it("updates own profile successfully", async () => {
     mockSession(studentSession())
-    mockDb.user.update.mockResolvedValue({ id: "student-1", name: "New Name", email: "new@student.edu" })
+    mockDb.user.findUnique.mockResolvedValue({ id: "student-1", role: "STUDENT", email: "student@schoolyard.dev" })
+    mockDb.user.update.mockResolvedValue({ id: "student-1", name: "New Name", email: "student@schoolyard.dev" })
 
-    const result = await updateUserProfile({ name: "New Name", email: "new@student.edu" })
+    const result = await updateUserProfile({ name: "New Name", email: "student@schoolyard.dev" })
 
     expect(mockDb.user.update).toHaveBeenCalledWith({
       where: { id: "student-1" },
-      data: { name: "New Name", email: "new@student.edu" }
+      data: { name: "New Name" }
     })
     expect(result).toEqual({ success: true })
   })
 
+  it("rejects email updates for non-ADMIN users", async () => {
+    mockSession(studentSession())
+    mockDb.user.findUnique.mockResolvedValue({ id: "student-1", role: "STUDENT", email: "student@schoolyard.dev" })
+
+    const result = await updateUserProfile({ name: "New Name", email: "hacker@schoolyard.dev" })
+    expect(result.error).toContain("modified by a school administrator")
+  })
+
   it("returns error on failure (e.g. duplicate email)", async () => {
     mockSession(studentSession())
+    mockDb.user.findUnique.mockResolvedValue({ id: "student-1", role: "STUDENT", email: "student@schoolyard.dev" })
     mockDb.user.update.mockRejectedValue(new Error("Unique constraint"))
 
-    const result = await updateUserProfile({ name: "New Name", email: "new@student.edu" })
+    const result = await updateUserProfile({ name: "New Name", email: "student@schoolyard.dev" })
     expect(result.error).toBeDefined()
   })
 })
@@ -112,8 +131,16 @@ describe("bulkUploadUsers", () => {
     vi.clearAllMocks()
   })
 
-  it("processes valid CSV rows", async () => {
+  it("schedules bulk upload successfully in the background", async () => {
     mockSession(adminSession())
+    const csv = `name,email,role,gradeLevel,studentId\nJohn Doe,john@school.edu,STUDENT,9,\n`
+    const result = await bulkUploadUsers(csv)
+
+    expect(enqueueBulkUpload).toHaveBeenCalledWith(csv)
+    expect(result).toEqual({ success: true, message: "Bulk upload scheduled in the background." })
+  })
+
+  it("processes valid CSV rows in worker", async () => {
     mockDb.user.upsert.mockResolvedValue({ id: "u1" })
     mockDb.student.findFirst.mockResolvedValue(null)
     mockDb.student.create.mockResolvedValue({ id: "s1" })
@@ -122,20 +149,19 @@ describe("bulkUploadUsers", () => {
     const csv = `name,email,role,gradeLevel,studentId
 John Doe,john@school.edu,STUDENT,9,
 `
-    const result = await bulkUploadUsers(csv)
+    const result = await processBulkUpload(csv)
 
     expect(result.success).toBe(1)
     expect(result.errors).toHaveLength(0)
   })
 
-  it("captures row errors and continues", async () => {
-    mockSession(adminSession())
+  it("captures row errors and continues in worker", async () => {
     mockDb.user.upsert.mockRejectedValue(new Error("Database error"))
 
     const csv = `name,email,role,gradeLevel,studentId
 Bad User,bad@school.edu,STUDENT,,
 `
-    const result = await bulkUploadUsers(csv)
+    const result = await processBulkUpload(csv)
 
     expect(result.success).toBe(0)
     expect(result.errors).toHaveLength(1)

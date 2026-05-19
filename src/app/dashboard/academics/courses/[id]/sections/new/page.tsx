@@ -23,7 +23,7 @@ export default async function NewSectionPage({ params }: { params: Promise<{ id:
     orderBy: { user: { name: 'asc' } }
   })
 
-  const periods = await (db as any).bellPeriod.findMany({
+  const periods = await db.bellPeriod.findMany({
     orderBy: { periodNumber: 'asc' }
   })
 
