@@ -56,6 +56,7 @@ export const mockDb = {
   bellPeriod: createModelMock(),
   submissionRecord: createModelMock(),
   document: createModelMock(),
+  auditLog: createModelMock(),
   userToken: createModelMock(),
   $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 }

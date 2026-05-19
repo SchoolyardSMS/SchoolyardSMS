@@ -10,6 +10,7 @@ import { sendSystemMessage, sendSystemBatchMessages } from "./messaging"
 import { z } from "zod"
 import type { Prisma } from "@prisma/client"
 import { assertRole } from "@/lib/rbac"
+import { logAuditEvent } from "@/lib/audit"
 
 const gradeUpdateSchema = z.object({
   assignmentId: z.string().min(1),
@@ -120,10 +121,23 @@ export async function mutateGrade(assignmentId: string, studentId: string, score
   const session = await getServerSession(authOptions)
   assertRole(session, ['ADMIN', 'TEACHER'])
 
-  await db.grade.upsert({
+  const previousGrade = await db.grade.findUnique({
+    where: { assignmentId_studentId: { assignmentId, studentId } }
+  })
+
+  const grade = await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
     update: { score },
     create: { assignmentId, studentId, score, feedback: "Updated via Quick Gradebook" }
+  })
+
+  await logAuditEvent({
+    actorId: session.user.id,
+    action: previousGrade ? "GRADE_UPDATE" : "GRADE_CREATE",
+    targetModel: "Grade",
+    targetId: grade.id,
+    previous: previousGrade ? { score: previousGrade.score, feedback: previousGrade.feedback } : null,
+    current: { score: grade.score, feedback: grade.feedback }
   })
 
   const assignment = await db.assignment.findUnique({ where: { id: assignmentId } })
@@ -180,10 +194,23 @@ export async function updateAssignmentGrade(formData: FormData) {
     await assertTeacherAssignmentOwnership(session.user.id, assignmentId)
   }
 
-  await db.grade.upsert({
+  const previousGrade = await db.grade.findUnique({
+    where: { assignmentId_studentId: { assignmentId, studentId } }
+  })
+
+  const grade = await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
     update: { score, feedback, gradedAt: new Date() },
     create: { assignmentId, studentId, score, feedback }
+  })
+
+  await logAuditEvent({
+    actorId: session.user.id,
+    action: previousGrade ? "GRADE_UPDATE" : "GRADE_CREATE",
+    targetModel: "Grade",
+    targetId: grade.id,
+    previous: previousGrade ? { score: previousGrade.score, feedback: previousGrade.feedback } : null,
+    current: { score: grade.score, feedback: grade.feedback }
   })
 
   const assignment = await db.assignment.findUnique({ where: { id: assignmentId }, select: { sectionId: true } })
