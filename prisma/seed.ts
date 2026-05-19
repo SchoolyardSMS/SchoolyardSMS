@@ -127,6 +127,7 @@ async function main() {
 
   // ── 0. Wipe ──────────────────────────────────────────────────────────────
   await prisma.$transaction([
+    prisma.verificationToken.deleteMany(),
     prisma.auditLog.deleteMany(),
     prisma.communityEnrollment.deleteMany(),
     prisma.communitySession.deleteMany(),
@@ -200,7 +201,7 @@ async function main() {
   console.log("✓ School settings");
 
   // ── 2. Report Card Template ──────────────────────────────────────────────
-  await prisma.reportCardTemplate.create({
+  const reportCardTemplate = await prisma.reportCardTemplate.create({
     data: {
       name: "Standard Report Card",
       isDefault: true,
@@ -358,6 +359,9 @@ async function main() {
   console.log(`✓ ${fixedStudents.length} students`);
 
   // ── 8. Parents ───────────────────────────────────────────────────────────
+  const parentUsers: Awaited<ReturnType<typeof prisma.user.create>>[] = [];
+  const parentProfiles: Awaited<ReturnType<typeof prisma.parent.create>>[] = [];
+
   const parentSeeds = [
     { name: "Robert Brooks",    email: "r.brooks@parents.schoolyard.demo",    phone: "555-0101", children: [0] },
     { name: "Linda Collins",    email: "l.collins@parents.schoolyard.demo",   phone: "555-0102", children: [1] },
@@ -386,6 +390,9 @@ async function main() {
     const profile = await prisma.parent.create({
       data: { userId: user.id, phone: p.phone },
     });
+    parentUsers.push(user);
+    parentProfiles.push(profile);
+
     for (const childIdx of p.children) {
       await prisma.parentStudent.create({
         data: { parentId: profile.id, studentId: studentProfiles[childIdx].id },
@@ -393,6 +400,59 @@ async function main() {
     }
   }
   console.log(`✓ ${parentSeeds.length} parents linked to students`);
+
+  // ── 8a. User Security Tokens, Push Subscriptions, and Sessions ───────────
+  // Seed push subscriptions to verify configuration endpoints
+  for (let i = 0; i < 5; i++) {
+    const user = studentUsers[i];
+    await prisma.pushSubscription.create({
+      data: {
+        userId: user.id,
+        endpoint: `https://fcm.googleapis.com/fcm/send/${faker.string.alphanumeric(40)}`,
+        p256dh: faker.string.alphanumeric(20),
+        auth: faker.string.alphanumeric(16),
+      },
+    });
+  }
+
+  // Seed user registration/invite tokens
+  for (let i = 0; i < 3; i++) {
+    await prisma.userToken.create({
+      data: {
+        token: faker.string.uuid(),
+        email: `candidate-${i}@schoolyard.demo`,
+        role: Role.STUDENT,
+        expires: daysFromNow(7),
+      },
+    });
+  }
+
+  // Seed NextAuth verification & active accounts
+  await prisma.verificationToken.create({
+    data: {
+      identifier: ADMIN_EMAIL,
+      token: faker.string.uuid(),
+      expires: daysFromNow(1),
+    },
+  });
+
+  await prisma.account.create({
+    data: {
+      userId: adminUser.id,
+      type: "oauth",
+      provider: "google",
+      providerAccountId: "google-oauth2|109384029480",
+    },
+  });
+
+  await prisma.session.create({
+    data: {
+      sessionToken: faker.string.alphanumeric(32),
+      userId: adminUser.id,
+      expires: daysFromNow(30),
+    },
+  });
+  console.log("✓ Security subscriptions, sessions and access tokens created");
 
   // ── 9. Courses ───────────────────────────────────────────────────────────
   const courses: Awaited<ReturnType<typeof prisma.course.create>>[] = [];
@@ -437,12 +497,53 @@ async function main() {
   }
   console.log(`✓ ${sections.length} sections`);
 
+  // ── 10a. LMS Course Syllabus Topics & Materials ───────────────────────────
+  let totalTopics = 0;
+  let totalMaterials = 0;
+
+  for (const section of sections) {
+    const topicTitles = [
+      "Unit 1: Fundamentals and Key Concepts",
+      "Unit 2: Applied Methodologies",
+      "Unit 3: Comprehensive Review",
+    ];
+
+    for (let tIdx = 0; tIdx < topicTitles.length; tIdx++) {
+      const topic = await prisma.topic.create({
+        data: {
+          sectionId: section.id,
+          title: topicTitles[tIdx],
+          description: `This unit covers core elements of ${topicTitles[tIdx].toLowerCase()} as outlined in the course syllabus.`,
+          order: tIdx + 1,
+        },
+      });
+      totalTopics++;
+
+      await prisma.topicMaterial.createMany({
+        data: [
+          {
+            topicId: topic.id,
+            type: "LINK",
+            title: "Study Guide Outline",
+            url: "https://schoolyard.academy/resource/study-guide",
+          },
+          {
+            topicId: topic.id,
+            type: "FILE",
+            title: "Lecture Slides PDF",
+            url: "https://schoolyard.academy/resource/lecture-slides.pdf",
+          },
+        ],
+      });
+      totalMaterials += 2;
+    }
+  }
+  console.log(`✓ ${totalTopics} LMS curriculum topics containing ${totalMaterials} materials`);
+
   // ── 11. Enrollments ──────────────────────────────────────────────────────
-  // Each student gets ~5-6 sections. We distribute across sections sensibly.
   const enrollments: Awaited<ReturnType<typeof prisma.enrollment.create>>[] = [];
   const enrollmentMap: Map<string, string> = new Map(); // `${studentId}:${sectionId}` → enrollmentId
 
-  // Fixed per-student section picks (indices into sections[])
   const studentSectionPicks: number[][] = [
     [0, 2, 4, 6, 8, 10],   // Aiden  — 9th grader
     [1, 3, 5, 7, 9, 11],   // Brianna
@@ -468,7 +569,7 @@ async function main() {
 
   for (let si = 0; si < studentProfiles.length; si++) {
     const student = studentProfiles[si];
-    const picks = studentSectionPicks[si] || [0, 1, 2, 3, 4]; // Fallback
+    const picks = studentSectionPicks[si] || [0, 1, 2, 3, 4];
 
     for (const pickIdx of picks) {
       const section = sections[pickIdx];
@@ -487,9 +588,36 @@ async function main() {
   }
   console.log(`✓ ${enrollments.length} student enrollments`);
 
+  // ── 11a. Parent-reported Attendance Notifications ───────────────────────
+  const mockNotifications: any[] = [];
+  const parentProfilesWithChildren = await prisma.parent.findMany({ include: { children: true } });
+
+  for (const parent of parentProfilesWithChildren) {
+    if (parent.children.length === 0) continue;
+    const child = parent.children[0];
+
+    mockNotifications.push({
+      parentId: parent.id,
+      studentId: child.studentId,
+      type: pickRandom([AttendanceNotificationType.SICK, AttendanceNotificationType.LATE, AttendanceNotificationType.EARLY_DISMISSAL]),
+      date: daysAgo(faker.number.int({ min: 1, max: 10 })),
+      expectedTime: "09:30 AM",
+      reason: faker.helpers.arrayElement(["Dental check-up appointment", "Mild cold symptoms — resting at home", "Family morning event"]),
+      status: AttendanceNotificationStatus.ACKNOWLEDGED,
+      acknowledgedBy: adminUser.name,
+      acknowledgedAt: daysAgo(1),
+    });
+  }
+
+  await prisma.attendanceNotification.createMany({ data: mockNotifications });
+  console.log(`✓ ${mockNotifications.length} parent-reported attendance notifications`);
+
   // ── 12. Assignments & Grades ─────────────────────────────────────────────
   let totalAssignments = 0;
   let totalGrades = 0;
+
+  // Track scores for TermGrade and ReportCard generation later
+  const studentCumulativeScores: Record<string, { totalEarned: number; totalMax: number }> = {};
 
   for (const section of sections) {
     const sectionEnrollments = enrollments.filter((e) => e.sectionId === section.id);
@@ -522,6 +650,13 @@ async function main() {
         const isMissing = Math.random() < 0.05; // 5% chance missing
         const score = isMissing ? 0 : realisticScore(maxScore);
 
+        // Keep track of total earned points to compute mock GPA averages
+        if (!studentCumulativeScores[enr.studentId]) {
+          studentCumulativeScores[enr.studentId] = { totalEarned: 0, totalMax: 0 };
+        }
+        studentCumulativeScores[enr.studentId].totalEarned += score;
+        studentCumulativeScores[enr.studentId].totalMax += maxScore;
+
         gradesToCreate.push({
           assignmentId: assignment.id,
           studentId: enr.studentId,
@@ -545,17 +680,95 @@ async function main() {
   }
   console.log(`✓ ${totalAssignments} assignments with ${totalGrades} grades`);
 
+  // ── 12a. Term Grades & Report Cards ───────────────────────────────────────
+  let termGradeCount = 0;
+  let reportCardCount = 0;
+
+  for (const enr of enrollments) {
+    const studentScoreInfo = studentCumulativeScores[enr.studentId];
+    const scorePct = studentScoreInfo ? (studentScoreInfo.totalEarned / studentScoreInfo.totalMax) * 100 : 85.0;
+    
+    let letterGrade = "B";
+    if (scorePct >= 90) letterGrade = "A";
+    else if (scorePct >= 80) letterGrade = "B";
+    else if (scorePct >= 70) letterGrade = "C";
+    else if (scorePct >= 60) letterGrade = "D";
+    else letterGrade = "F";
+
+    await prisma.termGrade.create({
+      data: {
+        enrollmentId: enr.id,
+        termId: termSpring.id,
+        calculatedScore: Math.round(scorePct * 10) / 10,
+        overrideScore: Math.round(scorePct * 10) / 10,
+        letterGrade,
+        comments: faker.helpers.arrayElement([
+          "Shows consistent work ethic and great focus during discussions.",
+          "Demonstrates strong mastery of mathematical fundamentals.",
+          "Contributes productively to group projects. Excellent peer supporter.",
+          "Consistent analytical skills shown in writing assessments.",
+        ]),
+        isPosted: true,
+        postedAt: NOW,
+      },
+    });
+    termGradeCount++;
+  }
+
+  // Generate Spring ReportCards
+  for (const student of studentProfiles) {
+    const studentScoreInfo = studentCumulativeScores[student.id];
+    const scorePct = studentScoreInfo ? (studentScoreInfo.totalEarned / studentScoreInfo.totalMax) * 100 : 85.0;
+    const gpa = scorePct >= 90 ? 4.0 : scorePct >= 80 ? 3.0 : scorePct >= 70 ? 2.0 : 1.0;
+
+    await prisma.reportCard.create({
+      data: {
+        studentId: student.id,
+        termId: termSpring.id,
+        snapshot: {
+          calculatedGPA: gpa,
+          attendanceRate: "96.4%",
+          conduct: "Satisfactory",
+          academicYear: "2024-2025",
+        },
+        isPublished: true,
+        publishedAt: NOW,
+      },
+    });
+    reportCardCount++;
+  }
+  console.log(`✓ ${termGradeCount} term grades and ${reportCardCount} student report cards finalized`);
+
   // ── 13. Attendance ───────────────────────────────────────────────────────
   const attendanceRecords = [];
   const pastDays = schoolDaysBetween(daysAgo(14), new Date(NOW));
 
   for (const day of pastDays) {
     for (const enr of enrollments) {
+      const status = weightedAttendanceStatus();
+      let checkInTime = null;
+      let checkOutTime = null;
+      let excusedReason = null;
+
+      if (status === AttendanceStatus.PRESENT) {
+        checkInTime = "08:05 AM";
+        checkOutTime = "02:55 PM";
+      } else if (status === AttendanceStatus.TARDY) {
+        checkInTime = "08:22 AM";
+        checkOutTime = "02:55 PM";
+      } else if (status === AttendanceStatus.EXCUSED) {
+        excusedReason = "Parent-reported sick day";
+      }
+
       attendanceRecords.push({
         studentId: enr.studentId,
         sectionId: enr.sectionId,
         date: day,
-        status: weightedAttendanceStatus(),
+        status,
+        checkInTime,
+        checkOutTime,
+        excusedReason,
+        notifiedParent: status === AttendanceStatus.ABSENT,
       });
     }
   }
@@ -569,31 +782,200 @@ async function main() {
   }
   console.log(`✓ ${attendanceRecords.length} attendance records over 14 days`);
 
-  // ── 14. Incidents (Discipline) ───────────────────────────────────────────
-  const incidentsData = [];
-  const severities = Object.values(IncidentSeverity || { MINOR: "MINOR", MODERATE: "MODERATE", SEVERE: "SEVERE" });
-  const categories = Object.values(IncidentCategory || { BEHAVIOR: "BEHAVIOR", ACADEMIC_DISHONESTY: "ACADEMIC_DISHONESTY", SAFETY: "SAFETY" });
+  // ── 13a. Course Syllabus Documents ───────────────────────────────────────
+  let totalDocs = 0;
+  for (const section of sections) {
+    await prisma.document.create({
+      data: {
+        title: "Course Syllabus Spring.pdf",
+        fileUrl: "https://schoolyard.academy/resource/syllabus-spring.pdf",
+        type: DocumentType.GENERAL,
+        uploaderId: teacherUsers[0].id,
+        sectionId: section.id,
+      },
+    });
+    totalDocs++;
+  }
+
+  // Student specific transcripts & medical releases
+  for (const student of studentProfiles) {
+    await prisma.document.create({
+      data: {
+        title: "Medical Clearance Authorization Form.pdf",
+        fileUrl: "https://schoolyard.academy/resource/medical-auth.pdf",
+        type: DocumentType.MEDICAL,
+        uploaderId: adminUser.id,
+        studentId: student.id,
+      },
+    });
+    await prisma.document.create({
+      data: {
+        title: "Cumulative Academic Transcript.pdf",
+        fileUrl: "https://schoolyard.academy/resource/academic-transcript.pdf",
+        type: DocumentType.TRANSCRIPT,
+        uploaderId: adminUser.id,
+        studentId: student.id,
+      },
+    });
+    totalDocs += 2;
+  }
+  console.log(`✓ ${totalDocs} general, medical, and academic transcript documents`);
+
+  // ── 14. Incidents & Incident Comments (Discipline) ───────────────────────
+  const severities = Object.values(IncidentSeverity);
+  const categories = Object.values(IncidentCategory);
 
   for (let i = 0; i < 8; i++) {
     const student = pickRandom(studentProfiles);
     const reporter = pickRandom(teacherUsers);
 
-    incidentsData.push({
-      studentId: student.id,
-      reporterId: reporter.id,
-      title: faker.lorem.words(3) + " Issue",
-      description: faker.lorem.paragraph(),
-      date: daysAgo(faker.number.int({ min: 1, max: 30 })),
-      status: IncidentStatus.OPEN,
-      severity: pickRandom(severities as IncidentSeverity[]),
-      category: pickRandom(categories as IncidentCategory[]),
+    const incident = await prisma.incident.create({
+      data: {
+        studentId: student.id,
+        reporterId: reporter.id,
+        title: faker.helpers.arrayElement(["Class Disruption", "Academic Dishonesty", "Tardiness Concern"]),
+        description: faker.lorem.paragraph(),
+        date: daysAgo(faker.number.int({ min: 1, max: 30 })),
+        status: IncidentStatus.OPEN,
+        severity: pickRandom(severities as IncidentSeverity[]),
+        category: pickRandom(categories as IncidentCategory[]),
+        actionTaken: "Scheduled parent conference to outline corrective focus points.",
+        followUpDate: daysFromNow(5),
+      },
+    });
+
+    // Seed conversation comments on the logged incident report
+    await prisma.incidentComment.createMany({
+      data: [
+        {
+          incidentId: incident.id,
+          authorId: adminUser.id,
+          body: "Reviewed the report. Let me know if we need parent-teacher conference coordination support.",
+        },
+        {
+          incidentId: incident.id,
+          authorId: reporter.id,
+          body: "Spoke with the student regarding the expectations during tests. They promised to maintain focus.",
+        }
+      ],
     });
   }
-  
-  await prisma.incident.createMany({ data: incidentsData });
-  console.log(`✓ ${incidentsData.length} discipline incidents`);
+  console.log(`✓ 8 discipline incidents annotated with 16 administrative comments`);
 
-  // ── 15. Announcements ────────────────────────────────────────────────────
+  // ── 14a. Communications (Messages, Broadcasts, & Deliveries) ──────────────
+  // Direct Parent-Teacher correspondence
+  const parentProfileToMessage = parentProfiles[0];
+  const teacherUserToMessage = teacherUsers[0];
+  
+  const welcomeMessage = await prisma.message.create({
+    data: {
+      senderId: teacherUserToMessage.id,
+      receiverId: parentProfileToMessage.userId,
+      subject: "Welcome to the school semester!",
+      body: "Hello! I am excited to have your child in class this semester. Let me know if you ever have any questions.",
+      read: true,
+      status: "DELIVERED",
+    },
+  });
+
+  // Thread reply
+  await prisma.message.create({
+    data: {
+      senderId: parentProfileToMessage.userId,
+      receiverId: teacherUserToMessage.id,
+      subject: "Re: Welcome to the school semester!",
+      body: "Thank you, teacher! Looking forward to a great school semester as well.",
+      read: false,
+      status: "SENT",
+      parentId: welcomeMessage.id,
+    },
+  });
+
+  // Outbound notification broadcasts
+  const broadcast = await prisma.broadcast.create({
+    data: {
+      subject: "Emergency Weather Closure Notification",
+      body: "Please take notice that school campus facilities will remain closed tomorrow due to incoming snow weather conditions.",
+      audience: "ALL_PARENTS",
+      senderId: adminUser.id,
+    },
+  });
+
+  const broadcastDeliveries = [];
+  for (const parent of parentProfiles) {
+    broadcastDeliveries.push({
+      broadcastId: broadcast.id,
+      recipientId: parent.userId,
+      channel: "email",
+      status: "DELIVERED",
+    });
+  }
+  await prisma.broadcastDelivery.createMany({ data: broadcastDeliveries });
+  console.log(`✓ Direct messaging threads & ${broadcastDeliveries.length} broadcast system deliveries`);
+
+  // ── 15. Calendar Days (Schedules) ────────────────────────────────────────
+  const thirtyDays = schoolDaysBetween(daysAgo(15), daysFromNow(15));
+  const createdCalendarDays = [];
+  let toggleBlock = true;
+
+  for (const date of thirtyDays) {
+    const cDay = await prisma.calendarDay.create({
+      data: {
+        date,
+        type: DayType.INSTRUCTIONAL,
+        blockDay: toggleBlock ? BlockDay.A : BlockDay.B,
+        hasCommunityPeriod: true,
+      },
+    });
+    createdCalendarDays.push(cDay);
+    toggleBlock = !toggleBlock;
+  }
+  console.log(`✓ ${createdCalendarDays.length} calendar days created`);
+
+  // ── 16. Community Periods (Sessions & Enrollments) ───────────────────────
+  let totalCommunitySessions = 0;
+  let totalCommunityEnrollments = 0;
+
+  for (const cDay of createdCalendarDays) {
+    const sessionsToCreate = faker.number.int({ min: 1, max: 2 });
+    
+    for (let i = 0; i < sessionsToCreate; i++) {
+      const teacher = pickRandom(teacherProfiles);
+      
+      const session = await prisma.communitySession.create({
+        data: {
+          calendarDayId: cDay.id,
+          teacherId: teacher.id,
+          title: pickRandom(["Study Hall", "Math Tutoring", "Open Gym", "Science Lab Prep"]),
+          capacity: 15,
+          room: ROOMS[faker.number.int({ min: 0, max: ROOMS.length - 1 })],
+        },
+      });
+      totalCommunitySessions++;
+
+      const enrolledStudents = faker.helpers.arrayElements(studentProfiles, faker.number.int({ min: 3, max: 8 }));
+      
+      for (const student of enrolledStudents) {
+        await prisma.communityEnrollment.create({
+          data: {
+            sessionId: session.id,
+            studentId: student.id,
+            isRequired: Math.random() < 0.2, // 20% forced registration
+            attendance: pickRandom([
+              CommunityAttendanceStatus.PRESENT,
+              CommunityAttendanceStatus.PRESENT,
+              CommunityAttendanceStatus.ABSENT,
+              CommunityAttendanceStatus.EXCUSED
+            ]),
+          },
+        });
+        totalCommunityEnrollments++;
+      }
+    }
+  }
+  console.log(`✓ ${totalCommunitySessions} community sessions with ${totalCommunityEnrollments} enrollments`);
+
+  // ── 17. Announcements ────────────────────────────────────────────────────
   const generalSectionId = sections[0].id;
   const scienceSectionId = sections.find((s) => s.teacherId === teacherProfiles[1].id)?.id || sections[0].id;
 
@@ -620,6 +1002,33 @@ async function main() {
     ],
   });
   console.log("✓ Announcements posted");
+
+  // ── 18. Audit Logs (Compliance & Tracking) ────────────────────────────────
+  const auditLogsToCreate = [
+    {
+      actorId: adminUser.id,
+      action: "UPDATE_SCHOOL_SETTINGS",
+      targetModel: "SchoolSettings",
+      targetId: "singleton",
+      current: { activeTerm: "Spring 2025" },
+    },
+    {
+      actorId: teacherUsers[0].id,
+      action: "UPDATE_GRADES",
+      targetModel: "Grade",
+      targetId: "cuid-example-grade",
+      current: { score: 95.0 },
+    },
+    {
+      actorId: adminUser.id,
+      action: "RESOLVED_INCIDENT",
+      targetModel: "Incident",
+      targetId: "cuid-example-incident",
+      current: { status: "RESOLVED" },
+    }
+  ];
+  await prisma.auditLog.createMany({ data: auditLogsToCreate });
+  console.log(`✓ ${auditLogsToCreate.length} active administrative audit logs recorded`);
 
   console.log("\n✅ Seeding complete! Database is ready for demo.");
 }
