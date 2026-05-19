@@ -117,20 +117,6 @@ export function parseDateAsET(dateStr: string, timeStr: string = "00:00"): Date 
   const [year, month, day] = dateStr.split("-").map(Number)
   const [hour, minute] = timeStr.split(":").map(Number)
 
-  // Create a date object in the system's local time representing these ET parts
-  // (This is just a starting point for calculation)
-  const date = new Date(year, month - 1, day, hour, minute)
-
-  // Use Intl.DateTimeFormat to find the offset between UTC and ET for this specific time
-  const etString = date.toLocaleString("en-US", { 
-    timeZone: "America/New_York",
-    year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
-  })
-  
-  // This string tells us what time it is in ET when the UTC clock shows the same as our 'date'
-  // But we want to go the other way: We have the ET, we want the UTC.
-  // We can construct a UTC date using the ET numbers, then calculate the error.
-  
   const targetUTC = Date.UTC(year, month - 1, day, hour, minute)
   
   // Find what the ET would be if the UTC time was exactly our target numbers

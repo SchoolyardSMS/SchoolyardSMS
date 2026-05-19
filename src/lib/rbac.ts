@@ -13,12 +13,15 @@ export function assertRole<T extends Session | null>(
   roles: string[] = []
 ): asserts session is NonNullable<T> {
   if (!session?.user) throw new Error("Unauthorized")
-  if (!roles.includes((session as any).user.role)) {
+  if (!roles.includes((session as { user: { role: string } }).user.role)) {
     throw new Error("Unauthorized: insufficient role")
   }
 }
 
-export async function assertTeacherOrAdminForSection(session: any, sectionId: string) {
+export async function assertTeacherOrAdminForSection(
+  session: { user: { id: string; role: string } } | null,
+  sectionId: string
+) {
   if (!session?.user) throw new Error("Unauthorized")
   if (session.user.role === 'ADMIN') return
   if (session.user.role !== 'TEACHER') throw new Error("Unauthorized: insufficient role")
@@ -31,7 +34,8 @@ export async function assertTeacherOrAdminForSection(session: any, sectionId: st
   if (section.teacherId !== teacher.id) throw new Error("Unauthorized: not the assigned teacher for this section")
 }
 
-export default {
+const rbac = {
   assertRole,
   assertTeacherOrAdminForSection
 }
+export default rbac

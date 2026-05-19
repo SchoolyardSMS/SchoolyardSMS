@@ -89,8 +89,8 @@ export function calculateGrade(
 function isGradingScaleEntryArray(value: unknown): value is GradingScaleEntry[] {
   return Array.isArray(value) && value.every(
     (entry) => typeof entry === "object" && entry !== null &&
-      typeof (entry as any).min === "number" &&
-      typeof (entry as any).letter === "string"
+      "min" in entry && typeof (entry as Record<string, unknown>).min === "number" &&
+      "letter" in entry && typeof (entry as Record<string, unknown>).letter === "string"
   )
 }
 

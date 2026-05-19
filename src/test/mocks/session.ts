@@ -6,6 +6,7 @@
  *   mockSession(adminSession())
  */
 import { vi } from "vitest"
+import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 
 const mockedGetServerSession = vi.mocked(getServerSession)
@@ -67,5 +68,5 @@ export function parentSession(overrides: Record<string, unknown> = {}) {
  * Pass `null` to simulate an unauthenticated request.
  */
 export function mockSession(session: ReturnType<typeof adminSession> | null) {
-  mockedGetServerSession.mockResolvedValue(session as any)
+  mockedGetServerSession.mockResolvedValue(session as unknown as Session)
 }

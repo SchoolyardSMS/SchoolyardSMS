@@ -31,12 +31,13 @@ export async function sendPushNotification(
       JSON.stringify(payload)
     )
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error sending push notification:', error)
-    if (error.statusCode === 404 || error.statusCode === 410) {
+    const err = error as { statusCode?: number; message?: string }
+    if (err.statusCode === 404 || err.statusCode === 410) {
       // Subscription has expired or is no longer valid
       return { success: false, error: 'GONE' }
     }
-    return { success: false, error: error.message }
+    return { success: false, error: err.message || 'Unknown error' }
   }
 }
