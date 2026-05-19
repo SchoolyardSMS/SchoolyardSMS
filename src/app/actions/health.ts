@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { HealthUpdateSchema } from "@/lib/validations/sis"
 import { assertRole } from "@/lib/rbac"
+import { encrypt } from "@/lib/encryption"
 
 export async function updateStudentHealth(studentId: string, data: { medicalAlerts?: string | null; accommodations?: string | null }) {
   try {
@@ -17,8 +18,8 @@ export async function updateStudentHealth(studentId: string, data: { medicalAler
     await db.student.update({
       where: { id: studentId },
       data: {
-        medicalAlerts: parsedData.medicalAlerts,
-        accommodations: parsedData.accommodations
+        medicalAlerts: encrypt(parsedData.medicalAlerts),
+        accommodations: encrypt(parsedData.accommodations)
       }
     })
 

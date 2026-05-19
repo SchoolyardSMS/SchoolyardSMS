@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { ReportCardDownloader } from "./report-card-downloader"
 import { formatDate } from "@/lib/dates"
+import { decrypt } from "@/lib/encryption"
 
 export default async function StudentProfilePage({
   params,
@@ -67,6 +68,10 @@ export default async function StudentProfilePage({
   })
 
   if (!student) return notFound()
+
+  // Decrypt sensitive health columns transparently on read (backward compatible)
+  student.medicalAlerts = decrypt(student.medicalAlerts)
+  student.accommodations = decrypt(student.accommodations)
 
   const isSelf = session.user.id === student.userId
   const isAdmin = session.user.role === "ADMIN"
