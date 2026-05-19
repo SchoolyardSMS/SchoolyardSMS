@@ -41,6 +41,7 @@ model User {
   announcements     Announcement[]
   broadcastDeliveries BroadcastDelivery[]
   pushSubscriptions PushSubscription[]
+  auditLogs         AuditLog[]
 
   @@index([role])
   @@index([createdAt])
@@ -799,3 +800,24 @@ model CommunityEnrollment {
   @@index([sessionId])
   @@index([studentId])
 }
+
+// ─── Audit / Compliance Logging ──────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  actor       User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action      String   // e.g. "GRADE_UPDATE", "INCIDENT_MODIFICATION"
+  targetModel String   // e.g. "Grade", "Incident"
+  targetId    String
+  previous    Json?    // Optional JSON representation of prior state
+  current     Json?    // Optional JSON representation of new state
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetModel, targetId])
+  @@index([createdAt])
+}
+
