@@ -105,6 +105,8 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// ─── Main ────────────────────────────────────────────────────────────────────
+
 function weightedAttendanceStatus(): AttendanceStatus {
   const r = Math.random();
   if (r < 0.87) return AttendanceStatus.PRESENT;
@@ -119,8 +121,6 @@ function realisticScore(max: number): number {
   const curved = Math.pow(base, 0.6); // skew towards higher end
   return Math.round(curved * max * 10) / 10;
 }
-
-// ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log("🌱 Seeding Schoolyard Academy demo…\n");
@@ -478,7 +478,7 @@ async function main() {
         data: {
           studentId: student.id,
           sectionId: section.id,
-          status: EnrollmentStatus.ACTIVE,
+          status: EnrollmentStatus.ENROLLED,
         },
       });
       enrollments.push(enrollment);
@@ -510,7 +510,7 @@ async function main() {
           status: AssignmentStatus.PUBLISHED,
           maxScore,
           dueDate,
-          publishedAt: daysAgo(faker.number.int({ min: 41, max: 60 })),
+          publishDate: daysAgo(faker.number.int({ min: 41, max: 60 })),
         },
       });
       totalAssignments++;
@@ -520,7 +520,7 @@ async function main() {
 
       for (const enr of sectionEnrollments) {
         const isMissing = Math.random() < 0.05; // 5% chance missing
-        const score = isMissing ? null : realisticScore(maxScore);
+        const score = isMissing ? 0 : realisticScore(maxScore);
 
         gradesToCreate.push({
           assignmentId: assignment.id,
@@ -530,7 +530,7 @@ async function main() {
           isMissing,
           isExcused: false,
           isLate: Math.random() < 0.1,
-          pointsEarned: isMissing ? 0 : score,
+          pointsEarned: score,
         });
 
         if (!isMissing) {
@@ -544,7 +544,6 @@ async function main() {
       }
 
       await prisma.grade.createMany({ data: gradesToCreate });
-      // We assume SubmissionRecord uses 'status' as String since it wasn't strictly provided as enum in imports
       await prisma.submissionRecord.createMany({ data: submissionsToCreate });
       totalGrades += gradesToCreate.length;
     }
@@ -600,31 +599,28 @@ async function main() {
   console.log(`✓ ${incidentsData.length} discipline incidents`);
 
   // ── 15. Announcements ────────────────────────────────────────────────────
+  const generalSectionId = sections[0].id;
+  const scienceSectionId = sections.find((s) => s.teacherId === teacherProfiles[1].id)?.id || sections[0].id;
+
   await prisma.announcement.createMany({
     data: [
       {
-        title: "Welcome to the Spring Semester!",
-        content: "We are incredibly excited to welcome everyone back to campus for the new semester. Please review your schedules in the portal.",
+        sectionId: generalSectionId,
+        content: "**Welcome to the Spring Semester!**\n\nWe are incredibly excited to welcome everyone back to campus for the new semester. Please review your schedules in the portal.",
         authorId: adminUser.id,
-        targetRoles: [Role.STUDENT, Role.TEACHER, Role.PARENT],
-        published: true,
-        publishDate: daysAgo(45),
+        createdAt: daysAgo(45),
       },
       {
-        title: "Upcoming Parent-Teacher Conferences",
-        content: "Please make sure to schedule your slots for next week's conferences via the community portal. Spaces are filling up quickly.",
+        sectionId: generalSectionId,
+        content: "**Upcoming Parent-Teacher Conferences**\n\nPlease make sure to schedule your slots for next week's conferences via the community portal. Spaces are filling up quickly.",
         authorId: adminUser.id,
-        targetRoles: [Role.PARENT, Role.TEACHER],
-        published: true,
-        publishDate: daysAgo(5),
+        createdAt: daysAgo(5),
       },
       {
-        title: "Science Fair Registration Extended",
-        content: "Good news! The deadline to submit your project proposals for the Spring Science Fair has been extended by one week.",
+        sectionId: scienceSectionId,
+        content: "**Science Fair Registration Extended**\n\nGood news! The deadline to submit your project proposals for the Spring Science Fair has been extended by one week.",
         authorId: teacherUsers[1].id, // David Okafor (Science)
-        targetRoles: [Role.STUDENT],
-        published: true,
-        publishDate: daysAgo(2),
+        createdAt: daysAgo(2),
       }
     ],
   });
