@@ -5,16 +5,48 @@ import GoogleProvider from "next-auth/providers/google"
 import { db as prisma, db } from "./db"
 import bcrypt from "bcryptjs"
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 Days
-  },
-  pages: {
-    signIn: "/login",
-  },
-  providers: [
+// Build providers array conditionally
+const providers: any[] = [
+  CredentialsProvider({
+    name: "Credentials",
+    credentials: {
+      email: { label: "Email", type: "email", placeholder: "admin@schoolyard.dev" },
+      password: { label: "Password", type: "password" }
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) {
+        throw new Error("Missing email or password")
+      }
+
+      const user = await prisma.user.findUnique({
+        where: {
+          email: credentials.email
+        }
+      })
+
+      if (!user || user.deletedAt || !user.hashedPassword) {
+        throw new Error("Invalid academic credentials")
+      }
+
+      const isPasswordValid = await bcrypt.compare(credentials.password, user.hashedPassword)
+
+      if (!isPasswordValid) {
+        throw new Error("Invalid academic credentials")
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      }
+    }
+  })
+]
+
+// Only add Google provider if not disabled for demo mode
+if (process.env.DISABLE_GOOGLE_AUTH !== "true") {
+  providers.unshift(
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
@@ -27,43 +59,20 @@ export const authOptions: NextAuthOptions = {
        * of the same email.
        */
       allowDangerousEmailAccountLinking: false,
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@schoolyard.dev" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password")
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
-
-        if (!user || user.deletedAt || !user.hashedPassword) {
-          throw new Error("Invalid academic credentials")
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.hashedPassword)
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid academic credentials")
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
-      }
     })
-  ],
+  )
+}
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 Days
+  },
+  pages: {
+    signIn: "/login",
+  },
+  providers,
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
