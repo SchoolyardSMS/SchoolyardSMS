@@ -31,6 +31,20 @@
 
 ---
 
+## 🌐 Demo Site
+Visit the live demo at: http://schoolyard-sms.vercel.app/
+
+The public demo uses seeded accounts with a shared demo password:
+- `admin@schoolyard.dev` / `password` (ADMIN)
+- `teacher@schoolyard.dev` / `password` (TEACHER)
+- `student@schoolyard.dev` / `password` (STUDENT)
+- `parent@schoolyard.dev` / `password` (PARENT)
+
+> Note: The demo deployment may have production-safe limitations enabled. Some integrations are mocked or disabled to preserve security and stability:
+> - Email delivery may be mocked instead of sending real messages.
+> - File uploads are often disabled or simulated in serverless/demo environments.
+> - OAuth providers such as Google may be disabled for the public demo.
+
 ## 🛠️ Technology Stack
 
 - **Core Framework**: [Next.js (App Router)](https://nextjs.org)
