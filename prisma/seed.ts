@@ -7,7 +7,6 @@ const prisma = new PrismaClient()
 // --- Utilities ---
 const pick = <T>(items: T[]) => items[Math.floor(Math.random() * items.length)]
 const randomRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-const randomDateInRange = (start: Date, end: Date) => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
 const getLetterGrade = (score: number) => {
   if (score >= 93) return 'A'; if (score >= 90) return 'A-';
   if (score >= 87) return 'B+'; if (score >= 83) return 'B'; if (score >= 80) return 'B-';
@@ -21,7 +20,6 @@ async function main() {
   const defaultPassword = bcrypt.hashSync('password', 10)
 
   // 1. Create Core Users
-  console.log('📝 Creating base users...')
   const admin = await prisma.user.upsert({
     where: { email: 'admin@schoolyard.dev' },
     update: { hashedPassword: defaultPassword },
@@ -33,10 +31,11 @@ async function main() {
   const studentData = Array.from({ length: 500 }).map(() => ({
     email: faker.internet.email().toLowerCase(),
     name: faker.person.fullName(),
-    role: Role.STUDENT as const,
+    role: Role.STUDENT,
     hashedPassword: defaultPassword,
   }))
   await prisma.user.createMany({ data: studentData, skipDuplicates: true })
+  
   const createdStudents = await prisma.user.findMany({ where: { role: Role.STUDENT } })
   await prisma.student.createMany({
     data: createdStudents.map((u) => ({
@@ -62,7 +61,6 @@ async function main() {
   }
 
   // 4. Create School Year & Terms
-  console.log('📅 Creating school calendar...')
   const currentYear = new Date().getFullYear()
   const schoolYear = await prisma.schoolYear.upsert({
     where: { name: `${currentYear}-${currentYear + 1}` },
@@ -91,11 +89,7 @@ async function main() {
 
   for (let i = 0; i < 30; i++) {
     const course = await prisma.course.create({
-      data: {
-        code: `CRS${100 + i}`,
-        name: `Course ${i + 1}`,
-        credits: 3.0
-      }
+      data: { code: `CRS${100 + i}`, name: `Course ${i + 1}`, credits: 3.0 }
     })
 
     const section = await prisma.section.create({
@@ -108,20 +102,18 @@ async function main() {
       }
     })
 
-    // Enroll a subset of students
     const batch = students.slice(i * 10, (i + 1) * 10)
     await prisma.enrollment.createMany({
       data: batch.map(s => ({ studentId: s.id, sectionId: section.id, status: EnrollmentStatus.ENROLLED }))
     })
   }
 
-  // 6. Assignments, Grades, Term Grades & Report Cards
+  // 6. Assignments & Grades
   console.log('📝 Generating academics...')
   const allSections = await prisma.section.findMany()
   for (const section of allSections) {
     const enrollments = await prisma.enrollment.findMany({ where: { sectionId: section.id } })
     
-    // Create assignments
     for (let a = 0; a < 3; a++) {
       const assignment = await prisma.assignment.create({
         data: {
@@ -132,7 +124,6 @@ async function main() {
         }
       })
 
-      // Create grades
       await prisma.grade.createMany({
         data: enrollments.map(e => ({
           assignmentId: assignment.id,
@@ -145,10 +136,7 @@ async function main() {
     // Calculate Term Grades
     for (const enrollment of enrollments) {
       const grades = await prisma.grade.findMany({ 
-        where: { 
-            studentId: enrollment.studentId,
-            assignment: { sectionId: section.id }
-        } 
+        where: { studentId: enrollment.studentId, assignment: { sectionId: section.id } } 
       })
       
       if (grades.length > 0) {
@@ -166,7 +154,6 @@ async function main() {
     }
   }
 
-  // 7. Incidents
   console.log('🚨 Generating incidents...')
   const incidentStudents = students.slice(0, 20)
   for (const student of incidentStudents) {
@@ -175,7 +162,7 @@ async function main() {
         studentId: student.id,
         reporterId: admin.id,
         title: 'Behavioral Report',
-        description: 'Mock incident report generated for demo purposes.',
+        description: 'Mock incident report generated.',
         category: IncidentCategory.BEHAVIOR,
         severity: IncidentSeverity.MINOR,
         status: IncidentStatus.OPEN
@@ -187,10 +174,5 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  .catch((e) => { console.error(e); process.exit(1) })
+  .finally(async () => await prisma.$disconnect())
