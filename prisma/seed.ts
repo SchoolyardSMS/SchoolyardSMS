@@ -526,11 +526,6 @@ async function main() {
           assignmentId: assignment.id,
           studentId: enr.studentId,
           score,
-          maxScore,
-          isMissing,
-          isExcused: false,
-          isLate: Math.random() < 0.1,
-          pointsEarned: score,
         });
 
         if (!isMissing) {
