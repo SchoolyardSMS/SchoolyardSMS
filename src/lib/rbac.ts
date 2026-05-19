@@ -1,4 +1,4 @@
-import { db } from "./db"
+import { db } from "@/lib/db"
 import type { Session } from "next-auth"
 import { cache } from "react"
 

@@ -3,11 +3,8 @@ import { env } from './env';
 
 const resend = new Resend(env.RESEND_API_KEY);
 
-// Check if we want to bypass actual email sending (e.g., for demo/dev)
-const DISABLE_EMAILS = process.env.DISABLE_EMAILS === 'true';
-
 export async function sendInviteEmail(email: string, inviteLink: string, role: string) {
-  if (DISABLE_EMAILS) {
+  if (process.env.DISABLE_EMAILS === 'true') {
     console.log(`[MAIL MOCKED] Invite sent to ${email}. Role: ${role}. Link: ${inviteLink}`);
     return { success: true, data: { id: 'mocked_id' } };
   }
@@ -50,7 +47,7 @@ export async function sendInviteEmail(email: string, inviteLink: string, role: s
 }
 
 export async function sendPasswordResetEmail(email: string, resetLink: string) {
-  if (DISABLE_EMAILS) {
+  if (process.env.DISABLE_EMAILS === 'true') {
     console.log(`[MAIL MOCKED] Password reset sent to ${email}. Link: ${resetLink}`);
     return { success: true, data: { id: 'mocked_id' } };
   }

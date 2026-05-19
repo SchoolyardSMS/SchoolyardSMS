@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import { db as prisma, db } from "./db"
+import { db as prisma, db } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
 // Build providers array conditionally
