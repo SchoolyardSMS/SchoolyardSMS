@@ -203,9 +203,10 @@ export async function deleteUser(id: string) {
     throw new Error("Cannot delete your own admin account.")
   }
 
-  // Prisma Cascade handles deleting the Student/Teacher profiles & related records
-  await db.user.delete({
-    where: { id }
+  // Soft delete user to retain historical grades, attendance and audit logs for compliance
+  await db.user.update({
+    where: { id },
+    data: { deletedAt: new Date() }
   })
 
   revalidatePath("/dashboard/admin/users")
@@ -272,6 +273,7 @@ export async function getUsers(page: number = 1, pageSize: number = 20) {
 
   const [users, totalCount] = await Promise.all([
     db.user.findMany({
+      where: { deletedAt: null },
       skip,
       take: pageSize,
       orderBy: { createdAt: 'desc' },
@@ -280,7 +282,7 @@ export async function getUsers(page: number = 1, pageSize: number = 20) {
         teacherProfile: true,
       }
     }),
-    db.user.count()
+    db.user.count({ where: { deletedAt: null } })
   ])
 
   return {
@@ -297,6 +299,7 @@ export async function searchUsers(query: string, options: { role?: Role | "STAFF
   if (!query || query.length < 2) return []
 
   const where: any = {
+    deletedAt: null,
     OR: [
       { name: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
