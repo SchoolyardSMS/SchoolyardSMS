@@ -1,4 +1,15 @@
-import { PrismaClient, Role, EnrollmentStatus, IncidentCategory, IncidentSeverity, IncidentStatus } from '@prisma/client'
+import { 
+  PrismaClient, 
+  Role, 
+  EnrollmentStatus, 
+  IncidentCategory, 
+  IncidentSeverity, 
+  IncidentStatus, 
+  AttendanceStatus, 
+  DayType, 
+  BlockDay, 
+  CommunityAttendanceStatus 
+} from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { faker } from '@faker-js/faker'
 
@@ -7,13 +18,6 @@ const prisma = new PrismaClient()
 // --- Utilities ---
 const pick = <T>(items: T[]) => items[Math.floor(Math.random() * items.length)]
 const randomRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-const getLetterGrade = (score: number) => {
-  if (score >= 93) return 'A'; if (score >= 90) return 'A-';
-  if (score >= 87) return 'B+'; if (score >= 83) return 'B'; if (score >= 80) return 'B-';
-  if (score >= 77) return 'C+'; if (score >= 73) return 'C'; if (score >= 70) return 'C-';
-  if (score >= 67) return 'D+'; if (score >= 63) return 'D'; if (score >= 60) return 'D-';
-  return 'F'
-}
 
 async function main() {
   console.log('🌱 Starting full database seed...')
@@ -26,16 +30,15 @@ async function main() {
     create: { email: 'admin@schoolyard.dev', name: 'System Administrator', role: Role.ADMIN, hashedPassword: defaultPassword },
   })
 
-  // 2. Generate 500 Mock Students
+  // 2. Generate Students (500)
   console.log('👥 Generating 500 students...')
-  const studentData = Array.from({ length: 500 }).map(() => ({
+  const students = Array.from({ length: 500 }).map(() => ({
     email: faker.internet.email().toLowerCase(),
     name: faker.person.fullName(),
     role: Role.STUDENT,
     hashedPassword: defaultPassword,
   }))
-  await prisma.user.createMany({ data: studentData, skipDuplicates: true })
-  
+  await prisma.user.createMany({ data: students, skipDuplicates: true })
   const createdStudents = await prisma.user.findMany({ where: { role: Role.STUDENT } })
   await prisma.student.createMany({
     data: createdStudents.map((u) => ({
@@ -45,9 +48,8 @@ async function main() {
     })),
   })
 
-  // 3. Generate 25 Teachers
+  // 3. Generate Teachers (25)
   console.log('👨‍🏫 Generating 25 teachers...')
-  const departments = ['Mathematics', 'English', 'Science', 'Social Studies', 'Art']
   for (let i = 0; i < 25; i++) {
     await prisma.user.create({
       data: {
@@ -55,114 +57,50 @@ async function main() {
         name: faker.person.fullName(),
         role: Role.TEACHER,
         hashedPassword: defaultPassword,
-        teacherProfile: { create: { department: pick(departments) } }
+        teacherProfile: { create: { department: 'General Studies' } }
       }
     })
   }
 
-  // 4. Create School Year & Terms
-  const currentYear = new Date().getFullYear()
-  const schoolYear = await prisma.schoolYear.upsert({
-    where: { name: `${currentYear}-${currentYear + 1}` },
-    update: {},
-    create: {
-      name: `${currentYear}-${currentYear + 1}`,
-      startDate: new Date(`${currentYear}-08-01`),
-      endDate: new Date(`${currentYear + 1}-06-30`),
-      isActive: true,
-    }
+  // 4. Academics: Calendar & Terms
+  console.log('📅 Generating School Year & Terms...')
+  const year = await prisma.schoolYear.create({
+    data: { name: '2026-2027', startDate: new Date('2026-08-01'), endDate: new Date('2027-06-30'), isActive: true }
+  })
+  const term = await prisma.term.create({
+    data: { schoolYearId: year.id, name: 'Fall 2026', startDate: new Date('2026-08-15'), endDate: new Date('2026-12-20') }
   })
 
-  const fallTerm = await prisma.term.create({
-    data: {
-      schoolYearId: schoolYear.id,
-      name: 'Fall 2026',
-      startDate: new Date(`${currentYear}-08-15`),
-      endDate: new Date(`${currentYear}-12-20`)
-    }
-  })
-
-  // 5. Generate Courses & Sections
-  console.log('📚 Generating sections...')
+  // 5. Academics: Courses, Sections, Enrollments, Attendance
+  console.log('📚 Generating Courses, Sections, & Attendance...')
   const teachers = await prisma.teacher.findMany()
-  const students = await prisma.student.findMany()
+  const studentRecords = await prisma.student.findMany()
 
-  for (let i = 0; i < 30; i++) {
-    const course = await prisma.course.create({
-      data: { code: `CRS${100 + i}`, name: `Course ${i + 1}`, credits: 3.0 }
-    })
-
+  for (let i = 0; i < 10; i++) {
+    const course = await prisma.course.create({ data: { code: `C${100 + i}`, name: `Course ${i + 1}` } })
     const section = await prisma.section.create({
-      data: {
-        courseId: course.id,
-        teacherId: pick(teachers).id,
-        termId: fallTerm.id,
-        schedule: 'Mon/Wed 10:00 AM',
-        room: `Room ${100 + i}`
-      }
+      data: { courseId: course.id, teacherId: pick(teachers).id, termId: term.id, schedule: 'MWF 9:00', room: `Room ${100 + i}` }
     })
-
-    const batch = students.slice(i * 10, (i + 1) * 10)
-    await prisma.enrollment.createMany({
-      data: batch.map(s => ({ studentId: s.id, sectionId: section.id, status: EnrollmentStatus.ENROLLED }))
-    })
-  }
-
-  // 6. Assignments & Grades
-  console.log('📝 Generating academics...')
-  const allSections = await prisma.section.findMany()
-  for (const section of allSections) {
-    const enrollments = await prisma.enrollment.findMany({ where: { sectionId: section.id } })
     
-    for (let a = 0; a < 3; a++) {
-      const assignment = await prisma.assignment.create({
-        data: {
-          sectionId: section.id,
-          title: `Assignment ${a + 1}`,
-          dueDate: new Date(),
-          maxScore: 100
-        }
+    // Enroll & Attend
+    const batch = studentRecords.slice(i * 10, (i + 1) * 10)
+    for (const s of batch) {
+      await prisma.enrollment.create({ data: { studentId: s.id, sectionId: section.id, status: EnrollmentStatus.ENROLLED } })
+      await prisma.attendance.create({
+        data: { studentId: s.id, sectionId: section.id, date: new Date(), status: AttendanceStatus.PRESENT }
       })
-
-      await prisma.grade.createMany({
-        data: enrollments.map(e => ({
-          assignmentId: assignment.id,
-          studentId: e.studentId,
-          score: randomRange(70, 100)
-        }))
-      })
-    }
-
-    // Calculate Term Grades
-    for (const enrollment of enrollments) {
-      const grades = await prisma.grade.findMany({ 
-        where: { studentId: enrollment.studentId, assignment: { sectionId: section.id } } 
-      })
-      
-      if (grades.length > 0) {
-        const avg = grades.reduce((sum, g) => sum + g.score, 0) / grades.length
-        await prisma.termGrade.create({
-          data: {
-            enrollmentId: enrollment.id,
-            termId: fallTerm.id,
-            calculatedScore: avg,
-            letterGrade: getLetterGrade(avg),
-            isPosted: true
-          }
-        })
-      }
     }
   }
 
-  console.log('🚨 Generating incidents...')
-  const incidentStudents = students.slice(0, 20)
-  for (const student of incidentStudents) {
+  // 6. Discipline (Incidents)
+  console.log('🚨 Generating Incidents...')
+  for (let i = 0; i < 20; i++) {
     await prisma.incident.create({
       data: {
-        studentId: student.id,
+        studentId: pick(studentRecords).id,
         reporterId: admin.id,
-        title: 'Behavioral Report',
-        description: 'Mock incident report generated.',
+        title: 'Conduct violation',
+        description: 'Mock incident detail.',
         category: IncidentCategory.BEHAVIOR,
         severity: IncidentSeverity.MINOR,
         status: IncidentStatus.OPEN
@@ -170,7 +108,25 @@ async function main() {
     })
   }
 
-  console.log('✅ Seeding successful!')
+  // 7. Community & Calendar
+  console.log('📅 Generating Community Calendar...')
+  const day = await prisma.calendarDay.create({
+    data: { date: new Date(), type: DayType.INSTRUCTIONAL, blockDay: BlockDay.A, hasCommunityPeriod: true }
+  })
+  const session = await prisma.communitySession.create({
+    data: { calendarDayId: day.id, teacherId: pick(teachers).id, title: 'Advisor Meetup', room: 'Lib-1' }
+  })
+  await prisma.communityEnrollment.create({
+    data: { sessionId: session.id, studentId: studentRecords[0].id, attendance: CommunityAttendanceStatus.PENDING }
+  })
+
+  // 8. Messaging
+  console.log('✉️ Generating Messages...')
+  await prisma.message.create({
+    data: { senderId: admin.id, receiverId: studentRecords[0].userId, subject: 'Welcome', body: 'System check complete.' }
+  })
+
+  console.log('✅ Full seeding successful!')
 }
 
 main()
