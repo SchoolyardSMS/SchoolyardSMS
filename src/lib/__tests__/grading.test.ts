@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest"
 import { calculateGrade, getLetterGrade, calculateGPA } from "../grading"
 import type { AssignmentSummary, GradeSummary } from "../grading"
+import { AssignmentType } from "@prisma/client"
 
 // ── calculateGrade (unweighted) ──────────────────────────────────────────────
 describe("calculateGrade — unweighted", () => {
   it("calculates percentage from total earned / total possible", () => {
     const assignments: AssignmentSummary[] = [
-      { id: "a1", type: "HOMEWORK" as any, maxScore: 100 },
-      { id: "a2", type: "QUIZ" as any, maxScore: 50 },
+      { id: "a1", type: AssignmentType.HOMEWORK, maxScore: 100 },
+      { id: "a2", type: AssignmentType.QUIZ, maxScore: 50 },
     ]
     const grades: GradeSummary[] = [
       { assignmentId: "a1", score: 90 },
@@ -24,7 +25,7 @@ describe("calculateGrade — unweighted", () => {
 
   it("returns 0 when all maxScores are null", () => {
     const assignments: AssignmentSummary[] = [
-      { id: "a1", type: "HOMEWORK" as any, maxScore: null },
+      { id: "a1", type: AssignmentType.HOMEWORK, maxScore: null },
     ]
     const grades: GradeSummary[] = [{ assignmentId: "a1", score: 80 }]
     expect(calculateGrade({}, assignments, grades)).toBe(0)
@@ -32,8 +33,8 @@ describe("calculateGrade — unweighted", () => {
 
   it("handles missing grades for some assignments", () => {
     const assignments: AssignmentSummary[] = [
-      { id: "a1", type: "HOMEWORK" as any, maxScore: 100 },
-      { id: "a2", type: "QUIZ" as any, maxScore: 100 },
+      { id: "a1", type: AssignmentType.HOMEWORK, maxScore: 100 },
+      { id: "a2", type: AssignmentType.QUIZ, maxScore: 100 },
     ]
     const grades: GradeSummary[] = [
       { assignmentId: "a1", score: 85 },
@@ -51,8 +52,8 @@ describe("calculateGrade — weighted", () => {
       weightingConfig: { HOMEWORK: 30, TEST: 70 },
     }
     const assignments: AssignmentSummary[] = [
-      { id: "a1", type: "HOMEWORK" as any, maxScore: 100 },
-      { id: "a2", type: "TEST" as any, maxScore: 100 },
+      { id: "a1", type: AssignmentType.HOMEWORK, maxScore: 100 },
+      { id: "a2", type: AssignmentType.TEST, maxScore: 100 },
     ]
     const grades: GradeSummary[] = [
       { assignmentId: "a1", score: 100 }, // 100% homework
@@ -67,7 +68,7 @@ describe("calculateGrade — weighted", () => {
       weightingConfig: { HOMEWORK: 40, TEST: 60 },
     }
     const assignments: AssignmentSummary[] = [
-      { id: "a1", type: "HOMEWORK" as any, maxScore: 100 },
+      { id: "a1", type: AssignmentType.HOMEWORK, maxScore: 100 },
       // No TEST assignments
     ]
     const grades: GradeSummary[] = [

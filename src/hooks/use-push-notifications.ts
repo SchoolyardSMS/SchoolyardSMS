@@ -23,15 +23,6 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window) {
-      setIsSupported(true)
-      checkSubscription()
-    } else {
-      setLoading(false)
-    }
-  }, [])
-
   const checkSubscription = async () => {
     try {
       const registration = await navigator.serviceWorker.ready
@@ -43,6 +34,18 @@ export function usePushNotifications() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const handle = requestAnimationFrame(() => {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window) {
+        setIsSupported(true)
+        checkSubscription()
+      } else {
+        setLoading(false)
+      }
+    })
+    return () => cancelAnimationFrame(handle)
+  }, [])
 
   const subscribe = async () => {
     try {
@@ -62,8 +65,8 @@ export function usePushNotifications() {
           subscription: {
             endpoint: sub.endpoint,
             keys: {
-              p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey("p256dh")!) as any)),
-              auth: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey("auth")!) as any)),
+              p256dh: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(sub.getKey("p256dh")!)))),
+              auth: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(sub.getKey("auth")!)))),
             },
           },
         }),
@@ -73,7 +76,7 @@ export function usePushNotifications() {
 
       setSubscription(sub)
       toast.success("Push notifications enabled!")
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error subscribing to push:", error)
       toast.error("Failed to enable push notifications")
     } finally {
