@@ -268,7 +268,7 @@ async function main() {
             data: {
               assignmentId: assignment.id,
               studentId: enrollment.student.id,
-              score: faker.number.float({ min: 60, max: 100, precision: 0.1 }),
+              score: faker.number.float({ min: 60, max: 100, fractionDigits: 1 }),
               feedback: faker.lorem.sentence(),
             },
           })

@@ -42,11 +42,6 @@ export async function sendInviteEmail(email: string, inviteLink: string, role: s
       return { success: false, error };
     }
 
-  if (DISABLE_EMAILS) {
-    console.log(`[MAIL MOCKED] Password reset sent to ${email}. Link: ${resetLink}`);
-    return { success: true, data: { id: 'mocked_id' } };
-  }
-
     return { success: true, data };
   } catch (err) {
     console.error('Mail Exception:', err);
