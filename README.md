@@ -1,4 +1,4 @@
-# 🏫 Schoolyard Student Information System (SIS)
+# 🏫 Schoolyard Student Management System (SMS)
 
 [![Framework](https://img.shields.io/badge/Framework-Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?style=for-the-badge&logo=bun)](https://bun.sh)
