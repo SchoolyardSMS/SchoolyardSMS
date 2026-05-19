@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { HealthClient } from "./health-client"
+import { decrypt } from "@/lib/encryption"
 
 export const metadata = { title: "Health & Accommodations | Schoolyard" }
 
@@ -22,6 +23,10 @@ export default async function EditHealthPage({ params }: { params: Promise<{ id:
   })
 
   if (!student) return notFound()
+
+  // Decrypt sensitive health columns transparently on read (backward compatible)
+  student.medicalAlerts = decrypt(student.medicalAlerts)
+  student.accommodations = decrypt(student.accommodations)
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
