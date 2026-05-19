@@ -23,7 +23,7 @@ jobs:
         with:
           bun-version: 'latest'
 
-      - name: Install dependencies (bun)
+      - name: Install dependencies (bun)!
         run: bun install
 
       - name: Typecheck (tsc)
