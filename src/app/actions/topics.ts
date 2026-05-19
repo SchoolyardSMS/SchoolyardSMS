@@ -4,12 +4,11 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { assertRole } from "@/lib/rbac"
 
 export async function createTopic(sectionId: string, title: string, description?: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const topic = await db.topic.create({
     data: {
@@ -26,9 +25,7 @@ export async function createTopic(sectionId: string, title: string, description?
 
 export async function deleteTopic(topicId: string, sectionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   await db.topic.delete({
     where: { id: topicId }
@@ -40,9 +37,7 @@ export async function deleteTopic(topicId: string, sectionId: string) {
 
 export async function addMaterial(topicId: string, sectionId: string, title: string, type: "LINK" | "FILE", url: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const material = await db.topicMaterial.create({
     data: {
@@ -59,9 +54,7 @@ export async function addMaterial(topicId: string, sectionId: string, title: str
 
 export async function deleteMaterial(materialId: string, sectionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   await db.topicMaterial.delete({
     where: { id: materialId }

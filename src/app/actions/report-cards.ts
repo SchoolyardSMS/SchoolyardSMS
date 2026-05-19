@@ -5,13 +5,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { calculateGPA, getLetterGrade } from "@/lib/grading"
+import { assertRole } from "@/lib/rbac"
 
 export async function publishReportCards(termId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") {
-      return { success: false, error: "Unauthorized" }
-    }
+    try { assertRole(session, ['ADMIN']) } catch (err) { return { success: false, error: 'Unauthorized' } }
 
     // 1. Find all TermGrades for this term
     const termGrades = await db.termGrade.findMany({

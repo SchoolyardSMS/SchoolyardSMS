@@ -5,11 +5,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { assertRole } from "@/lib/rbac"
 
 // ── Create / update a bell period ─────────────────────────────────────────────
 export async function upsertBellPeriod(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const id           = formData.get("id") as string | null
   const name         = (formData.get("name") as string)?.trim()
@@ -39,7 +40,7 @@ export async function upsertBellPeriod(formData: FormData) {
 // ── Delete a bell period ──────────────────────────────────────────────────────
 export async function deleteBellPeriod(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   await db.bellPeriod.delete({ where: { id } })
   revalidatePath("/dashboard/schedule/manage")

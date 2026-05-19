@@ -5,13 +5,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { HealthUpdateSchema } from "@/lib/validations/sis"
+import { assertRole } from "@/lib/rbac"
 
 export async function updateStudentHealth(studentId: string, data: { medicalAlerts?: string | null; accommodations?: string | null }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") {
-      return { success: false, error: "Unauthorized" }
-    }
+    assertRole(session, ["ADMIN"])
 
     const parsedData = HealthUpdateSchema.parse(data)
 

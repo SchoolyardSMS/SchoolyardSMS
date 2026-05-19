@@ -3,6 +3,8 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { z } from "zod"
+import { assertRole } from "@/lib/rbac"
 import { Resend } from "resend"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
@@ -16,13 +18,13 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function sendMessage(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) throw new Error("Unauthorized")
+  const receiverId = String(formData.get("receiverId") || "")
+  const subject = String(formData.get("subject") || "")
+  const body = String(formData.get("body") || "")
+  const parentId = formData.get("parentId") ? String(formData.get("parentId")) : undefined
 
-  const receiverId = formData.get("receiverId") as string
-  const subject = formData.get("subject") as string
-  const body = formData.get("body") as string
-  const parentId = formData.get("parentId") as string || undefined
-
-  if (!receiverId || !subject || !body) throw new Error("Missing required fields")
+  const schema = z.object({ receiverId: z.string().min(1), subject: z.string().min(1), body: z.string().min(1), parentId: z.string().optional() })
+  schema.parse({ receiverId, subject, body, parentId })
 
   const receiver = await db.user.findUnique({ where: { id: receiverId } })
   if (!receiver || !receiver.email) throw new Error("Recipient has no email address")
@@ -179,17 +181,14 @@ export async function replyToMessage(parentMessageId: string, content: string) {
  */
 export async function sendSchoolMessage(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized to send school-wide messages.")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
+  if (!session) throw new Error("Unauthorized")
 
-  const subject = formData.get("subject") as string
-  const content = formData.get("content") as string
-  const audience = formData.get("audience") as string 
-
-  if (!subject || !content || !audience) {
-    throw new Error("Missing required fields for messaging.")
-  }
+  const subject = String(formData.get("subject") || "")
+  const content = String(formData.get("content") || "")
+  const audience = String(formData.get("audience") || "")
+  const schema = z.object({ subject: z.string().min(1), content: z.string().min(1), audience: z.string().min(1) })
+  schema.parse({ subject, content, audience })
 
   const recipients = await resolveAudienceRecipients(audience)
 
@@ -197,71 +196,35 @@ export async function sendSchoolMessage(formData: FormData) {
     throw new Error("No recipients found for the selected audience.")
   }
 
-  try {
-    const fromEmail = `Schoolyard SMS <messaging@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`
-    
-    const broadcast = await db.broadcast.create({
-      data: {
-        subject: `[School Announcement] ${subject}`,
-        body: content,
-        audience,
-        senderId: session.user.id
-      }
-    })
-
-    const batchSize = 100
-    let totalSent = 0
-    
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const chunk = recipients.slice(i, i + batchSize)
-      const bodyWithRef = `${content}\n\n---\nRef: [BC-${broadcast.id}]`
-
-      const batchData = chunk.map(r => ({
-        from: fromEmail,
-        to: r.email,
-        subject: `[School Announcement] ${subject}`,
-        replyTo: `bc-${broadcast.id}@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}`,
-        text: bodyWithRef,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; background: #f9fafb;">
-            <div style="max-w: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px;">
-              <h2 style="color: #4f46e5;">${subject}</h2>
-              <p style="white-space: pre-wrap;">${content}</p>
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-              <p style="font-size: 10px; color: #9ca3af;">Ref: [BC-${broadcast.id}]</p>
-            </div>
-          </div>
-        `,
-        headers: {
-          'X-Schoolyard-Broadcast-ID': broadcast.id,
-          'Precedence': 'bulk'
+    try {
+      const broadcast = await db.broadcast.create({
+        data: {
+          subject: `[School Announcement] ${subject}`,
+          body: content,
+          audience,
+          senderId: session.user!.id
         }
+      })
+
+      // Pre-create deliveries as PENDING and enqueue a background job to process them
+      const deliveryRecords = recipients.map(r => ({
+        broadcastId: broadcast.id,
+        recipientId: r.id,
+        channel: 'email',
+        status: 'PENDING'
       }))
 
-      const result = await resend.batch.send(batchData)
-      
-      if (result.data) {
-        const responses = Array.isArray(result.data) ? result.data : (result.data as any).data;
-        const messageRecords = chunk.map((r, idx) => ({
-          senderId: session.user.id,
-          receiverId: r.id,
-          subject: subject,
-          broadcastId: broadcast.id,
-          body: null,
-          resendId: responses?.[idx]?.id || null,
-          status: responses?.[idx]?.id ? "SENT" : "FAILED"
-        }))
+      await db.broadcastDelivery.createMany({ data: deliveryRecords })
 
-        await db.message.createMany({ data: messageRecords })
-        totalSent += chunk.length
-      }
+      // Enqueue background processing (falls back to in-process processor if no Redis configured)
+      const { enqueueBroadcast } = await import('@/lib/queue')
+      await enqueueBroadcast(broadcast.id)
+
+      revalidatePath("/dashboard/messages")
+      return { success: true, queued: true }
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to send broadcast.")
     }
-
-    revalidatePath("/dashboard/messages")
-    return { success: true, count: totalSent }
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to send broadcast.")
-  }
 }
 
 export async function markAsRead(messageId: string) {

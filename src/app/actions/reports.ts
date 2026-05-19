@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { assertRole } from "@/lib/rbac"
 
 const DEFAULT_LAYOUT = {
   sections: [
@@ -19,7 +20,7 @@ const DEFAULT_LAYOUT = {
 
 export async function createReportCardTemplate(name: string) {
   const session = await getServerSession(authOptions)
-  if (session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   // Set as default if it's the first template
   const templateCount = await (db as any).reportCardTemplate.count()
@@ -38,7 +39,7 @@ export async function createReportCardTemplate(name: string) {
 
 export async function updateReportCardTemplate(id: string, data: { name?: string, layout?: any, isDefault?: boolean }) {
   const session = await getServerSession(authOptions)
-  if (session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   // If setting as default, unset others first
   if (data.isDefault) {
@@ -60,7 +61,7 @@ export async function updateReportCardTemplate(id: string, data: { name?: string
 
 export async function deleteReportCardTemplate(id: string) {
   const session = await getServerSession(authOptions)
-  if (session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const template = await (db as any).reportCardTemplate.findUnique({ where: { id } })
   if (template?.isDefault) throw new Error("Cannot delete the default template")

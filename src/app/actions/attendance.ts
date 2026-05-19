@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { sendSystemBatchMessages } from "./messaging"
 import { AttendanceStatus } from "@prisma/client"
+import { assertRole } from "@/lib/rbac"
 import { formatInET } from "@/lib/dates"
 
 export async function submitAttendance(
@@ -127,9 +128,7 @@ export async function submitAttendance(
 
 export async function archiveAttendanceDay(sectionId: string, date: Date) {
   const session = await getServerSession(authOptions)
-  if (!session?.user || (session.user.role !== 'TEACHER' && session.user.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   await db.attendance.updateMany({
     where: {
@@ -149,7 +148,7 @@ export async function archiveAttendanceDay(sectionId: string, date: Date) {
 
 export async function submitBulkAttendance(sectionId: string, studentIds: string[], date: Date, status: AttendanceStatus) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   // Validate inputs
   const bulkSchema = z.object({
@@ -173,26 +172,33 @@ export async function submitBulkAttendance(sectionId: string, studentIds: string
   }
 
   // Using a transaction to upsert all (note: consider bulk SQL for large operations)
-  const operations = studentIds.map(studentId => 
-    db.attendance.upsert({
-      where: {
-        studentId_sectionId_date: {
-          studentId,
-          sectionId,
-          date
-        }
-      },
-      update: { status },
-      create: {
-        studentId,
-        sectionId,
-        date,
-        status
-      }
-    })
-  )
+  // Optimize: fetch existing attendance rows for this section/date
+  const existing = await db.attendance.findMany({
+    where: {
+      sectionId,
+      date,
+      studentId: { in: studentIds }
+    },
+    select: { studentId: true }
+  })
 
-  await db.$transaction(operations)
+  const existingIds = new Set(existing.map(e => e.studentId))
+  const toUpdate = Array.from(existingIds)
+  const toCreate = studentIds.filter(id => !existingIds.has(id))
+
+  // Single update for all existing records
+  if (toUpdate.length > 0) {
+    await db.attendance.updateMany({
+      where: { sectionId, date, studentId: { in: toUpdate } },
+      data: { status }
+    })
+  }
+
+  // Bulk create missing records
+  if (toCreate.length > 0) {
+    const createData = toCreate.map(studentId => ({ studentId, sectionId, date, status }))
+    await db.attendance.createMany({ data: createData })
+  }
 
   revalidatePath(`/dashboard/academics/sections/${sectionId}/attendance`)
   revalidatePath(`/dashboard/attendance`)
@@ -201,9 +207,7 @@ export async function submitBulkAttendance(sectionId: string, studentIds: string
 
 export async function reportAttendance(studentId: string, type: "SICK" | "LATE" | "EARLY_DISMISSAL", date: string, reason?: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "PARENT") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['PARENT'])
 
   // Get parent profile
   const parent = await db.parent.findUnique({
@@ -236,9 +240,7 @@ export async function reportAttendance(studentId: string, type: "SICK" | "LATE" 
 
 export async function acknowledgeAttendanceNotification(notificationId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN'])
 
   const notification = await db.attendanceNotification.update({
     where: { id: notificationId },
@@ -249,28 +251,36 @@ export async function acknowledgeAttendanceNotification(notificationId: string) 
   const enrollments = await db.enrollment.findMany({
     where: { studentId: notification.studentId, status: "ENROLLED" }
   })
-  
-  const operations = enrollments.map(enr => 
-    db.attendance.upsert({
-      where: {
-        studentId_sectionId_date: {
-          studentId: notification.studentId,
-          sectionId: enr.sectionId,
-          date: notification.date
-        }
-      },
-      update: { status: "EXCUSED", notes: `Automated excuse via Parent Notification (${notification.type})` },
-      create: {
-        studentId: notification.studentId,
-        sectionId: enr.sectionId,
-        date: notification.date,
-        status: "EXCUSED",
-        notes: `Automated excuse via Parent Notification (${notification.type})`
-      }
+  const sectionIds = enrollments.map(e => e.sectionId)
+
+  // Find existing attendance records for this student/date across these sections
+  const existingAttendances = await db.attendance.findMany({
+    where: { studentId: notification.studentId, date: notification.date, sectionId: { in: sectionIds } },
+    select: { sectionId: true }
+  })
+
+  const existingSectionIds = new Set(existingAttendances.map(a => a.sectionId))
+
+  const toUpdateSections = sectionIds.filter(id => existingSectionIds.has(id))
+  const toCreateSections = sectionIds.filter(id => !existingSectionIds.has(id))
+
+  if (toUpdateSections.length > 0) {
+    await db.attendance.updateMany({
+      where: { studentId: notification.studentId, date: notification.date, sectionId: { in: toUpdateSections } },
+      data: { status: "EXCUSED", notes: `Automated excuse via Parent Notification (${notification.type})` }
     })
-  )
-  
-  await db.$transaction(operations)
+  }
+
+  if (toCreateSections.length > 0) {
+    const createRecords = toCreateSections.map(sectionId => ({
+      studentId: notification.studentId,
+      sectionId,
+      date: notification.date,
+      status: AttendanceStatus.EXCUSED,
+      notes: `Automated excuse via Parent Notification (${notification.type})`
+    }))
+    await db.attendance.createMany({ data: createRecords })
+  }
 
   revalidatePath("/dashboard/attendance")
   return { success: true }

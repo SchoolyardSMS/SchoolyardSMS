@@ -39,6 +39,7 @@ model User {
   receivedMessages  Message[]          @relation("ReceivedMessages")
   broadcasts        Broadcast[]
   announcements     Announcement[]
+  broadcastDeliveries BroadcastDelivery[]
   pushSubscriptions PushSubscription[]
 
   @@index([role])
@@ -520,7 +521,25 @@ model Broadcast {
   senderId  String
   sender    User      @relation(fields: [senderId], references: [id])
   messages  Message[]
+  deliveries BroadcastDelivery[]
   createdAt DateTime  @default(now())
+}
+
+model BroadcastDelivery {
+  id          String   @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  channel     String   // e.g. "email", "sms", "push"
+  providerId  String?  // third-party provider id (e.g., resend id)
+  status      String   @default("PENDING")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([broadcastId])
+  @@index([recipientId])
 }
 
 // ─── Bell Schedule ────────────────────────────────────────────────────────────

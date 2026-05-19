@@ -4,12 +4,11 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { assertRole } from "@/lib/rbac"
 
 export async function updateSchoolSettings(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN"])
 
   const activeTab = (formData.get("activeSettingsTab") as string)?.trim() || "branding"
   

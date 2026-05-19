@@ -9,6 +9,7 @@ import { parseLocalDate, parseDateAsET, formatInET } from "@/lib/dates"
 import { sendSystemMessage, sendSystemBatchMessages } from "./messaging"
 import { z } from "zod"
 import type { Prisma } from "@prisma/client"
+import { assertRole } from "@/lib/rbac"
 
 const gradeUpdateSchema = z.object({
   assignmentId: z.string().min(1),
@@ -117,9 +118,7 @@ function createStudentWhereFilter(query?: string, gradeLevel?: number): Prisma.S
 
 export async function mutateGrade(assignmentId: string, studentId: string, score: number) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized access to gradebook modifications.")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
@@ -137,9 +136,7 @@ export async function mutateGrade(assignmentId: string, studentId: string, score
 
 export async function submitAssignment(assignmentId: string, studentId: string, status: string = "COMPLETED") {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'STUDENT') {
-    throw new Error("Unauthorized. Only students can submit assignments.")
-  }
+  assertRole(session, ['STUDENT'])
 
   // Ensure the student matches the logged in user
   const student = await db.student.findUnique({ where: { userId: session.user.id } })
@@ -164,9 +161,7 @@ export async function submitAssignment(assignmentId: string, studentId: string, 
 // ── Grade + feedback from inline assignment detail table ──────────────────────
 export async function updateAssignmentGrade(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const parsed = gradeUpdateSchema.safeParse({
     assignmentId: formData.get("assignmentId"),
@@ -201,7 +196,7 @@ export async function updateAssignmentGrade(formData: FormData) {
 // ── Create Course ─────────────────────────────────────────────────────────────
 export async function createCourse(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   const parsed = courseFormSchema.safeParse({
     name: formData.get("name"),
@@ -226,9 +221,7 @@ export async function createCourse(formData: FormData) {
 // ── Create Assignment ─────────────────────────────────────────────────────────
 export async function createAssignment(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const parsed = assignmentFormSchema.safeParse({
     sectionId: formData.get("sectionId"),
@@ -281,9 +274,7 @@ export async function createAssignment(formData: FormData) {
 
 export async function updateAssignmentDetails(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const parsed = assignmentUpdateSchema.safeParse({
     assignmentId: formData.get("assignmentId"),
@@ -338,7 +329,7 @@ export async function updateAssignmentDetails(formData: FormData) {
 // ── Create Section ────────────────────────────────────────────────────────────
 export async function createSection(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   const parsed = sectionFormSchema.safeParse({
     courseId: formData.get("courseId"),
@@ -371,7 +362,7 @@ export async function createSection(formData: FormData) {
 
 export async function archiveSection(sectionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   await db.section.update({
     where: { id: sectionId },
@@ -389,7 +380,7 @@ export async function archiveSection(sectionId: string) {
 // ── Update Course ─────────────────────────────────────────────────────────────
 export async function updateCourse(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   const parsed = courseFormSchema.safeParse({
     name: formData.get("name"),
@@ -415,7 +406,7 @@ export async function updateCourse(id: string, formData: FormData) {
 // ── Delete Course ─────────────────────────────────────────────────────────────
 export async function deleteCourse(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   await db.course.update({
     where: { id },
@@ -429,9 +420,7 @@ export async function deleteCourse(id: string) {
 // ── Delete Assignment ─────────────────────────────────────────────────────────
 export async function deleteAssignment(assignmentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const assignment = await db.assignment.findUnique({
     where: { id: assignmentId },
@@ -460,9 +449,7 @@ export async function deleteAssignment(assignmentId: string) {
 
 export async function duplicateAssignment(assignmentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const originalAssignment = await db.assignment.findUnique({
     where: { id: assignmentId }
@@ -494,7 +481,7 @@ export async function duplicateAssignment(assignmentId: string) {
 
 export async function updateSection(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   const parsed = sectionFormSchema.safeParse({
     courseId: formData.get("courseId") ?? "", // courseId is not updated here, but schema can still validate the form shape
@@ -532,7 +519,7 @@ export async function updateSection(id: string, formData: FormData) {
 // ── Delete Section ────────────────────────────────────────────────────────────
 export async function deleteSection(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') throw new Error("Unauthorized")
+  assertRole(session, ['ADMIN'])
 
   const section = await db.section.findUnique({ where: { id }, select: { courseId: true } })
   await db.section.update({ where: { id }, data: { isArchived: true } })
@@ -547,9 +534,7 @@ export async function deleteSection(id: string) {
 // ── Enrollment Actions ──────────────────────────────────────────────────────
 export async function enrollStudents(sectionId: string, userIds: string[]) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   // For each userId, get-or-create their Student profile, then enroll
   for (const userId of userIds) {
@@ -615,9 +600,7 @@ export async function getStudents(page: number = 1, pageSize: number = 20, query
 
 export async function unenrollStudent(enrollmentId: string, sectionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   await db.enrollment.delete({
     where: { id: enrollmentId }
@@ -632,9 +615,7 @@ export async function unenrollStudent(enrollmentId: string, sectionId: string) {
 
 export async function nudgeStudent(assignmentId: string, studentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const assignment = await db.assignment.findUnique({
     where: { id: assignmentId },
@@ -660,9 +641,7 @@ export async function nudgeStudent(assignmentId: string, studentId: string) {
 
 export async function nudgeAllPending(assignmentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   const assignment = await db.assignment.findUnique({
     where: { id: assignmentId },
@@ -703,9 +682,7 @@ export async function nudgeAllPending(assignmentId: string) {
 
 export async function updateGradingSettings(sectionId: string, weightingConfig: Record<string, number>) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== 'TEACHER' && session.user?.role !== 'ADMIN')) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ['ADMIN', 'TEACHER'])
 
   // Ensure total weight is exactly 100 or 0
   const total = Object.values(weightingConfig).reduce((sum, val) => sum + val, 0)

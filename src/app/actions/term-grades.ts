@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { TermGradeUpdateSchema } from "@/lib/validations/sis"
+import { assertRole } from "@/lib/rbac"
 
 export async function saveTermGrade(
   enrollmentId: string,
@@ -18,9 +19,7 @@ export async function saveTermGrade(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-      return { success: false, error: "Unauthorized" }
-    }
+    assertRole(session, ["ADMIN", "TEACHER"])
 
     const parsedData = TermGradeUpdateSchema.parse(data)
 

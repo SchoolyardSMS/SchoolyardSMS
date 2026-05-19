@@ -6,13 +6,12 @@ import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { IncidentCategory, IncidentSeverity, IncidentStatus } from "@prisma/client"
+import { assertRole } from "@/lib/rbac"
 
 // ── Create a new incident ─────────────────────────────────────────────────────
 export async function createIncident(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  try { assertRole(session, ["ADMIN","TEACHER"]) } catch (err) { throw new Error("Unauthorized") }
 
   const studentId   = formData.get("studentId") as string
   const title       = (formData.get("title") as string)?.trim()
@@ -48,9 +47,7 @@ export async function createIncident(formData: FormData) {
 // ── Update status / action ────────────────────────────────────────────────────
 export async function updateIncidentStatus(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  try { assertRole(session, ["ADMIN","TEACHER"]) } catch (err) { throw new Error("Unauthorized") }
 
   const id          = formData.get("id") as string
   const status      = formData.get("status") as IncidentStatus
@@ -70,9 +67,7 @@ export async function updateIncidentStatus(formData: FormData) {
 // ── Add a timeline comment ────────────────────────────────────────────────────
 export async function addIncidentComment(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  try { assertRole(session, ["ADMIN","TEACHER"]) } catch (err) { throw new Error("Unauthorized") }
 
   const incidentId = formData.get("incidentId") as string
   const body       = (formData.get("body") as string)?.trim()

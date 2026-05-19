@@ -8,14 +8,12 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { DocumentType } from "@prisma/client"
 import { randomBytes } from "crypto"
+import { assertRole } from "@/lib/rbac"
 
 export async function uploadAssignmentSubmission(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) throw new Error("Unauthorized")
+  assertRole(session, ["STUDENT"])
   
-  if (session.user.role !== "STUDENT") {
-    throw new Error("Only students can submit assignments")
-  }
 
   const file = formData.get("file") as File
   const assignmentId = formData.get("assignmentId") as string
@@ -66,7 +64,7 @@ export async function uploadAssignmentSubmission(formData: FormData) {
 
 export async function uploadBrandingFile(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const file = formData.get("file") as File
   if (!file) throw new Error("No file provided")
@@ -90,9 +88,7 @@ export async function uploadBrandingFile(formData: FormData) {
 
 export async function uploadMaterialFile(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "TEACHER")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const file = formData.get("file") as File
   if (!file) throw new Error("No file provided")

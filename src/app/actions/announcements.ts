@@ -4,10 +4,11 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { assertRole } from "@/lib/rbac"
 
 export async function createAnnouncement(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session) throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const sectionId = formData.get("sectionId") as string
   const content = formData.get("content") as string
@@ -42,7 +43,7 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function deleteAnnouncement(id: string, sectionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session) throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const announcement = await db.announcement.findUnique({
     where: { id },

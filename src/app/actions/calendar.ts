@@ -5,12 +5,11 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { DayType } from "@prisma/client"
+import { assertRole } from "@/lib/rbac"
 
 export async function generateCalendar(year: number, month: number) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN"])
 
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   
@@ -42,9 +41,7 @@ export async function generateCalendar(year: number, month: number) {
 
 export async function declareSnowDay(dateStr: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN"])
 
   const snowDate = new Date(dateStr)
 
@@ -99,9 +96,7 @@ export async function declareSnowDay(dateStr: string) {
 
 export async function updateCalendarDay(dateStr: string, updates: { type?: DayType, hasCommunityPeriod?: boolean, name?: string | null, blockDay?: any, isMidterm?: boolean, isFinal?: boolean }) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN"])
 
   const date = new Date(dateStr)
   

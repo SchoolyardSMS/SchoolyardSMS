@@ -5,11 +5,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { DemographicUpdateSchema } from "@/lib/validations/sis"
+import { assertRole } from "@/lib/rbac"
 
 export async function updateStudentDemographics(studentId: string, data: { dateOfBirth: Date; gradeLevel: number }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+    try { assertRole(session, ['ADMIN']) } catch (err) { return { success: false, error: 'Unauthorized' } }
 
     const parsedData = DemographicUpdateSchema.parse(data)
 
@@ -34,7 +35,7 @@ export async function updateStudentDemographics(studentId: string, data: { dateO
 export async function linkParentToStudent(studentId: string, parentUserId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+    try { assertRole(session, ['ADMIN']) } catch (err) { return { success: false, error: 'Unauthorized' } }
 
     const parent = await db.parent.findUnique({
       where: { userId: parentUserId }
@@ -69,7 +70,7 @@ export async function linkParentToStudent(studentId: string, parentUserId: strin
 export async function unlinkParentFromStudent(studentId: string, parentId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+    try { assertRole(session, ['ADMIN']) } catch (err) { return { success: false, error: 'Unauthorized' } }
 
     await db.parentStudent.delete({
       where: {

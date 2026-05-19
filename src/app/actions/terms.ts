@@ -4,10 +4,11 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { assertRole } from "@/lib/rbac"
 
 export async function createSchoolYear(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   const name = formData.get("name") as string
   const startDate = new Date(formData.get("startDate") as string)
@@ -28,7 +29,7 @@ export async function createSchoolYear(formData: FormData) {
 
 export async function updateSchoolYear(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   const name = formData.get("name") as string
   const startDate = new Date(formData.get("startDate") as string)
@@ -49,7 +50,7 @@ export async function updateSchoolYear(id: string, formData: FormData) {
 
 export async function deleteSchoolYear(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   try {
     await db.schoolYear.delete({ where: { id } })
@@ -62,7 +63,7 @@ export async function deleteSchoolYear(id: string) {
 
 export async function createTerm(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   const name = formData.get("name") as string
   const schoolYearId = formData.get("schoolYearId") as string
@@ -86,7 +87,7 @@ export async function createTerm(formData: FormData) {
 
 export async function updateTerm(id: string, formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   const name = formData.get("name") as string
   const type = (formData.get("type") as any) || "SEMESTER"
@@ -109,7 +110,7 @@ export async function updateTerm(id: string, formData: FormData) {
 
 export async function deleteTerm(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   try {
     await db.term.delete({ where: { id } })
@@ -122,7 +123,7 @@ export async function deleteTerm(id: string) {
 
 export async function setSchoolYearActive(schoolYearId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") return { error: "Unauthorized" }
+  assertRole(session, ["ADMIN"])
 
   await db.schoolYear.updateMany({ data: { isActive: false } })
   await db.schoolYear.update({ where: { id: schoolYearId }, data: { isActive: true } })

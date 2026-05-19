@@ -5,13 +5,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { calculateGrade, getLetterGrade } from "@/lib/grading"
+import { assertRole } from "@/lib/rbac"
 
 export async function checkSchoolWideGradesSubmission(termId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") {
-      return { success: false, error: "Unauthorized" }
-    }
+    assertRole(session, ["ADMIN"])
 
     // 1. Find the selected term
     const term = await db.term.findUnique({
@@ -92,9 +91,7 @@ export async function checkSchoolWideGradesSubmission(termId: string) {
 export async function runSchoolWideReset(termId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== "ADMIN") {
-      return { success: false, error: "Unauthorized" }
-    }
+    assertRole(session, ["ADMIN"])
 
     const term = await db.term.findUnique({
       where: { id: termId }

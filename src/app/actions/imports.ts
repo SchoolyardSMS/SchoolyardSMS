@@ -4,11 +4,12 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import Papa from "papaparse"
+import { assertRole } from "@/lib/rbac"
 import bcrypt from "bcryptjs"
 
 export async function importUsersCsv(csvText: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const { data, errors } = Papa.parse(csvText, { header: true, skipEmptyLines: true })
   if (errors.length > 0) throw new Error("CSV Parsing Error: " + errors[0].message)
@@ -56,7 +57,7 @@ export async function importUsersCsv(csvText: string) {
 
 export async function importCoursesCsv(csvText: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const { data, errors } = Papa.parse(csvText, { header: true, skipEmptyLines: true })
   if (errors.length > 0) throw new Error("CSV Parsing Error: " + errors[0].message)
@@ -84,7 +85,7 @@ export async function importCoursesCsv(csvText: string) {
 
 export async function importSectionsCsv(csvText: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const { data, errors } = Papa.parse(csvText, { header: true, skipEmptyLines: true })
   if (errors.length > 0) throw new Error("CSV Parsing Error: " + errors[0].message)
@@ -123,7 +124,7 @@ export async function importSectionsCsv(csvText: string) {
 
 export async function importEnrollmentsCsv(csvText: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") throw new Error("Unauthorized")
+  assertRole(session, ["ADMIN"])
 
   const { data, errors } = Papa.parse(csvText, { header: true, skipEmptyLines: true })
   if (errors.length > 0) throw new Error("CSV Parsing Error: " + errors[0].message)

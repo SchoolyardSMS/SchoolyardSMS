@@ -7,12 +7,11 @@ import { revalidatePath } from "next/cache"
 import { CommunityAttendanceStatus } from "@prisma/client"
 import { sendSystemMessage, sendSystemBatchMessages } from "./messaging"
 import { formatInET } from "@/lib/dates"
+import { assertRole } from "@/lib/rbac"
 
 export async function createCommunitySession(data: { calendarDayId: string, teacherId?: string, title: string, description: string, room: string, capacity: number, isRestricted: boolean }) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   let finalTeacherId = data.teacherId
 
@@ -42,9 +41,7 @@ export async function createCommunitySession(data: { calendarDayId: string, teac
 
 export async function updateCommunitySession(id: string, data: { title: string, description: string, room: string, capacity: number, isRestricted: boolean }) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   // If teacher, verify ownership
   if (session.user.role === "TEACHER") {
@@ -66,9 +63,7 @@ export async function updateCommunitySession(id: string, data: { title: string, 
 
 export async function deleteCommunitySession(id: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   // If teacher, verify ownership
   if (session.user.role === "TEACHER") {
@@ -86,9 +81,7 @@ export async function deleteCommunitySession(id: string) {
 
 export async function forceEnrollStudent(sessionId: string, studentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   // Find the target session to get its calendarDayId
   const targetSession = await db.communitySession.findUnique({
@@ -123,9 +116,7 @@ export async function forceEnrollStudent(sessionId: string, studentId: string) {
 
 export async function removeStudentEnrollment(enrollmentId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   await db.communityEnrollment.delete({ where: { id: enrollmentId } })
   revalidatePath("/dashboard/community")
@@ -134,9 +125,7 @@ export async function removeStudentEnrollment(enrollmentId: string) {
 
 export async function updateCommunityAttendance(enrollmentId: string, status: CommunityAttendanceStatus) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   await db.communityEnrollment.update({
     where: { id: enrollmentId },
@@ -150,7 +139,7 @@ export async function updateCommunityAttendance(enrollmentId: string, status: Co
 // Student actions
 export async function enrollInSession(sessionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "STUDENT") throw new Error("Unauthorized")
+  assertRole(session, ["STUDENT"])
 
   const student = await db.student.findUnique({ where: { userId: session.user.id } })
   if (!student) throw new Error("Student profile not found")
@@ -191,7 +180,7 @@ export async function enrollInSession(sessionId: string) {
 
 export async function dropSession(sessionId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "STUDENT") throw new Error("Unauthorized")
+  assertRole(session, ["STUDENT"])
 
   const student = await db.student.findUnique({ where: { userId: session.user.id } })
   if (!student) throw new Error("Student profile not found")
@@ -213,9 +202,7 @@ export async function dropSession(sessionId: string) {
 
 export async function duplicateCommunitySession(sessionId: string, newCalendarDayId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const originalSession = await db.communitySession.findUnique({
     where: { id: sessionId }
@@ -249,9 +236,7 @@ export async function duplicateCommunitySession(sessionId: string, newCalendarDa
 
 export async function nudgeMissingStudent(studentId: string, calendarDayId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const student = await db.student.findUnique({
     where: { id: studentId },
@@ -276,9 +261,7 @@ export async function nudgeMissingStudent(studentId: string, calendarDayId: stri
 
 export async function nudgeAllMissingStudents(calendarDayId: string) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user?.role !== "TEACHER" && session.user?.role !== "ADMIN")) {
-    throw new Error("Unauthorized")
-  }
+  assertRole(session, ["ADMIN", "TEACHER"])
 
   const calendarDay = await db.calendarDay.findUnique({ where: { id: calendarDayId } })
   if (!calendarDay) throw new Error("Calendar day not found")

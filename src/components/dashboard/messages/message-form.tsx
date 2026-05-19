@@ -53,7 +53,11 @@ export function MessageForm({
         formData.set("audience", audience)
         const result = await sendSchoolMessage(formData)
         if (result.success) {
-          toast.success(`Broadcast sent to ${result.count} recipients!`)
+          if ((result as any).queued) {
+            toast.success('Broadcast queued for delivery.')
+          } else {
+            toast.success(`Broadcast sent to ${(result as any).count} recipients!`)
+          }
           router.push("/dashboard/messages")
         }
       } else {
