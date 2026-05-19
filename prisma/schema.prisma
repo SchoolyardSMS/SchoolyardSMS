@@ -821,4 +821,3 @@ model AuditLog {
   @@index([targetModel, targetId])
   @@index([createdAt])
 }
-
