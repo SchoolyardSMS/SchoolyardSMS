@@ -34,11 +34,11 @@
 ## 🌐 Demo Site
 Visit the live demo at: http://schoolyard-sms.vercel.app/
 
-The public demo uses seeded accounts with a shared demo password:
-- `admin@schoolyard.dev` / `password` (ADMIN)
-- `teacher@schoolyard.dev` / `password` (TEACHER)
-- `student@schoolyard.dev` / `password` (STUDENT)
-- `parent@schoolyard.dev` / `password` (PARENT)
+The public demo uses seeded accounts with a shared demo password. Example seeded credentials:
+- `admin@schoolyard.demo` / `password` (ADMIN)
+- `m.chen@schoolyard.demo` / `password` (TEACHER)
+- `a.brooks@students.schoolyard.demo` / `password` (STUDENT)
+- `r.brooks@parents.schoolyard.demo` / `password` (PARENT)
 
 > Note: The demo deployment may have production-safe limitations enabled. Some integrations are mocked or disabled to preserve security and stability:
 > - Email delivery may be mocked instead of sending real messages.
