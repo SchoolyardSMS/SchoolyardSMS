@@ -24,7 +24,7 @@ export default async function TermGradesPage({ params, searchParams }: { params:
         term: { include: { children: true } }
       }
     }),
-    db.schoolSettings.findUnique({ where: { id: "singleton" }, select: { gradingScale: true } })
+    db.schoolSettings.findUnique({ where: { id: "singleton" }, select: { activeTerm: true, gradingScale: true } })
   ])
 
   if (!section) return notFound()
@@ -58,11 +58,16 @@ export default async function TermGradesPage({ params, searchParams }: { params:
     ]
   }
 
-  const selectedTermId = termId || section.termId
+  const activeTermFromSettings = schoolSettings?.activeTerm
+  const matchingActiveTerm = activeTermFromSettings
+    ? possibleTerms.find(t => t.name.toLowerCase() === activeTermFromSettings.toLowerCase())
+    : null
+
+  const selectedTermId = termId || matchingActiveTerm?.id || section.termId
   const selectedTerm = possibleTerms.find(t => t.id === selectedTermId)
 
   const enrollments = await db.enrollment.findMany({
-    where: { sectionId: id },
+    where: { sectionId: id, status: "ENROLLED" },
     include: {
       student: { include: { user: true } },
       termGrades: selectedTermId ? {
@@ -120,6 +125,7 @@ export default async function TermGradesPage({ params, searchParams }: { params:
 
       {selectedTermId ? (
         <TermGradesClient
+          key={selectedTermId}
           sectionId={id}
           enrollments={enrollments}
           termId={selectedTermId}

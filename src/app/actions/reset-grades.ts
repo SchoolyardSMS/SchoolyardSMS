@@ -33,7 +33,7 @@ export async function checkSchoolWideGradesSubmission(termId: string) {
 
     // 2. Find all sections that are linked to any of these term IDs
     const sections = await db.section.findMany({
-      where: { termId: { in: relevantTermIds } },
+      where: { termId: { in: relevantTermIds }, isArchived: false },
       include: {
         course: true,
         teacher: { include: { user: true } },
@@ -113,7 +113,7 @@ export async function runSchoolWideReset(termId: string) {
 
     // 1. Fetch all active sections for these term IDs
     const sections = await db.section.findMany({
-      where: { termId: { in: relevantTermIds } },
+      where: { termId: { in: relevantTermIds }, isArchived: false },
       include: {
         enrollments: {
           where: { status: "ENROLLED" },
