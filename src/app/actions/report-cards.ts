@@ -76,7 +76,8 @@ export async function publishReportCards(termId: string) {
           score,
           letterGrade: letter,
           comments: tg.comments,
-          gpa
+          gpa,
+          credits: tg.enrollment.section.course.credits
         }
       })
 

@@ -70,9 +70,7 @@ export default async function TermGradesPage({ params, searchParams }: { params:
     where: { sectionId: id, status: "ENROLLED" },
     include: {
       student: { include: { user: true } },
-      termGrades: selectedTermId ? {
-        where: { termId: selectedTermId }
-      } : false
+      termGrades: true
     },
     orderBy: { student: { user: { name: "asc" } } }
   })
@@ -134,6 +132,8 @@ export default async function TermGradesPage({ params, searchParams }: { params:
           assignments={assignments}
           grades={grades}
           weightingConfig={section.weightingConfig}
+          selectedTerm={selectedTerm}
+          allTerms={possibleTerms}
         />
       ) : (
         <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500">

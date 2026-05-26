@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ChevronDown, CheckSquare } from "lucide-react"
+import { ChevronDown, CheckSquare, Printer, FileText } from "lucide-react"
 
 export function GradebookClientControls({
   sectionId,
@@ -47,18 +47,37 @@ export function GradebookClientControls({
         </div>
       </div>
 
-      {/* Post Term Grades Link Button */}
-      {!currentTermId && (
+      {/* Roster & Gradebook Print Actions & Post Term Grades */}
+      <div className="flex flex-wrap items-center gap-2">
         <Button
-          asChild
-          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl font-bold text-xs"
+          onClick={() => window.print()}
+          variant="outline"
+          className="rounded-xl font-bold text-xs border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 flex items-center gap-1.5 h-9"
         >
-          <Link href={`/dashboard/academics/sections/${sectionId}/term-grades`}>
-            <CheckSquare className="w-3.5 h-3.5 mr-2" />
-            Post Term Grades
-          </Link>
+          <Printer className="w-3.5 h-3.5 text-slate-500" />
+          Print Gradebook
         </Button>
-      )}
+        <Button
+          onClick={() => window.open(`/dashboard/academics/sections/${sectionId}/gradebook?blank=true`, '_blank')}
+          variant="outline"
+          className="rounded-xl font-bold text-xs border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 flex items-center gap-1.5 h-9"
+        >
+          <FileText className="w-3.5 h-3.5 text-slate-500" />
+          Print Blank Worksheet
+        </Button>
+
+        {!currentTermId && (
+          <Button
+            asChild
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl font-bold text-xs h-9"
+          >
+            <Link href={`/dashboard/academics/sections/${sectionId}/term-grades`}>
+              <CheckSquare className="w-3.5 h-3.5 mr-2" />
+              Post Term Grades
+            </Link>
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

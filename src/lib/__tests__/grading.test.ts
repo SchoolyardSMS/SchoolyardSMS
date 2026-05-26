@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calculateGrade, getLetterGrade, calculateGPA } from "../grading"
+import { calculateGrade, getLetterGrade, calculateGPA, calculateCompositeSemesterGrade, calculateCompositeYearGrade } from "../grading"
 import type { AssignmentSummary, GradeSummary } from "../grading"
 import { AssignmentType } from "@prisma/client"
 
@@ -135,5 +135,64 @@ describe("calculateGPA", () => {
   it("scales to custom max GPA", () => {
     // A = 4.0 base, scaled to 5.0: (4.0 / 4.0) * 5.0 = 5.0
     expect(calculateGPA(95, 5.0)).toBe(5.0)
+  })
+})
+
+// ── calculateCompositeSemesterGrade ──────────────────────────────────────────
+describe("calculateCompositeSemesterGrade", () => {
+  it("averages quarters and applies exam weights (80/20)", () => {
+    // Quarters avg = (90 + 80) / 2 = 85
+    // 85 * 0.8 + 95 * 0.2 = 68 + 19 = 87
+    const result = calculateCompositeSemesterGrade({
+      quarterGrades: [90, 80],
+      midtermScore: 95,
+      finalScore: null
+    })
+    expect(result).toBeCloseTo(87, 1)
+  })
+
+  it("prioritizes final exam over midterm score if present", () => {
+    // Quarters avg = 85
+    // 85 * 0.8 + 100 * 0.2 = 68 + 20 = 88 (ignores midterm score of 95)
+    const result = calculateCompositeSemesterGrade({
+      quarterGrades: [90, 80],
+      midtermScore: 95,
+      finalScore: 100
+    })
+    expect(result).toBeCloseTo(88, 1)
+  })
+
+  it("defaults to 100% quarters average if exam is exempted", () => {
+    // Quarters avg = 85. Midterm is 95 but exempted -> returns 85
+    const result = calculateCompositeSemesterGrade({
+      quarterGrades: [90, 80],
+      midtermScore: 95,
+      midtermExempt: true
+    })
+    expect(result).toBeCloseTo(85, 1)
+  })
+
+  it("defaults to 100% quarters average if no exam score is provided", () => {
+    const result = calculateCompositeSemesterGrade({
+      quarterGrades: [90, 80],
+      midtermScore: null,
+      finalScore: null
+    })
+    expect(result).toBeCloseTo(85, 1)
+  })
+
+  it("returns null if no quarter grades are provided", () => {
+    expect(calculateCompositeSemesterGrade({ quarterGrades: [] })).toBeNull()
+  })
+})
+
+// ── calculateCompositeYearGrade ──────────────────────────────────────────────
+describe("calculateCompositeYearGrade", () => {
+  it("averages semester averages", () => {
+    expect(calculateCompositeYearGrade([90, 80])).toBeCloseTo(85, 1)
+  })
+
+  it("returns null if no semester grades", () => {
+    expect(calculateCompositeYearGrade([])).toBeNull()
   })
 })

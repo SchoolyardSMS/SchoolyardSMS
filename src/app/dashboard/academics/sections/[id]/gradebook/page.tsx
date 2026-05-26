@@ -27,20 +27,20 @@ export default async function GradebookPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ termId?: string }>
+  searchParams: Promise<{ termId?: string; blank?: string }>
 }) {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
 
   const { id } = await params
-  const { termId: selectedTermId } = await searchParams
+  const { termId: selectedTermId, blank } = await searchParams
 
   const section = await db.section.findUnique({
     where: { id },
     include: {
       course: true,
       teacher: { include: { user: true } },
-      term: { include: { children: true } },
+      term: { include: { children: true, schoolYear: true } },
       enrollments: {
         where: { status: "ENROLLED" },
         include: {
@@ -56,6 +56,93 @@ export default async function GradebookPage({
   const isStaff = session.user?.role === 'ADMIN' || section.teacher.user.id === session.user?.id
   if (!isStaff) {
     redirect(`/dashboard/academics/sections/${section.id}`) 
+  }
+
+  const isBlankMode = blank === "true"
+
+  if (isBlankMode) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto space-y-6 bg-white text-black min-h-screen">
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            @page { size: landscape; margin: 1cm; }
+          }
+          table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+          th, td { border: 1px solid #cbd5e1; padding: 12px 14px; text-align: left; font-size: 11px; }
+          th { background-color: #f8fafc; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #475569; border-bottom: 2px solid #94a3b8; }
+          td { height: 48px; }
+        `}} />
+        
+        {/* Header Details */}
+        <div className="border-b-2 border-slate-900 pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-wider text-slate-900">Gradebook Worksheet</h1>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Schoolyard Academy • SIS Physical Record</p>
+            </div>
+            <div className="text-right no-print">
+              <Button onClick={() => window.print()} className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs px-4 py-2 flex items-center gap-2">
+                Print Sheet
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-6 text-xs font-semibold">
+            <div>
+              <span className="text-slate-400 uppercase tracking-wider block text-[10px]">Course Title</span>
+              <span className="text-slate-900 text-sm font-bold">{section.course.name}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 uppercase tracking-wider block text-[10px]">Teacher Name</span>
+              <span className="text-slate-900 text-sm font-bold">{section.teacher.user.name}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 uppercase tracking-wider block text-[10px]">Schedule Period</span>
+              <span className="text-slate-900 text-sm font-bold">{section.schedule}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 uppercase tracking-wider block text-[10px]">Academic Year</span>
+              <span className="text-slate-900 text-sm font-bold">{section.term?.schoolYear.name || "2025-2026"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Worksheet Table */}
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th className="w-[220px]">Student Name</th>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <th key={i} className="text-center min-w-[70px]">Col {i + 1}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {section.enrollments.map(enr => (
+                <tr key={enr.id} className="hover:bg-slate-50">
+                  <td className="font-bold text-slate-900">{enr.student.user.name}</td>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <td key={i} className="py-4">&nbsp;</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Auto print trigger */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+              window.print();
+            }, 600);
+          });
+        `}} />
+      </div>
+    )
   }
 
   // 1. Calculate possible nested terms for the school year
@@ -110,7 +197,7 @@ export default async function GradebookPage({
   return (
     <div className="flex-1 space-y-6 p-4 sm:p-8 pt-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" asChild className="rounded-full">
             <Link href={`/dashboard/academics/sections/${section.id}`}><ChevronLeft className="h-4 w-4 mr-1" /> Back</Link>
@@ -130,15 +217,17 @@ export default async function GradebookPage({
       </div>
 
       {/* Modern view filters and actions */}
-      <GradebookClientControls
-        sectionId={id}
-        possibleTerms={possibleTerms}
-        currentTermId={selectedTermId || null}
-        sectionActiveTermId={section.termId}
-      />
+      <div className="no-print">
+        <GradebookClientControls
+          sectionId={id}
+          possibleTerms={possibleTerms}
+          currentTermId={selectedTermId || null}
+          sectionActiveTermId={section.termId}
+        />
+      </div>
 
       {selectedTermId && (
-        <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 p-4 rounded-2xl flex items-center gap-3">
+        <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 p-4 rounded-2xl flex items-center gap-3 no-print">
           <Award className="w-5 h-5 text-amber-600 shrink-0" />
           <div className="text-xs text-amber-800 dark:text-amber-300 font-medium">
             You are viewing the archived snapshot for <span className="font-black">{activeTermName}</span>. Grades are locked. To resume standard grading, select <span className="font-semibold">Current Quarter</span> above.
@@ -248,11 +337,54 @@ export default async function GradebookPage({
       </div>
       
       {!selectedTermId && (
-        <div className="flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600">
+        <div className="flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600 no-print">
            <span>Auto-Saving Active</span>
            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
       )}
+
+      {/* Populated Gradebook Print Media Styles */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          .no-print, header, nav, aside {
+            display: none !important;
+          }
+          body, html, main, .flex-1 {
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .rounded-3xl {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          th, td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 6px 8px !important;
+            color: black !important;
+            background: white !important;
+            font-size: 10px !important;
+          }
+          th {
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+          }
+          /* Remove sticky overrides during print */
+          .sticky {
+            position: static !important;
+          }
+          @page {
+            size: landscape;
+            margin: 1cm;
+          }
+        }
+      `}} />
     </div>
   )
 }

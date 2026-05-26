@@ -143,3 +143,49 @@ export function calculateGPA(
   if (gpaMax === 100) return pct
   return (baseGPA / 4.0) * gpaMax
 }
+
+export type CompositeSemesterGradeInput = {
+  quarterGrades: number[]
+  midtermScore?: number | null
+  finalScore?: number | null
+  midtermExempt?: boolean
+  finalExempt?: boolean
+  quartersWeight?: number
+  examWeight?: number
+}
+
+export function calculateCompositeSemesterGrade(input: CompositeSemesterGradeInput): number | null {
+  const {
+    quarterGrades,
+    midtermScore,
+    finalScore,
+    midtermExempt = false,
+    finalExempt = false,
+    quartersWeight = 80,
+    examWeight = 20
+  } = input
+
+  if (!quarterGrades || quarterGrades.length === 0) return null
+
+  // Calculate quarters average
+  const quartersAvg = quarterGrades.reduce((sum, v) => sum + v, 0) / quarterGrades.length
+
+  // Determine active exam grade: Final exam takes priority if present, otherwise Midterm exam
+  const hasFinal = finalScore !== undefined && finalScore !== null
+  const examScore = hasFinal ? finalScore : (midtermScore ?? null)
+  const isExempt = hasFinal ? finalExempt : midtermExempt
+
+  if (isExempt || examScore === null) {
+    // If exam is exempted or not yet graded, quarters count for 100%
+    return quartersAvg
+  }
+
+  // Combine quarters and exam weights
+  return (quartersAvg * (quartersWeight / 100)) + (examScore * (examWeight / 100))
+}
+
+export function calculateCompositeYearGrade(semesterGrades: number[]): number | null {
+  if (!semesterGrades || semesterGrades.length === 0) return null
+  return semesterGrades.reduce((sum, v) => sum + v, 0) / semesterGrades.length
+}
+

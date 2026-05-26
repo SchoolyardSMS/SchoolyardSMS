@@ -64,7 +64,18 @@ export async function GET(
       totalTerms++
     }
     if (snapshot && snapshot.grades) {
-       totalCredits += snapshot.grades.length // Assumes 1 credit per course
+      const isQuarter = rc.term.type === "QUARTER"
+      if (!isQuarter) {
+        snapshot.grades.forEach((g: any) => {
+          const score = g.score ?? 0
+          const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 60)
+          if (!isFailed) {
+            const courseCredits = g.credits ?? 1.0
+            const earned = rc.term.type === "SEMESTER" ? courseCredits * 0.5 : courseCredits
+            totalCredits += earned
+          }
+        })
+      }
     }
   })
 
@@ -144,11 +155,24 @@ export async function GET(
       currentY += 10
 
       // Grades Table
-      const tableData = snapshot.grades.map((g: any) => [
-        g.courseName,
-        "1.00", // Default Credit
-        g.letterGrade || "—"
-      ])
+      const tableData = snapshot.grades.map((g: any) => {
+        const score = g.score ?? 0
+        const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 60)
+        const courseCredits = g.credits ?? 1.0
+        const creditAwarded = isFailed
+          ? 0.0
+          : (rc.term.type === "QUARTER"
+              ? 0.0
+              : (rc.term.type === "SEMESTER"
+                  ? courseCredits * 0.5
+                  : courseCredits))
+
+        return [
+          g.courseName,
+          creditAwarded.toFixed(2),
+          g.letterGrade || "—"
+        ]
+      })
 
       autoTable(doc, {
         startY: currentY,
