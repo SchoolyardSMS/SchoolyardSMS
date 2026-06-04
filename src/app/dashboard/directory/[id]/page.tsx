@@ -187,13 +187,11 @@ export default async function StudentProfilePage({
                     studentId={student.id}
                     reportCards={(student as any).reportCards || []}
                   />
-                  {isAdmin && (
-                    <Button asChild variant="outline" className="w-full rounded-xl border-indigo-200 dark:border-indigo-800">
-                      <a href={`/api/reports/transcript/${student.id}`} download>
-                        <FileText className="h-4 w-4 mr-2" /> Download Transcript
-                      </a>
-                    </Button>
-                  )}
+                  <Button asChild variant="outline" className="w-full rounded-xl border-indigo-200 dark:border-indigo-800">
+                    <a href={`/api/reports/transcript/${student.id}`} download>
+                      <FileText className="h-4 w-4 mr-2" /> Download Transcript
+                    </a>
+                  </Button>
                 </div>
               )}
             </div>

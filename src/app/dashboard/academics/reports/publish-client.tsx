@@ -6,7 +6,7 @@ import { publishReportCards } from "@/app/actions/report-cards"
 import { Loader2, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 
-export function PublishReportCardsClient({ terms }: { terms: { id: string, name: string, type: string }[] }) {
+export function PublishReportCardsClient({ terms }: { terms: { id: string, name: string, type: string, displayName?: string }[] }) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [selectedTerm, setSelectedTerm] = useState(terms[0]?.id || "")
@@ -43,7 +43,7 @@ export function PublishReportCardsClient({ terms }: { terms: { id: string, name:
           onChange={(e) => setSelectedTerm(e.target.value)}
         >
           {terms.map(t => (
-            <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
+            <option key={t.id} value={t.id}>{t.displayName || t.name} ({t.type})</option>
           ))}
         </select>
         <Button onClick={handlePublish} disabled={loading || !selectedTerm} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold">

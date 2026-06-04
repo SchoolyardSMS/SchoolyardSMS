@@ -100,11 +100,163 @@ export async function updateTerm(id: string, formData: FormData) {
   }
 
   try {
+    const oldTerm = await db.term.findUnique({ where: { id }, select: { name: true } })
     await db.term.update({ where: { id }, data: { name, type, parentId, startDate, endDate } })
+
+    if (oldTerm && oldTerm.name !== name) {
+      const settings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
+      if (settings && settings.activeTerm === oldTerm.name) {
+        await db.schoolSettings.update({
+          where: { id: "singleton" },
+          data: { activeTerm: name }
+        })
+      }
+    }
+
     revalidatePath("/dashboard/admin/calendar/terms")
     return { success: true }
   } catch (e: any) {
     return { error: e.message || "Failed to update term" }
+  }
+}
+
+export async function duplicateSchoolYear(
+  sourceId: string,
+  name: string,
+  startDateStr: string,
+  endDateStr: string
+) {
+  const session = await getServerSession(authOptions)
+  assertRole(session, ["ADMIN"])
+
+  const startDate = new Date(startDateStr)
+  const endDate = new Date(endDateStr)
+
+  if (!name || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return { error: "Invalid input" }
+  }
+
+  try {
+    const sourceYear = await db.schoolYear.findUnique({
+      where: { id: sourceId },
+      include: { terms: true }
+    })
+
+    if (!sourceYear) {
+      return { error: "Source school year not found" }
+    }
+
+    // Create the new school year
+    const newYear = await db.schoolYear.create({
+      data: {
+        name,
+        startDate,
+        endDate,
+        isActive: false
+      }
+    })
+
+    // Calculate offset
+    const offsetMs = startDate.getTime() - sourceYear.startDate.getTime()
+
+    // Map to duplicate terms
+    const sourceTerms = sourceYear.terms
+
+    async function cloneTermsRecursively(oldParentId: string | null, newParentId: string | null) {
+      const levelTerms = sourceTerms.filter(t => t.parentId === oldParentId)
+      for (const term of levelTerms) {
+        const created = await db.term.create({
+          data: {
+            name: term.name,
+            type: term.type,
+            schoolYearId: newYear.id,
+            parentId: newParentId,
+            startDate: new Date(term.startDate.getTime() + offsetMs),
+            endDate: new Date(term.endDate.getTime() + offsetMs),
+          }
+        })
+        await cloneTermsRecursively(term.id, created.id)
+      }
+    }
+
+    await cloneTermsRecursively(null, null)
+
+    revalidatePath("/dashboard/admin/calendar/terms")
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message || "Failed to duplicate school year" }
+  }
+}
+
+export async function duplicateTerm(
+  termId: string,
+  targetSchoolYearId: string,
+  newName: string,
+  startDateStr: string,
+  endDateStr: string,
+  duplicateChildren: boolean
+) {
+  const session = await getServerSession(authOptions)
+  assertRole(session, ["ADMIN"])
+
+  const startDate = new Date(startDateStr)
+  const endDate = new Date(endDateStr)
+
+  if (!newName || !targetSchoolYearId || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return { error: "Invalid input" }
+  }
+
+  try {
+    const originalTerm = await db.term.findUnique({
+      where: { id: termId }
+    })
+
+    if (!originalTerm) {
+      return { error: "Original term not found" }
+    }
+
+    const createdTerm = await db.term.create({
+      data: {
+        name: newName,
+        type: originalTerm.type,
+        schoolYearId: targetSchoolYearId,
+        parentId: null, // Duplicated terms start at root
+        startDate,
+        endDate
+      }
+    })
+
+    if (duplicateChildren) {
+      const offsetMs = startDate.getTime() - originalTerm.startDate.getTime()
+      
+      const allTermsInYear = await db.term.findMany({
+        where: { schoolYearId: originalTerm.schoolYearId }
+      })
+
+      async function cloneChildrenRecursively(oldParentId: string, newParentId: string) {
+        const children = allTermsInYear.filter(t => t.parentId === oldParentId)
+        for (const child of children) {
+          const createdChild = await db.term.create({
+            data: {
+              name: child.name,
+              type: child.type,
+              schoolYearId: targetSchoolYearId,
+              parentId: newParentId,
+              startDate: new Date(child.startDate.getTime() + offsetMs),
+              endDate: new Date(child.endDate.getTime() + offsetMs),
+            }
+          })
+          await cloneChildrenRecursively(child.id, createdChild.id)
+        }
+      }
+
+      await cloneChildrenRecursively(originalTerm.id, createdTerm.id)
+    }
+
+    revalidatePath("/dashboard/admin/calendar/terms")
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message || "Failed to duplicate term" }
   }
 }
 

@@ -52,6 +52,41 @@ export async function GET(
   const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
   const schoolName = schoolSettings?.name || "Schoolyard Academy"
 
+  // Fetch student enrollments to find class duration configurations
+  const studentEnrollments = await db.enrollment.findMany({
+    where: { studentId },
+    include: {
+      section: {
+        include: {
+          course: true,
+          term: true
+        }
+      }
+    }
+  })
+
+  function shouldIncludeGrade(g: any, rcTerm: any) {
+    const enrollment = studentEnrollments.find(e => 
+      e.section.course.name === g.courseName &&
+      e.section.term?.schoolYearId === rcTerm.schoolYearId
+    )
+    if (!enrollment) return true // Fallback if no enrollment metadata is found
+
+    const classTermType = enrollment.section.term?.type || "SEMESTER"
+
+    if (classTermType === "YEAR") {
+      // Year-long class: only show on Year report card block
+      return rcTerm.type === "YEAR"
+    } else {
+      // Semester-long class: only show on corresponding Semester block
+      if (rcTerm.type === "YEAR") return false
+      if (enrollment.section.termId) {
+        return enrollment.section.termId === rcTerm.id
+      }
+      return rcTerm.type === "SEMESTER"
+    }
+  }
+
   // Calculate Cumulative GPA
   let totalGPA = 0
   let totalTerms = 0
@@ -67,8 +102,10 @@ export async function GET(
       const isQuarter = rc.term.type === "QUARTER"
       if (!isQuarter) {
         snapshot.grades.forEach((g: any) => {
+          if (!shouldIncludeGrade(g, rc.term)) return
+
           const score = g.score ?? 0
-          const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 60)
+          const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 65)
           if (!isFailed) {
             const courseCredits = g.credits ?? 1.0
             const earned = rc.term.type === "SEMESTER" ? courseCredits * 0.5 : courseCredits
@@ -141,6 +178,9 @@ export async function GET(
       const snapshot = rc.snapshot
       if (!snapshot || !snapshot.grades || snapshot.grades.length === 0) continue
 
+      const filteredGrades = snapshot.grades.filter((g: any) => shouldIncludeGrade(g, rc.term))
+      if (filteredGrades.length === 0) continue
+
       // Term Header
       doc.setFillColor(241, 245, 249)
       doc.rect(20, currentY, 170, 8, "F")
@@ -155,9 +195,9 @@ export async function GET(
       currentY += 10
 
       // Grades Table
-      const tableData = snapshot.grades.map((g: any) => {
+      const tableData = filteredGrades.map((g: any) => {
         const score = g.score ?? 0
-        const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 60)
+        const isFailed = g.letterGrade === "F" || score < (schoolSettings?.passingGrade ?? 65)
         const courseCredits = g.credits ?? 1.0
         const creditAwarded = isFailed
           ? 0.0

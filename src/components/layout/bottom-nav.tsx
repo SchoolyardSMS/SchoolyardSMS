@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Calendar, ClipboardCheck, MessageSquare, User } from "lucide-react"
+import { LayoutDashboard, Calendar, ClipboardCheck, MessageSquare, User, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const bottomNavItems = [
@@ -12,9 +12,14 @@ const bottomNavItems = [
     icon: LayoutDashboard,
   },
   {
+    label: "Calendar",
+    href: "/dashboard/calendar",
+    icon: Calendar,
+  },
+  {
     label: "Schedule",
     href: "/dashboard/schedule",
-    icon: Calendar,
+    icon: CalendarDays,
   },
   {
     label: "Attendance",

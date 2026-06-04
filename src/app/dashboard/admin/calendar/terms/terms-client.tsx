@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   createSchoolYear, updateSchoolYear, deleteSchoolYear,
-  createTerm, updateTerm, deleteTerm, setSchoolYearActive
+  createTerm, updateTerm, deleteTerm, setSchoolYearActive,
+  duplicateSchoolYear, duplicateTerm
 } from "@/app/actions/terms"
 import { toast } from "sonner"
 import {
   Plus, Pencil, Trash2, Check, X, Loader2, Calendar,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Copy
 } from "lucide-react"
 
 type Term = {
@@ -49,13 +50,18 @@ function TermRow({
   allTerms,
   depth,
   onDone,
+  schoolYears,
+  currentSchoolYearId,
 }: {
   term: Term
   allTerms: Term[]
   depth: number
   onDone: () => void
+  schoolYears: SchoolYear[]
+  currentSchoolYearId: string
 }) {
   const [editing, setEditing] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
   const [pending, startTransition] = useTransition()
 
   const handleDelete = () => {
@@ -133,6 +139,74 @@ function TermRow({
     )
   }
 
+  if (duplicating) {
+    const handleDuplicate = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      const fd = new FormData(e.currentTarget)
+      const targetSchoolYearId = fd.get("targetSchoolYearId") as string
+      const newName = fd.get("name") as string
+      const startDate = fd.get("startDate") as string
+      const endDate = fd.get("endDate") as string
+      const duplicateChildren = fd.get("duplicateChildren") === "on"
+
+      startTransition(async () => {
+        const res = await duplicateTerm(term.id, targetSchoolYearId, newName, startDate, endDate, duplicateChildren)
+        if (res?.error) toast.error(res.error)
+        else {
+          toast.success(`"${term.name}" duplicated`)
+          setDuplicating(false)
+          onDone()
+        }
+      })
+    }
+
+    return (
+      <div className={indentClass}>
+        <form onSubmit={handleDuplicate} className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-slate-800 space-y-3 mt-1">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">Duplicate Term</h5>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Name</label>
+              <Input name="name" defaultValue={`Copy of ${term.name}`} required className="h-8 text-sm" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Target School Year</label>
+              <select name="targetSchoolYearId" defaultValue={currentSchoolYearId} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+                {schoolYears.map(y => (
+                  <option key={y.id} value={y.id}>{y.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
+              <input type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
+              <input type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+            </div>
+          </div>
+          {allTerms.some(t => t.parentId === term.id) && (
+            <div className="flex items-center gap-2">
+              <input type="checkbox" name="duplicateChildren" id={`dup-child-${term.id}`} defaultChecked className="rounded border-slate-300 bg-white text-teal-600 focus:ring-teal-500 h-4 w-4" />
+              <label htmlFor={`dup-child-${term.id}`} className="text-xs text-slate-600 dark:text-slate-400 select-none">Duplicate sub-terms recursively</label>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={pending} className="bg-teal-600 hover:bg-teal-700 text-white">
+              {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Duplicate
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setDuplicating(false)}>
+              <X className="w-3.5 h-3.5 mr-1" /> Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
   return (
     <div className={`${indentClass} mt-1`}>
       <div className="flex justify-between items-center px-3 py-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
@@ -148,6 +222,9 @@ function TermRow({
             {fmtDate(term.startDate)} → {fmtDate(term.endDate)}
           </span>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-teal-600" onClick={() => setDuplicating(true)} title="Duplicate term">
+              <Copy className="w-3.5 h-3.5" />
+            </Button>
             <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-indigo-600" onClick={() => setEditing(true)} title="Edit term">
               <Pencil className="w-3.5 h-3.5" />
             </Button>
@@ -169,28 +246,48 @@ function TermTree({
   allTerms,
   depth,
   onDone,
+  schoolYears,
+  currentSchoolYearId,
 }: {
   term: Term
   allTerms: Term[]
   depth: number
   onDone: () => void
+  schoolYears: SchoolYear[]
+  currentSchoolYearId: string
 }) {
   const children = allTerms.filter(t => t.parentId === term.id)
   return (
     <>
-      <TermRow term={term} allTerms={allTerms} depth={depth} onDone={onDone} />
+      <TermRow
+        term={term}
+        allTerms={allTerms}
+        depth={depth}
+        onDone={onDone}
+        schoolYears={schoolYears}
+        currentSchoolYearId={currentSchoolYearId}
+      />
       {children.map(child => (
-        <TermTree key={child.id} term={child} allTerms={allTerms} depth={depth + 1} onDone={onDone} />
+        <TermTree
+          key={child.id}
+          term={child}
+          allTerms={allTerms}
+          depth={depth + 1}
+          onDone={onDone}
+          schoolYears={schoolYears}
+          currentSchoolYearId={currentSchoolYearId}
+        />
       ))}
     </>
   )
 }
 
 // ─── Inline editor for a School Year ─────────────────────────────────────────
-function SchoolYearCard({ year }: { year: SchoolYear }) {
+function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: SchoolYear[] }) {
   const router = useRouter()
   const [expanded, setExpanded] = useState(true)
   const [editingYear, setEditingYear] = useState(false)
+  const [duplicatingYear, setDuplicatingYear] = useState(false)
   const [showAddTerm, setShowAddTerm] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -202,6 +299,24 @@ function SchoolYearCard({ year }: { year: SchoolYear }) {
       const res = await deleteSchoolYear(year.id)
       if (res?.error) toast.error(res.error)
       else { toast.success(`"${year.name}" deleted`); refresh() }
+    })
+  }
+
+  const handleDuplicateYear = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const name = fd.get("name") as string
+    const startDate = fd.get("startDate") as string
+    const endDate = fd.get("endDate") as string
+
+    startTransition(async () => {
+      const res = await duplicateSchoolYear(year.id, name, startDate, endDate)
+      if (res?.error) toast.error(res.error)
+      else {
+        toast.success(`"${year.name}" duplicated`)
+        setDuplicatingYear(false)
+        refresh()
+      }
     })
   }
 
@@ -269,6 +384,9 @@ function SchoolYearCard({ year }: { year: SchoolYear }) {
               Set Active
             </Button>
           )}
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-teal-600" onClick={() => setDuplicatingYear(e => !e)} title="Duplicate year">
+            <Copy className="w-3.5 h-3.5" />
+          </Button>
           <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-indigo-600" onClick={() => setEditingYear(e => !e)} title="Edit year">
             <Pencil className="w-3.5 h-3.5" />
           </Button>
@@ -299,6 +417,32 @@ function SchoolYearCard({ year }: { year: SchoolYear }) {
               {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Save
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => setEditingYear(false)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
+          </div>
+        </form>
+      )}
+
+      {duplicatingYear && (
+        <form onSubmit={handleDuplicateYear} className="p-4 bg-teal-50 dark:bg-teal-900/20 border-b border-teal-100 dark:border-teal-900/30 space-y-3">
+          <h4 className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest">Duplicate School Year</h4>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Year Name</label>
+              <Input name="name" defaultValue={`Copy of ${year.name}`} required className="h-8 text-sm" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
+              <input type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
+              <input type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={pending} className="bg-teal-600 hover:bg-teal-700 text-white">
+              {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Duplicate
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setDuplicatingYear(false)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
           </div>
         </form>
       )}
@@ -367,6 +511,8 @@ function SchoolYearCard({ year }: { year: SchoolYear }) {
                   allTerms={year.terms}
                   depth={0}
                   onDone={refresh}
+                  schoolYears={schoolYears}
+                  currentSchoolYearId={year.id}
                 />
               ))}
             </div>
@@ -444,7 +590,7 @@ export function TermsManagerClient({ schoolYears }: { schoolYears: SchoolYear[] 
       ) : (
         <div className="space-y-4">
           {schoolYears.map(year => (
-            <SchoolYearCard key={year.id} year={year as any} />
+            <SchoolYearCard key={year.id} year={year as any} schoolYears={schoolYears} />
           ))}
         </div>
       )}

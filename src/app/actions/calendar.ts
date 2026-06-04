@@ -36,6 +36,7 @@ export async function generateCalendar(year: number, month: number) {
   }
 
   revalidatePath("/dashboard/admin/calendar")
+  revalidatePath("/dashboard/calendar")
   return { success: true }
 }
 
@@ -61,6 +62,7 @@ export async function declareSnowDay(dateStr: string) {
   if (targetDay.blockDay === "NONE") {
     // If it wasn't an instructional block day anyway, no need to shift
     revalidatePath("/dashboard/admin/calendar")
+    revalidatePath("/dashboard/calendar")
     return { success: true }
   }
 
@@ -91,6 +93,7 @@ export async function declareSnowDay(dateStr: string) {
   // The last block day simply falls off the edge of the calendar (dropped)
   
   revalidatePath("/dashboard/admin/calendar")
+  revalidatePath("/dashboard/calendar")
   return { success: true }
 }
 
@@ -115,6 +118,7 @@ export async function updateCalendarDay(dateStr: string, updates: { type?: DayTy
   })
 
   revalidatePath("/dashboard/admin/calendar")
+  revalidatePath("/dashboard/calendar")
   return { success: true }
 }
 

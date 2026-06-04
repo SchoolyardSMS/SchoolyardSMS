@@ -6,7 +6,7 @@ import { generateCalendar, updateCalendarDay, declareSnowDay } from "@/app/actio
 import { toast } from "sonner"
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns"
 
-export function CalendarGrid({ initialDays }: { initialDays: CalendarDay[] }) {
+export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: CalendarDay[], readOnly?: boolean }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [days, setDays] = useState(initialDays)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -91,13 +91,15 @@ export function CalendarGrid({ initialDays }: { initialDays: CalendarDay[] }) {
             &rarr;
           </button>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="px-4 py-2 bg-[var(--school-primary,#4f46e5)] text-white rounded-lg text-sm font-medium disabled:opacity-50"
-        >
-          {isGenerating ? "Generating..." : "Initialize Month"}
-        </button>
+        {!readOnly && (
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="px-4 py-2 bg-[var(--school-primary,#4f46e5)] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+            {isGenerating ? "Generating..." : "Initialize Month"}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden">
@@ -124,8 +126,9 @@ export function CalendarGrid({ initialDays }: { initialDays: CalendarDay[] }) {
           return (
             <div
               key={date.toString()}
-              onClick={() => setSelectedDay(dayData || { id: "", date, type: "INSTRUCTIONAL", hasCommunityPeriod: false, name: null, blockDay: "NONE", isMidterm: false, isFinal: false, createdAt: new Date(), updatedAt: new Date() })}
-              className={`bg-white dark:bg-slate-900 min-h-[100px] p-2 border-t border-transparent hover:border-[var(--school-primary,#4f46e5)] cursor-pointer transition-colors relative
+              onClick={() => !readOnly && setSelectedDay(dayData || { id: "", date, type: "INSTRUCTIONAL", hasCommunityPeriod: false, name: null, blockDay: "NONE", isMidterm: false, isFinal: false, createdAt: new Date(), updatedAt: new Date() })}
+              className={`bg-white dark:bg-slate-900 min-h-[100px] p-2 border-t border-transparent relative transition-colors
+                ${!readOnly ? "hover:border-[var(--school-primary,#4f46e5)] cursor-pointer" : "cursor-default"}
                 ${dayData?.type === "HOLIDAY" ? "bg-red-50 dark:bg-red-900/10" : ""}
                 ${dayData?.type === "STAFF_DEVELOPMENT" ? "bg-amber-50 dark:bg-amber-900/10" : ""}
                 ${dayData?.type === "SNOW_DAY" ? "bg-cyan-50 dark:bg-cyan-900/10" : ""}

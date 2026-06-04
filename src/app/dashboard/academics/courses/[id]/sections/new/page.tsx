@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { SectionForm } from "@/components/dashboard/academics/section-form"
 
+import { getActiveSchoolYearTerms } from "@/lib/terms"
+
 export const metadata = { title: "New Section | Schoolyard" }
 
 export default async function NewSectionPage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,10 +29,7 @@ export default async function NewSectionPage({ params }: { params: Promise<{ id:
     orderBy: { periodNumber: 'asc' }
   })
 
-  const terms = await db.term.findMany({
-    include: { schoolYear: true },
-    orderBy: { startDate: 'desc' }
-  })
+  const terms = await getActiveSchoolYearTerms()
 
   return (
     <div className="flex-1 p-8 pt-6 max-w-2xl space-y-6">

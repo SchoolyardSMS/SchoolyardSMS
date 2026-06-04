@@ -43,6 +43,24 @@ export default async function DisciplinePage({
     where.studentId = student.id
   }
 
+  const getFilterUrl = (updates: { status?: string | null; severity?: string | null; category?: string | null }) => {
+    const params = new URLSearchParams()
+    if (sp.status) params.set("status", sp.status)
+    if (sp.severity) params.set("severity", sp.severity)
+    if (sp.category) params.set("category", sp.category)
+
+    Object.entries(updates).forEach(([key, val]) => {
+      if (val === null) {
+        params.delete(key)
+      } else if (val !== undefined) {
+        params.set(key, val)
+      }
+    })
+
+    const queryStr = params.toString()
+    return queryStr ? `/dashboard/discipline?${queryStr}` : "/dashboard/discipline"
+  }
+
   const [incidents, counts] = await Promise.all([
     db.incident.findMany({
       where,
@@ -99,7 +117,7 @@ export default async function DisciplinePage({
           ].map(({ key, icon: Icon, label, color }) => (
             <Link
               key={key}
-              href={sp.status === key ? "/dashboard/discipline" : `/dashboard/discipline?status=${key}`}
+              href={sp.status === key ? getFilterUrl({ status: null }) : getFilterUrl({ status: key })}
               className={cn(
                 "group rounded-2xl border p-5 flex items-center gap-4 transition-all shadow-sm",
                 sp.status === key 
@@ -127,7 +145,7 @@ export default async function DisciplinePage({
             {["MINOR", "MODERATE", "SEVERE"].map((s) => (
               <Link
                 key={s}
-                href={sp.severity === s ? "/dashboard/discipline" : `/dashboard/discipline?severity=${s}`}
+                href={sp.severity === s ? getFilterUrl({ severity: null }) : getFilterUrl({ severity: s })}
                 className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all",
                   sp.severity === s
@@ -142,7 +160,7 @@ export default async function DisciplinePage({
             {Object.entries(categoryLabel).map(([key, label]) => (
               <Link
                 key={key}
-                href={sp.category === key ? "/dashboard/discipline" : `/dashboard/discipline?category=${key}`}
+                href={sp.category === key ? getFilterUrl({ category: null }) : getFilterUrl({ category: key })}
                 className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all",
                   sp.category === key

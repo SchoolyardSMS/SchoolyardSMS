@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { getActiveSchoolYearTerms } from "@/lib/terms"
 import { PublishReportCardsClient } from "./publish-client"
 import { ReportCardDownloader } from "@/app/dashboard/directory/[id]/report-card-downloader"
 
@@ -31,9 +32,7 @@ export default async function ReportsPage() {
     })
   }
 
-  const terms = await db.term.findMany({
-    orderBy: { startDate: "desc" }
-  })
+  const terms = await getActiveSchoolYearTerms()
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6 bg-transparent">

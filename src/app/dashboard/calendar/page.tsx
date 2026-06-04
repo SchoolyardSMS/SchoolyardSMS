@@ -8,11 +8,13 @@ export const metadata = {
   title: "Academic Calendar | Schoolyard",
 }
 
-export default async function AdminCalendarPage() {
+export default async function PublicCalendarPage() {
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== "ADMIN") {
-    redirect("/dashboard")
+  if (!session) {
+    redirect("/login")
   }
+
+  const isAdmin = session.user?.role === "ADMIN"
 
   // Fetch the current academic year's days. We'll just fetch a wide range for now.
   const today = new Date()
@@ -37,18 +39,25 @@ export default async function AdminCalendarPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Academic Calendar</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Configure instructional days, holidays, and schedule community periods.
+            {isAdmin
+              ? "Configure instructional days, holidays, and schedule community periods."
+              : "View instructional days, holidays, and scheduled community periods."}
           </p>
         </div>
-        <div className="flex gap-2">
-          <a href="/dashboard/admin/calendar/terms" className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-            Terms & Years Setup
-          </a>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            <a
+              href="/dashboard/admin/calendar/terms"
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              Terms & Years Setup
+            </a>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
-        <CalendarGrid initialDays={days} />
+        <CalendarGrid initialDays={days} readOnly={!isAdmin} />
       </div>
     </div>
   )

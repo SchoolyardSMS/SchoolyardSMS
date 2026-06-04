@@ -19,6 +19,8 @@ import { deleteSection } from "@/app/actions/academics"
 import { Trash2 } from "lucide-react"
 import { MarkdownContent } from "@/components/ui/markdown-content"
 
+import { getActiveSchoolYearTerms } from "@/lib/terms"
+
 export const metadata = {
   title: "Course Details | Schoolyard",
 }
@@ -63,10 +65,7 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
     periods = await db.bellPeriod.findMany({
       orderBy: { periodNumber: 'asc' }
     })
-    terms = await db.term.findMany({
-      include: { schoolYear: true },
-      orderBy: { startDate: 'desc' }
-    })
+    terms = await getActiveSchoolYearTerms()
   }
 
   return (

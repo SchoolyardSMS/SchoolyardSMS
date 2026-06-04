@@ -55,6 +55,30 @@ export function SectionForm({
   const [termId, setTermId] = React.useState(initialData?.termId || "")
   const [bellPeriodId, setBellPeriodId] = React.useState(initialData?.bellPeriodId || "NONE")
 
+  const yearTerms = React.useMemo(() => terms.filter(t => t.type === "YEAR"), [terms])
+  const semesterTerms = React.useMemo(() => terms.filter(t => t.type === "SEMESTER"), [terms])
+
+  const initialType = React.useMemo(() => {
+    if (initialData?.termId) {
+      const activeTerm = terms.find(t => t.id === initialData.termId)
+      if (activeTerm?.type === "YEAR") return "YEAR"
+    }
+    return "SEMESTER"
+  }, [initialData?.termId, terms])
+
+  const [classType, setClassType] = React.useState<"YEAR" | "SEMESTER">(initialType)
+
+  const handleClassTypeChange = (type: "YEAR" | "SEMESTER") => {
+    setClassType(type)
+    if (type === "YEAR") {
+      const firstYear = yearTerms[0]
+      setTermId(firstYear ? firstYear.id : "")
+    } else {
+      const firstSem = semesterTerms[0]
+      setTermId(firstSem ? firstSem.id : "")
+    }
+  }
+
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="courseId" value={courseId} />
@@ -78,22 +102,71 @@ export function SectionForm({
           </select>
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Class Duration Type</Label>
+          <div className="flex gap-6 items-center">
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              <input 
+                type="radio" 
+                name="classType" 
+                value="YEAR"
+                checked={classType === "YEAR"}
+                onChange={() => handleClassTypeChange("YEAR")}
+                className="text-indigo-600 focus:ring-indigo-500"
+              />
+              Year-Long
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              <input 
+                type="radio" 
+                name="classType" 
+                value="SEMESTER"
+                checked={classType === "SEMESTER"}
+                onChange={() => handleClassTypeChange("SEMESTER")}
+                className="text-indigo-600 focus:ring-indigo-500"
+              />
+              Semester-Long
+            </label>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="termId">Term <span className="text-red-500">*</span></Label>
-            <select 
-              name="termId" 
-              value={termId} 
-              onChange={(e) => setTermId(e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="" disabled>Select a term...</option>
-              {terms.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.schoolYear.name})
-                </option>
-              ))}
-            </select>
+            {classType === "YEAR" ? (
+              <>
+                <Label htmlFor="termId">Academic Year <span className="text-red-500">*</span></Label>
+                <select 
+                  name="termId" 
+                  value={termId} 
+                  onChange={(e) => setTermId(e.target.value)}
+                  className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="" disabled>Select Year...</option>
+                  {yearTerms.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.displayName || t.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : (
+              <>
+                <Label htmlFor="termId">Choose Semester <span className="text-red-500">*</span></Label>
+                <select 
+                  name="termId" 
+                  value={termId} 
+                  onChange={(e) => setTermId(e.target.value)}
+                  className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="" disabled>Choose Semester...</option>
+                  {semesterTerms.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.displayName || t.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
             <p className="text-[10px] text-slate-500">
               Legacy: {initialData?.legacyTerm || "None"}
             </p>
