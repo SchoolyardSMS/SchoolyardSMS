@@ -3,6 +3,8 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
+const CSV_HEADERS = ["Date", "Student Name", "Course", "Term", "Status"]
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "TEACHER")) {
@@ -19,7 +21,6 @@ export async function GET(req: NextRequest) {
   })
 
   // Create CSV content
-  const headers = ["Date", "Student Name", "Course", "Term", "Status"]
   const rows = attendance.map(a => [
     new Date(a.date).toLocaleDateString("en-US", { timeZone: "UTC" }),
     a.student.user.name,
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     a.status
   ])
 
-  const csvContent = [headers, ...rows]
+  const csvContent = [CSV_HEADERS, ...rows]
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
     .join("\n")
 

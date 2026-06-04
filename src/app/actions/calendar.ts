@@ -123,6 +123,10 @@ export async function updateCalendarDay(dateStr: string, updates: { type?: DayTy
 }
 
 export async function getCalendarDays(start: Date, end: Date) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
   return await db.calendarDay.findMany({
     where: {
       date: {

@@ -21,6 +21,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 
+const STATUS_CONFIG: Record<string, { icon: any; color: string; activeClass: string }> = {
+  PRESENT: { icon: CheckCircle,  color: "text-emerald-500", activeClass: "bg-emerald-600 text-white border-transparent" },
+  ABSENT:  { icon: XCircle,      color: "text-rose-500",    activeClass: "bg-rose-600 text-white border-transparent" },
+  TARDY:   { icon: Clock,        color: "text-amber-500",   activeClass: "bg-amber-600 text-white border-transparent" },
+  EXCUSED: { icon: AlertCircle,  color: "text-blue-500",    activeClass: "bg-blue-600 text-white border-transparent" },
+}
+
 export function AttendanceTracker({ sectionId, enrollments, initialData }: any) {
   const router = useRouter()
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -79,12 +86,7 @@ export function AttendanceTracker({ sectionId, enrollments, initialData }: any) 
     }
   }
 
-  const statusConfig: Record<string, { icon: any; color: string; activeClass: string }> = {
-    PRESENT: { icon: CheckCircle,  color: "text-emerald-500", activeClass: "bg-emerald-600 text-white border-transparent" },
-    ABSENT:  { icon: XCircle,      color: "text-rose-500",    activeClass: "bg-rose-600 text-white border-transparent" },
-    TARDY:   { icon: Clock,        color: "text-amber-500",   activeClass: "bg-amber-600 text-white border-transparent" },
-    EXCUSED: { icon: AlertCircle,  color: "text-blue-500",    activeClass: "bg-blue-600 text-white border-transparent" },
-  }
+
 
   return (
     <div className="space-y-6">
@@ -156,7 +158,7 @@ export function AttendanceTracker({ sectionId, enrollments, initialData }: any) 
                 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="grid grid-cols-2 sm:flex gap-1.5 flex-1 sm:flex-none">
-                    {Object.entries(statusConfig).map(([status, config]) => {
+                    {Object.entries(STATUS_CONFIG).map(([status, config]) => {
                       const isActive = currentStatus === status
                       const Icon = config.icon
                       return (

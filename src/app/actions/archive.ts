@@ -320,21 +320,21 @@ export async function runSchoolYearRollover(archiveYearId: string, graduateGrade
       await archiveAndCompressStudent(student.id)
     }
 
-    // 4. Promote other students to next grade level
-    await db.student.updateMany({
-      where: { gradeLevel: { lt: graduateGradeLevel }, isArchived: false },
-      data: {
-        gradeLevel: {
-          increment: 1
+    // 4. Promote other students to next grade level and deactivate this year in parallel
+    await Promise.all([
+      db.student.updateMany({
+        where: { gradeLevel: { lt: graduateGradeLevel }, isArchived: false },
+        data: {
+          gradeLevel: {
+            increment: 1
+          }
         }
-      }
-    })
-
-    // 5. Deactivate this year
-    await db.schoolYear.update({
-      where: { id: archiveYearId },
-      data: { isActive: false }
-    })
+      }),
+      db.schoolYear.update({
+        where: { id: archiveYearId },
+        data: { isActive: false }
+      })
+    ])
 
     // 6. Migrate previously archived legacy sections to new format
     const legacyArchivedSections = await db.section.findMany({
@@ -364,6 +364,11 @@ export async function runSchoolYearRollover(archiveYearId: string, graduateGrade
  * Fetch and decompress a compressed history record by type and ID.
  */
 export async function getDecompressedArchive(entityType: "SECTION" | "STUDENT", entityId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
   const archive = await db.compressedArchive.findFirst({
     where: { entityType, entityId }
   })

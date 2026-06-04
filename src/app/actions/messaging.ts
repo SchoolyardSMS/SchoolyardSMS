@@ -9,6 +9,7 @@ import { Resend } from "resend"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { resolveAudienceRecipients } from "@/lib/messaging-utils"
+import { enqueueBroadcast } from "@/lib/queue"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -216,8 +217,7 @@ export async function sendSchoolMessage(formData: FormData) {
 
       await db.broadcastDelivery.createMany({ data: deliveryRecords })
 
-      // Enqueue background processing (falls back to in-process processor if no Redis configured)
-      const { enqueueBroadcast } = await import('@/lib/queue')
+      // Enqueue background processing
       await enqueueBroadcast(broadcast.id)
 
       revalidatePath("/dashboard/messages")
@@ -240,6 +240,10 @@ export async function markAsRead(messageId: string) {
 }
 
 export async function sendSystemMessage(senderId: string, receiverId: string, subject: string, body: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
   const receiver = await db.user.findUnique({ where: { id: receiverId } })
   if (!receiver?.email) return null
 
@@ -281,6 +285,10 @@ export async function sendSystemMessage(senderId: string, receiverId: string, su
 }
 
 export async function sendSystemBatchMessages(senderId: string, recipients: { userId: string, email: string, name: string }[], subject: string, getBody: (name: string) => string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
   if (recipients.length === 0) return 0
 
   const sender = await db.user.findUnique({ where: { id: senderId } })

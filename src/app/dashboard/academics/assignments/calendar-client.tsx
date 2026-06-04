@@ -17,6 +17,8 @@ interface AssignmentCalendarProps {
   initialStart: string
 }
 
+const DAYS_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+
 export function AssignmentCalendar({ initialAssignments, initialStart }: AssignmentCalendarProps) {
   const [weekOffset, setWeekOffset] = useState(0)
   const [mobileDayIndex, setMobileDayIndex] = useState(new Date().getDay())
@@ -25,8 +27,7 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
   const start = new Date(baseStart)
   start.setDate(baseStart.getDate() + (weekOffset * 7))
 
-  const daysLabels = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
-  const dates = daysLabels.map((_, i) => {
+  const dates = DAYS_LABELS.map((_, i) => {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
     return d
@@ -83,7 +84,7 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
              onClick={() => setMobileDayIndex(i)}
              className={`flex flex-col items-center p-2 rounded-xl transition-all w-12 ${mobileDayIndex === i ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
            >
-             <span className="text-[9px] font-black uppercase">{daysLabels[i].charAt(0)}</span>
+             <span className="text-[9px] font-black uppercase">{DAYS_LABELS[i].charAt(0)}</span>
              <span className="text-sm font-black">{date.getDate()}</span>
            </button>
          ))}
@@ -97,7 +98,7 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
           >
             <div className={`p-4 text-center border-b border-slate-50 dark:border-slate-800 transition-colors ${date.toDateString() === now.toDateString() ? 'bg-indigo-50/50 dark:bg-indigo-950/10' : 'bg-slate-50/30 dark:bg-slate-800/10'}`}>
                <span className={`text-[10px] font-black uppercase tracking-widest ${date.toDateString() === now.toDateString() ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-500'}`}>
-                 {daysLabels[i]}
+                 {DAYS_LABELS[i]}
                </span>
                <div className={`mt-2 h-10 w-10 mx-auto flex items-center justify-center rounded-2xl text-sm font-black transition-all ${date.toDateString() === now.toDateString() ? 'bg-indigo-600 text-white shadow-xl scale-110' : 'text-slate-400 dark:text-slate-600'}`}>
                  {date.getDate()}

@@ -8,6 +8,14 @@ export const metadata = {
   title: "Dashboard | Schoolyard",
 }
 
+const COLOR_MAP: Record<string, string> = {
+  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800",
+  blue:   "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
+  emerald:"bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800",
+  red:    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800",
+  slate:  "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-700",
+}
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")
@@ -108,13 +116,7 @@ export default async function DashboardPage() {
     ]
   }
 
-  const colorMap: Record<string, string> = {
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800",
-    blue:   "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
-    emerald:"bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800",
-    red:    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800",
-    slate:  "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-700",
-  }
+
 
   return (
     <div className="p-4 sm:p-8 space-y-8">
@@ -143,7 +145,7 @@ export default async function DashboardPage() {
       {stats.length > 0 && (
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(stats.length, 4)} gap-4`}>
           {stats.map(stat => {
-            const cardClass = `rounded-xl border p-6 ${colorMap[stat.color]} transition-shadow hover:shadow-md`
+            const cardClass = `rounded-xl border p-6 ${COLOR_MAP[stat.color]} transition-shadow hover:shadow-md`
             return stat.href ? (
               <Link key={stat.label} href={stat.href} className={cardClass}>
                 <p className="text-sm font-medium opacity-80">{stat.label}</p>

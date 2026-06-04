@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label"
 import { MarkdownEditor } from "@/components/ui/markdown-editor"
 
 export default async function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const session = await getServerSession(authOptions)
+  const [resolvedParams, session] = await Promise.all([params, getServerSession(authOptions)])
+  const { id } = resolvedParams
   if (!session || session.user?.role !== 'ADMIN') redirect("/login")
 
   const course = await db.course.findUnique({ where: { id } })

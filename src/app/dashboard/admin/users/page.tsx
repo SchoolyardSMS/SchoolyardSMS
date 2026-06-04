@@ -30,14 +30,16 @@ export default async function AdminUsersPage({
   const session = await getServerSession(authOptions)
   if (!session || session.user?.role !== 'ADMIN') redirect("/login")
 
-  const currentPage = parseInt((await searchParams).page || "1", 10)
-  const { users, totalPages } = await getUsers(currentPage)
+  const resolvedSearchParams = await searchParams
+  const currentPage = parseInt(resolvedSearchParams.page || "1", 10)
 
-  // Fetch all students for the parent invite dropdown
-  const allStudents = await db.student.findMany({
-    include: { user: true },
-    orderBy: { user: { name: "asc" } }
-  })
+  const [{ users, totalPages }, allStudents] = await Promise.all([
+    getUsers(currentPage),
+    db.student.findMany({
+      include: { user: true },
+      orderBy: { user: { name: "asc" } }
+    })
+  ])
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6 bg-transparent">

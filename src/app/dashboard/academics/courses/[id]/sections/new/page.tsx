@@ -20,16 +20,16 @@ export default async function NewSectionPage({ params }: { params: Promise<{ id:
   if (!course) return notFound()
 
   // Need teachers and bell periods for the form
-  const teachers = await db.teacher.findMany({
-    include: { user: true },
-    orderBy: { user: { name: 'asc' } }
-  })
-
-  const periods = await db.bellPeriod.findMany({
-    orderBy: { periodNumber: 'asc' }
-  })
-
-  const terms = await getActiveSchoolYearTerms()
+  const [teachers, periods, terms] = await Promise.all([
+    db.teacher.findMany({
+      include: { user: true },
+      orderBy: { user: { name: 'asc' } }
+    }),
+    db.bellPeriod.findMany({
+      orderBy: { periodNumber: 'asc' }
+    }),
+    getActiveSchoolYearTerms()
+  ])
 
   return (
     <div className="flex-1 p-8 pt-6 max-w-2xl space-y-6">

@@ -14,9 +14,58 @@ const DAY_LABELS: Record<string, string> = {
   MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun"
 }
 
+const RANDOM_COLORS = [
+  "var(--school-primary,#4f46e5)",
+  "#0891b2", "#059669", "#d97706", "#7c3aed", "#db2777",
+]
+
+function SectionCard({ section, colorIdx, blockMatch }: { section: any; colorIdx: number, blockMatch?: string }) {
+  const color = RANDOM_COLORS[colorIdx % RANDOM_COLORS.length]
+  let badgeLabel = section.course.code
+  if (section.bellPeriod) {
+    if (blockMatch) {
+      badgeLabel = `${section.bellPeriod.periodNumber}${blockMatch}` // e.g. "1A"
+    } else {
+      badgeLabel = `P${section.bellPeriod.periodNumber}` // e.g. "P1"
+    }
+  }
+
+  return (
+    <Link href={`/dashboard/academics/sections/${section.id}`} className="group flex items-start gap-3 rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-all">
+      <div className="rounded-lg p-2 shrink-0" style={{ background: `${color}20` }}>
+        <BookOpen className="h-5 w-5" style={{ color }} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-sm group-hover:underline truncate">{section.course.name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+          {section.teacher?.user?.name ? `${section.teacher.user.name} · ` : ""}
+          {section.room ?? "Room TBA"}
+        </p>
+        {section.bellPeriod && (
+          <div className="flex items-center gap-1 mt-2">
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {section.bellPeriod.startTime} – {section.bellPeriod.endTime}
+            </span>
+          </div>
+        )}
+        {!section.bellPeriod && section.schedule && (
+          <p className="text-xs text-muted-foreground mt-1">{section.schedule}</p>
+        )}
+        {section._count && (
+          <p className="text-xs text-muted-foreground mt-0.5">{section._count.enrollments} students</p>
+        )}
+      </div>
+      <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: color }}>
+        {badgeLabel}
+      </span>
+    </Link>
+  )
+}
+
 export default async function SchedulePage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const { view = 'list' } = await searchParams
-  const session = await getServerSession(authOptions)
+  const [resolvedSearchParams, session] = await Promise.all([searchParams, getServerSession(authOptions)])
+  const { view = 'list' } = resolvedSearchParams
   if (!session) redirect("/login")
 
   const role   = session.user?.role
@@ -87,54 +136,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   // Also collect unscheduled/all
   const unscheduledSections = sections.filter(s => !s.bellPeriod || s.bellPeriod.days.length === 0)
 
-  const randomColors = [
-    "var(--school-primary,#4f46e5)",
-    "#0891b2", "#059669", "#d97706", "#7c3aed", "#db2777",
-  ]
 
-  function SectionCard({ section, colorIdx, blockMatch }: { section: any; colorIdx: number, blockMatch?: string }) {
-    const color = randomColors[colorIdx % randomColors.length]
-    let badgeLabel = section.course.code
-    if (section.bellPeriod) {
-      if (blockMatch) {
-        badgeLabel = `${section.bellPeriod.periodNumber}${blockMatch}` // e.g. "1A"
-      } else {
-        badgeLabel = `P${section.bellPeriod.periodNumber}` // e.g. "P1"
-      }
-    }
-
-    return (
-      <Link href={`/dashboard/academics/sections/${section.id}`} className="group flex items-start gap-3 rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-all">
-        <div className="rounded-lg p-2 shrink-0" style={{ background: `${color}20` }}>
-          <BookOpen className="h-5 w-5" style={{ color }} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm group-hover:underline truncate">{section.course.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {section.teacher?.user?.name ? `${section.teacher.user.name} · ` : ""}
-            {section.room ?? "Room TBA"}
-          </p>
-          {section.bellPeriod && (
-            <div className="flex items-center gap-1 mt-2">
-              <Clock className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                {section.bellPeriod.startTime} – {section.bellPeriod.endTime}
-              </span>
-            </div>
-          )}
-          {!section.bellPeriod && section.schedule && (
-            <p className="text-xs text-muted-foreground mt-1">{section.schedule}</p>
-          )}
-          {section._count && (
-            <p className="text-xs text-muted-foreground mt-0.5">{section._count.enrollments} students</p>
-          )}
-        </div>
-        <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: color }}>
-          {badgeLabel}
-        </span>
-      </Link>
-    )
-  }
 
   return (
     <div className="flex-1 p-8 pt-6 space-y-6">

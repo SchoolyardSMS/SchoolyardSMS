@@ -32,8 +32,9 @@ export default async function GradebookPage({
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
 
-  const { id } = await params
-  const { termId: selectedTermId, blank } = await searchParams
+  const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams])
+  const { id } = resolvedParams
+  const { termId: selectedTermId, blank } = resolvedSearchParams
 
   const section = await db.section.findUnique({
     where: { id },

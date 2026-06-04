@@ -19,8 +19,8 @@ import { getActiveSchoolYearTerms } from "@/lib/terms"
 import { SectionForm } from "@/components/dashboard/academics/section-form"
 
 export default async function EditSectionPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const session = await getServerSession(authOptions)
+  const [resolvedParams, session] = await Promise.all([params, getServerSession(authOptions)])
+  const { id } = resolvedParams
   if (!session || session.user?.role !== 'ADMIN') redirect("/login")
 
   const section = await db.section.findUnique({
@@ -29,9 +29,11 @@ export default async function EditSectionPage({ params }: { params: Promise<{ id
   })
   if (!section) notFound()
 
-  const teachers = await db.teacher.findMany({ include: { user: true } })
-  const bellPeriods = await db.bellPeriod.findMany()
-  const terms = await getActiveSchoolYearTerms()
+  const [teachers, bellPeriods, terms] = await Promise.all([
+    db.teacher.findMany({ include: { user: true } }),
+    db.bellPeriod.findMany(),
+    getActiveSchoolYearTerms()
+  ])
 
   async function handleUpdate(formData: FormData) {
     "use server"

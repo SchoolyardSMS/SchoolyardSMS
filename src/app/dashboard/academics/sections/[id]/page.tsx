@@ -45,8 +45,9 @@ export default async function SectionDetailsPage({
   noStore()
   const role = session.user.role
 
-  const { id } = await params
-  const { tab = "overview", termId: selectedTermId } = await searchParams
+  const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams])
+  const { id } = resolvedParams
+  const { tab = "overview", termId: selectedTermId } = resolvedSearchParams
 
   const section = (await db.section.findUnique({
     where: { id },

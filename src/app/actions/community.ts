@@ -267,11 +267,13 @@ export async function nudgeAllMissingStudents(calendarDayId: string) {
   if (!calendarDay) throw new Error("Calendar day not found")
 
   // Find all students missing for this day
-  const allStudents = await db.student.findMany({ include: { user: true } })
-  const enrollments = await db.communityEnrollment.findMany({
-    where: { session: { calendarDayId } },
-    select: { studentId: true }
-  })
+  const [allStudents, enrollments] = await Promise.all([
+    db.student.findMany({ include: { user: true } }),
+    db.communityEnrollment.findMany({
+      where: { session: { calendarDayId } },
+      select: { studentId: true }
+    })
+  ])
   const enrolledIds = new Set(enrollments.map(e => e.studentId))
   const missingStudents = allStudents.filter(s => !enrolledIds.has(s.id))
 

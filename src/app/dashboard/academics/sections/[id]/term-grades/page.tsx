@@ -12,8 +12,9 @@ export default async function TermGradesPage({ params, searchParams }: { params:
   const session = await getServerSession(authOptions)
   if (!session || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) redirect("/dashboard")
 
-  const { id } = await params
-  const { termId } = await searchParams
+  const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams])
+  const { id } = resolvedParams
+  const { termId } = resolvedSearchParams
 
   const [section, schoolSettings] = await Promise.all([
     db.section.findUnique({
@@ -66,16 +67,15 @@ export default async function TermGradesPage({ params, searchParams }: { params:
   const selectedTermId = termId || matchingActiveTerm?.id || section.termId
   const selectedTerm = possibleTerms.find(t => t.id === selectedTermId)
 
-  const enrollments = await db.enrollment.findMany({
-    where: { sectionId: id, status: "ENROLLED" },
-    include: {
-      student: { include: { user: true } },
-      termGrades: true
-    },
-    orderBy: { student: { user: { name: "asc" } } }
-  })
-
-  const [assignments, grades] = await Promise.all([
+  const [enrollments, assignments, grades] = await Promise.all([
+    db.enrollment.findMany({
+      where: { sectionId: id, status: "ENROLLED" },
+      include: {
+        student: { include: { user: true } },
+        termGrades: true
+      },
+      orderBy: { student: { user: { name: "asc" } } }
+    }),
     db.assignment.findMany({
       where: { sectionId: id, status: { in: ["PUBLISHED", "CLOSED"] } },
       orderBy: { dueDate: "asc" }

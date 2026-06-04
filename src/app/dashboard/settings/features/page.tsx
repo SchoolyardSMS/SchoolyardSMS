@@ -6,21 +6,22 @@ import { FeaturesSettingsClient } from "./features-client"
 
 export const metadata = { title: "Features & Modules | Schoolyard Settings" }
 
+const DEFAULT_FEATURES = { lms: true, discipline: true, community: true }
+
+const DEFAULT_ROLE_PERMISSIONS = `{
+  "STUDENT": ["view_grades", "view_assignments", "submit_assignments"],
+  "TEACHER": ["edit_grades", "create_assignments", "view_roster", "take_attendance"],
+  "PARENT": ["view_grades", "view_attendance", "view_report_cards"],
+  "ADMIN": ["all"]
+}`
+
 export default async function FeaturesSettingsPage() {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "ADMIN") redirect("/dashboard")
 
   const settings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
 
-  const defaultFeatures = { lms: true, discipline: true, community: true }
-  const features = settings?.featuresEnabled ? (settings.featuresEnabled as any) : defaultFeatures
-
-  const defaultRolePermissions = `{
-  "STUDENT": ["view_grades", "view_assignments", "submit_assignments"],
-  "TEACHER": ["edit_grades", "create_assignments", "view_roster", "take_attendance"],
-  "PARENT": ["view_grades", "view_attendance", "view_report_cards"],
-  "ADMIN": ["all"]
-}`
+  const features = settings?.featuresEnabled ? (settings.featuresEnabled as any) : DEFAULT_FEATURES
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -31,7 +32,7 @@ export default async function FeaturesSettingsPage() {
 
       <FeaturesSettingsClient
         features={features}
-        rolePermissionsJson={settings?.rolePermissions ? JSON.stringify(settings.rolePermissions, null, 2) : defaultRolePermissions}
+        rolePermissionsJson={settings?.rolePermissions ? JSON.stringify(settings.rolePermissions, null, 2) : DEFAULT_ROLE_PERMISSIONS}
       />
     </div>
   )

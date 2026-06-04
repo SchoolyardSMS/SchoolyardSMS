@@ -74,15 +74,16 @@ export async function resetPassword(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    await db.user.update({
-      where: { email: email.toLowerCase() },
-      data: { hashedPassword }
-    })
-
-    // Delete the token after use
-    await db.userToken.delete({
-      where: { id: userToken.id }
-    })
+    // Parallelize user password update and token deletion
+    await Promise.all([
+      db.user.update({
+        where: { email: email.toLowerCase() },
+        data: { hashedPassword }
+      }),
+      db.userToken.delete({
+        where: { id: userToken.id }
+      })
+    ])
 
     return { success: true }
   } catch (error) {

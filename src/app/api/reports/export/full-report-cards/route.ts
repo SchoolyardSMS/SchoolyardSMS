@@ -7,6 +7,8 @@ import autoTable from "jspdf-autotable"
 import { getActiveReportCardTemplate } from "@/app/actions/reports"
 import { calculateGrade, calculateGPA, getLetterGrade } from "@/lib/grading"
 
+const SIGNATURE_ROLES = ["principal", "teacher", "advisor"]
+
 function hexToRgb(hex: string): [number, number, number] {
   const cleanHex = hex.startsWith('#') ? hex : `#${hex}`
   const r = parseInt(cleanHex.slice(1, 3), 16)
@@ -21,39 +23,36 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
-  // Fetch the active template
-  const activeTemplate = await getActiveReportCardTemplate()
-  const layout = activeTemplate.layout as any
-  const sections = layout.sections || []
-
-  // Fetch all students with their enrollments and grades
-  const students = await (db.student as any).findMany({
-    include: {
-      user: true,
-      enrollments: {
-        where: { status: "ENROLLED" },
-        include: {
-          section: {
-            include: {
-              course: true,
-              term: { include: { schoolYear: true } },
-              teacher: { include: { user: true } },
-              assignments: { where: { status: "PUBLISHED" } }
+  // Fetch all necessary data in parallel
+  const [activeTemplate, students, allGrades, allAttendance, schoolSettings] = await Promise.all([
+    getActiveReportCardTemplate(),
+    (db.student as any).findMany({
+      include: {
+        user: true,
+        enrollments: {
+          where: { status: "ENROLLED" },
+          include: {
+            section: {
+              include: {
+                course: true,
+                term: { include: { schoolYear: true } },
+                teacher: { include: { user: true } },
+                assignments: { where: { status: "PUBLISHED" } }
+              }
             }
           }
         }
       }
-    }
-  })
+    }),
+    db.grade.findMany(),
+    db.attendance.findMany(),
+    db.schoolSettings.findUnique({ where: { id: "singleton" } })
+  ])
 
-  // Fetch all grades and attendance
-  const allGrades = await db.grade.findMany()
-  const allAttendance = await db.attendance.findMany()
-
+  const layout = activeTemplate.layout as any
+  const sections = layout.sections || []
   const doc = new jsPDF()
 
-  // Fetch School Settings once for branding and grading config
-  const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
   const schoolName = schoolSettings?.name || "Schoolyard Academy"
   const gradingScale = schoolSettings?.gradingScale
   const gpaScale = schoolSettings?.gpaScale ?? 4.0
@@ -291,9 +290,8 @@ export async function GET(req: NextRequest) {
 
       if (section.type === "SIGNATURE_BLOCKS") {
         currentY += 15
-        const roles = ["principal", "teacher", "advisor"]
         let xPos = 20
-        roles.forEach(role => {
+        SIGNATURE_ROLES.forEach(role => {
           if (section.config[role]) {
             doc.setDrawColor(15, 23, 42)
             doc.setLineWidth(0.5)

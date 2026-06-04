@@ -127,7 +127,7 @@ export async function mutateGrade(assignmentId: string, studentId: string, score
 
   const grade = await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
-    update: { score },
+    update: { score, feedback: previousGrade?.feedback },
     create: { assignmentId, studentId, score, feedback: "Updated via Quick Gradebook" }
   })
 
@@ -200,8 +200,8 @@ export async function updateAssignmentGrade(formData: FormData) {
 
   const grade = await db.grade.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId } },
-    update: { score, feedback, gradedAt: new Date() },
-    create: { assignmentId, studentId, score, feedback }
+    update: { score, feedback: feedback ?? previousGrade?.feedback, gradedAt: new Date() },
+    create: { assignmentId, studentId, score, feedback: feedback ?? undefined }
   })
 
   await logAuditEvent({

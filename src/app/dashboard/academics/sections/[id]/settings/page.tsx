@@ -6,6 +6,7 @@ import { SettingsClient } from "./settings-client"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Settings, ChevronLeft, AlertCircle } from "lucide-react"
+import { archiveSection } from "@/app/actions/academics"
 
 export const metadata = {
   title: "Section Settings | Schoolyard",
@@ -69,9 +70,7 @@ export default async function SectionSettingsPage({ params }: { params: Promise<
           </div>
           <form action={async () => {
             "use server"
-            const { archiveSection } = await import("@/app/actions/academics")
             await archiveSection(section.id)
-            const { redirect } = await import("next/navigation")
             redirect(`/dashboard/academics/courses/${section.courseId}`)
           }}>
             <Button type="submit" variant="destructive" className="rounded-full px-8 shadow-md">

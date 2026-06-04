@@ -24,6 +24,15 @@ export const metadata = {
   title: "My Courses | Schoolyard",
 }
 
+const COURSE_GRADIENTS = [
+  "from-indigo-600 to-indigo-800",
+  "from-emerald-600 to-emerald-800",
+  "from-rose-600 to-rose-800",
+  "from-blue-600 to-blue-800",
+  "from-violet-600 to-violet-800",
+  "from-amber-600 to-amber-800"
+]
+
 export default async function CoursesPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect("/login")
@@ -71,14 +80,7 @@ export default async function CoursesPage() {
 
     const sections = (student?.enrollments || []).map(enr => enr.section)
     
-    const gradients = [
-      "from-indigo-600 to-indigo-800",
-      "from-emerald-600 to-emerald-800",
-      "from-rose-600 to-rose-800",
-      "from-blue-600 to-blue-800",
-      "from-violet-600 to-violet-800",
-      "from-amber-600 to-amber-800"
-    ]
+
 
     return (
       <div className="p-8 max-w-7xl mx-auto space-y-10">
@@ -101,7 +103,7 @@ export default async function CoursesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {sections.map((sec, i) => (
-              <CourseCard key={sec.id} section={sec} gradient={gradients[i % gradients.length]} />
+              <CourseCard key={sec.id} section={sec} gradient={COURSE_GRADIENTS[i % COURSE_GRADIENTS.length]} />
             ))}
           </div>
         )}

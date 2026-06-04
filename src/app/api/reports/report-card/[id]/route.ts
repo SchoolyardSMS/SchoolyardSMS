@@ -6,6 +6,8 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { getActiveReportCardTemplate } from "@/app/actions/reports"
 
+const SIGNATURE_ROLES = ["principal", "teacher", "advisor"]
+
 function hexToRgb(hex: string): [number, number, number] {
   const cleanHex = hex.startsWith('#') ? hex : `#${hex}`
   const r = parseInt(cleanHex.slice(1, 3), 16)
@@ -247,9 +249,8 @@ export async function GET(
 
     if (section.type === "SIGNATURE_BLOCKS") {
       currentY += 15
-      const roles = ["principal", "teacher", "advisor"]
       let xPos = 20
-      roles.forEach(role => {
+      SIGNATURE_ROLES.forEach(role => {
         if (section.config[role]) {
           doc.setDrawColor(15, 23, 42)
           doc.setLineWidth(0.5)

@@ -20,12 +20,13 @@ export default async function ArchivesPortalPage({
     redirect("/dashboard")
   }
 
-  const { yearId, sectionId } = await searchParams
-
-  // Fetch all school years
-  const schoolYears = await db.schoolYear.findMany({
-    orderBy: { startDate: "desc" }
-  })
+  const [resolvedSearchParams, schoolYears] = await Promise.all([
+    searchParams,
+    db.schoolYear.findMany({
+      orderBy: { startDate: "desc" }
+    })
+  ])
+  const { yearId, sectionId } = resolvedSearchParams
 
   let archivedSections: any[] = []
   let selectedArchive: any = null

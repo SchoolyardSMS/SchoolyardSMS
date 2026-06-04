@@ -73,6 +73,10 @@ export async function deleteReportCardTemplate(id: string) {
 }
 
 export async function getActiveReportCardTemplate() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
   const template = await db.reportCardTemplate.findFirst({
     where: { isDefault: true }
   })
@@ -88,6 +92,10 @@ export async function getActiveReportCardTemplate() {
 }
 
 export async function getSchoolSettings() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
   const settings = await db.schoolSettings.findUnique({
     where: { id: "singleton" }
   })
