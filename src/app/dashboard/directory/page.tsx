@@ -13,6 +13,7 @@ import {
   ChevronLeft
 } from "lucide-react"
 import { getStudents } from "@/app/actions/academics"
+import { StudentDirectoryList } from "./directory-list"
 
 export default async function DirectoryPage({
   searchParams,
@@ -71,40 +72,10 @@ export default async function DirectoryPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {students.map((student: any) => (
-          <Link 
-            key={student.id} 
-            href={`/dashboard/directory/${student.id}`}
-            className="group block bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 hover:shadow-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-all transform hover:-translate-y-1"
-          >
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-full bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                <UserIcon className="h-7 w-7 text-indigo-600 dark:text-indigo-400 group-hover:text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg truncate text-foreground">{student.user.name}</h3>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <GraduationCap className="h-3 w-3" /> Grade {student.gradeLevel}
-                  </span>
-                  <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{student.id.substring(0, 8)}</span>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-indigo-600 transition-colors" />
-            </div>
-          </Link>
-        ))}
-
-        {students.length === 0 && (
-          <div className="col-span-full py-20 text-center border-2 border-dashed rounded-2xl border-slate-200 dark:border-slate-800">
-            <Search className="h-12 w-12 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-400">No students found</h3>
-            <p className="text-muted-foreground">Try adjusting your search terms or grade filter.</p>
-          </div>
-        )}
-      </div>
+      <StudentDirectoryList 
+        students={students} 
+        isAdmin={session.user.role === "ADMIN"} 
+      />
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

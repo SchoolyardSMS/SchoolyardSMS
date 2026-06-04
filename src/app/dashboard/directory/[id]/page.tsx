@@ -19,11 +19,14 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  FileText
+  FileText,
+  Archive
 } from "lucide-react"
 import { ReportCardDownloader } from "./report-card-downloader"
 import { formatDate } from "@/lib/dates"
 import { decrypt } from "@/lib/encryption"
+import { getDecompressedArchive } from "@/app/actions/archive"
+import { ArchiveStudentButton } from "./archive-button"
 
 export default async function StudentProfilePage({
   params,
@@ -69,9 +72,35 @@ export default async function StudentProfilePage({
 
   if (!student) return notFound()
 
-  // Decrypt sensitive health columns transparently on read (backward compatible)
-  student.medicalAlerts = decrypt(student.medicalAlerts)
-  student.accommodations = decrypt(student.accommodations)
+  let archiveData: any = null
+  let reportCards: any[] = []
+  
+  if (student.isArchived) {
+    archiveData = await getDecompressedArchive("STUDENT", id)
+    if (archiveData) {
+      // Map properties for rendering
+      student.medicalAlerts = decrypt(archiveData.medicalAlerts)
+      student.accommodations = decrypt(archiveData.accommodations)
+      
+      // Fetch corresponding terms for report cards in archive
+      const termIds = archiveData.reportCards?.map((rc: any) => rc.termId) || []
+      const terms = await db.term.findMany({
+        where: { id: { in: termIds } }
+      })
+      reportCards = (archiveData.reportCards || []).map((rc: any) => {
+        const termObj = terms.find((t: any) => t.id === rc.termId)
+        return {
+          ...rc,
+          term: termObj || { id: rc.termId, name: `Term (${rc.termId})`, type: "UNKNOWN" }
+        }
+      })
+    }
+  } else {
+    // Decrypt sensitive health columns transparently on read (backward compatible)
+    student.medicalAlerts = decrypt(student.medicalAlerts)
+    student.accommodations = decrypt(student.accommodations)
+    reportCards = student.reportCards || []
+  }
 
   const isSelf = session.user.id === student.userId
   const isAdmin = session.user.role === "ADMIN"
@@ -79,30 +108,45 @@ export default async function StudentProfilePage({
   const isMyChild = student.parents.some(p => p.parent.userId === session.user.id)
   
   const canViewSensitive = isAdmin || isTeacher || isSelf || isMyChild
+
   // --- LMS Calculations (Academics) ---
-  const activeEnrollments = student.enrollments.filter(e => e.status === "ENROLLED")
-
-  const coursesProgress = activeEnrollments.map(enr => {
-    const assignments = enr.section.assignments
-    let earned = 0
-    let possible = 0
-
-    assignments.forEach(a => {
-      const grade = a.grades[0]
-      if (grade && a.maxScore) {
-        earned += grade.score
-        possible += a.maxScore
+  let coursesProgress: Array<{ courseName: string; percentage: number | null; teacherId?: string }> = []
+  if (student.isArchived && archiveData) {
+    coursesProgress = (archiveData.enrollments || []).map((enr: any) => {
+      const termGrades = enr.termGrades || []
+      const scores = termGrades
+        .map((tg: any) => tg.overrideScore !== null ? tg.overrideScore : tg.calculatedScore)
+        .filter((s: any) => s !== null && s !== undefined)
+      const avgScore = scores.length > 0 ? (scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
+      return {
+        courseName: enr.courseName,
+        percentage: avgScore,
       }
     })
+  } else {
+    const activeEnrollments = student.enrollments.filter(e => e.status === "ENROLLED")
+    coursesProgress = activeEnrollments.map(enr => {
+      const assignments = enr.section.assignments
+      let earned = 0
+      let possible = 0
 
-    const percentage = possible > 0 ? (earned / possible) * 100 : null
+      assignments.forEach(a => {
+        const grade = a.grades[0]
+        if (grade && a.maxScore) {
+          earned += grade.score
+          possible += a.maxScore
+        }
+      })
 
-    return {
-      courseName: enr.section.course.name,
-      percentage,
-      teacherId: enr.section.teacherId
-    }
-  })
+      const percentage = possible > 0 ? (earned / possible) * 100 : null
+
+      return {
+        courseName: enr.section.course.name,
+        percentage,
+        teacherId: enr.section.teacherId
+      }
+    })
+  }
 
   const gradedCourses = coursesProgress.filter(cp => cp.percentage !== null)
   const coursesWithGrades = gradedCourses.length
@@ -110,10 +154,21 @@ export default async function StudentProfilePage({
   const overallGPA = coursesWithGrades > 0 ? (totalGradeSum / coursesWithGrades).toFixed(1) : "N/A"
 
   // --- SMS Calculations (Attendance & Behavior) ---
-  const totalAttendance = student.attendance.length
-  const presentCount = student.attendance.filter(a => a.status === "PRESENT" || a.status === "TARDY").length
-  const absentCount = student.attendance.filter(a => a.status === "ABSENT").length
-  const tardyCount = student.attendance.filter(a => a.status === "TARDY").length
+  const totalAttendance = student.isArchived && archiveData
+    ? archiveData.attendance?.length || 0
+    : student.attendance.length
+  
+  const presentCount = student.isArchived && archiveData
+    ? (archiveData.attendance || []).filter((a: any) => a.status === "PRESENT" || a.status === "TARDY").length
+    : student.attendance.filter(a => a.status === "PRESENT" || a.status === "TARDY").length
+
+  const absentCount = student.isArchived && archiveData
+    ? (archiveData.attendance || []).filter((a: any) => a.status === "ABSENT").length
+    : student.attendance.filter(a => a.status === "ABSENT").length
+
+  const tardyCount = student.isArchived && archiveData
+    ? (archiveData.attendance || []).filter((a: any) => a.status === "TARDY").length
+    : student.attendance.filter(a => a.status === "TARDY").length
   
   const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 100
 
@@ -133,6 +188,9 @@ export default async function StudentProfilePage({
             </Button>
             {isAdmin && (
               <>
+                {!student.isArchived && (
+                  <ArchiveStudentButton studentId={student.id} />
+                )}
                 <Button size="sm" variant="outline" asChild className="border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:bg-slate-900">
                   <Link href={`/dashboard/admin/students/${student.id}/edit`}>
                     <UserIcon className="w-4 h-4 mr-2" /> Edit Records
@@ -148,6 +206,16 @@ export default async function StudentProfilePage({
           </div>
         )}
       </div>
+
+      {student.isArchived && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-4 flex items-center gap-3 text-amber-800 dark:text-amber-300">
+          <Archive className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div>
+            <p className="font-semibold text-sm">Archived Record</p>
+            <p className="text-xs opacity-90">This profile contains archived and compressed historical data. It is read-only.</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* LEFT COLUMN: Identity & SMS Profile */}
@@ -185,7 +253,7 @@ export default async function StudentProfilePage({
                 <div className="mt-6 flex flex-col gap-2">
                   <ReportCardDownloader
                     studentId={student.id}
-                    reportCards={(student as any).reportCards || []}
+                    reportCards={reportCards || []}
                   />
                   <Button asChild variant="outline" className="w-full rounded-xl border-indigo-200 dark:border-indigo-800">
                     <a href={`/api/reports/transcript/${student.id}`} download>

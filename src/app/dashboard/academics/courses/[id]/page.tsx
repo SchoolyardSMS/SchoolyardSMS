@@ -106,14 +106,14 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {course.sections.filter((s: any) => !s.isArchived).length === 0 ? (
+              {course.sections.filter((s: any) => !s.isArchived && s.term?.schoolYear?.isActive).length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
                     No active sections found.
                   </TableCell>
                 </TableRow>
               ) : (
-                course.sections.filter((s: any) => !s.isArchived).map((section: any) => (
+                course.sections.filter((s: any) => !s.isArchived && s.term?.schoolYear?.isActive).map((section: any) => (
                   <TableRow key={section.id}>
                     <TableCell className="font-medium">
                       {section.term ? `${section.term.name} (${section.term.schoolYear.name})` : section.legacyTerm}
@@ -165,13 +165,13 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
       </div>
 
       {/* Archived Sections */}
-      {course.sections.some((s: any) => s.isArchived) && (
+      {course.sections.some((s: any) => s.isArchived || !s.term?.schoolYear?.isActive) && (
         <div className="mt-12 space-y-4 opacity-60 grayscale hover:grayscale-0 transition-all">
           <h3 className="text-xl font-semibold border-b pb-2 text-slate-500">Archived Sections</h3>
           <div className="rounded-md border bg-slate-50/50 dark:bg-slate-900/50">
             <Table>
               <TableBody>
-                {course.sections.filter((s: any) => s.isArchived).map((section: any) => (
+                {course.sections.filter((s: any) => s.isArchived || !s.term?.schoolYear?.isActive).map((section: any) => (
                   <TableRow key={section.id}>
                     <TableCell className="font-medium">
                       {section.term ? `${section.term.name} (${section.term.schoolYear.name})` : section.legacyTerm}

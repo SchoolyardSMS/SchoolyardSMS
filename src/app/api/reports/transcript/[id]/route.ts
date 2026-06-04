@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+import { getDecompressedArchive } from "@/app/actions/archive"
 
 export async function GET(
   req: NextRequest,
@@ -52,18 +53,76 @@ export async function GET(
   const schoolSettings = await db.schoolSettings.findUnique({ where: { id: "singleton" } })
   const schoolName = schoolSettings?.name || "Schoolyard Academy"
 
-  // Fetch student enrollments to find class duration configurations
-  const studentEnrollments = await db.enrollment.findMany({
-    where: { studentId },
-    include: {
-      section: {
-        include: {
-          course: true,
-          term: true
+  let archiveData: any = null
+  let reportCardsList = student.reportCards
+  let studentEnrollments: any[] = []
+
+  if (student.isArchived) {
+    archiveData = await getDecompressedArchive("STUDENT", studentId)
+    if (archiveData) {
+      // Map report cards from archive
+      const termIds = archiveData.reportCards?.map((rc: any) => rc.termId) || []
+      const terms = await db.term.findMany({
+        where: { id: { in: termIds } },
+        include: { schoolYear: true }
+      })
+
+      const decompressedReportCards = (archiveData.reportCards || []).map((rc: any) => {
+        const termObj = terms.find((t: any) => t.id === rc.termId)
+        return {
+          ...rc,
+          term: termObj || { id: rc.termId, name: `Term (${rc.termId})`, type: "UNKNOWN", schoolYear: { name: "Unknown Year", startDate: new Date() } }
+        }
+      })
+
+      // Sort decompressed report cards
+      decompressedReportCards.sort((a: any, b: any) => {
+        const aYearStart = a.term.schoolYear?.startDate ? new Date(a.term.schoolYear.startDate).getTime() : 0
+        const bYearStart = b.term.schoolYear?.startDate ? new Date(b.term.schoolYear.startDate).getTime() : 0
+        if (aYearStart !== bYearStart) return aYearStart - bYearStart
+        const aTermStart = a.term.startDate ? new Date(a.term.startDate).getTime() : 0
+        const bTermStart = b.term.startDate ? new Date(b.term.startDate).getTime() : 0
+        return aTermStart - bTermStart
+      })
+
+      reportCardsList = decompressedReportCards
+
+      // Reconstruct mock studentEnrollments from archiveData.enrollments
+      const archiveEnrollmentTermIds = archiveData.enrollments?.flatMap((e: any) => e.termGrades?.map((tg: any) => tg.termId) || []) || []
+      const enrollmentTerms = await db.term.findMany({
+        where: { id: { in: archiveEnrollmentTermIds } },
+        include: { schoolYear: true }
+      })
+
+      studentEnrollments = (archiveData.enrollments || []).map((e: any) => {
+        const firstTermId = e.termGrades?.[0]?.termId
+        const termObj = enrollmentTerms.find((t: any) => t.id === firstTermId)
+        return {
+          section: {
+            course: {
+              name: e.courseName,
+              code: e.courseCode
+            },
+            termId: firstTermId,
+            term: termObj || null
+          }
+        }
+      })
+    }
+  } else {
+    // Fetch student enrollments from database
+    studentEnrollments = await db.enrollment.findMany({
+      where: { studentId },
+      include: {
+        section: {
+          include: {
+            course: true,
+            term: true
+          }
         }
       }
-    }
-  })
+    })
+  }
 
   function shouldIncludeGrade(g: any, rcTerm: any) {
     const enrollment = studentEnrollments.find(e => 
@@ -92,7 +151,7 @@ export async function GET(
   let totalTerms = 0
   let totalCredits = 0
 
-  student.reportCards.forEach((rc: any) => {
+  reportCardsList.forEach((rc: any) => {
     const snapshot = rc.snapshot
     if (snapshot && snapshot.totalGPA) {
       totalGPA += snapshot.totalGPA
@@ -170,11 +229,11 @@ export async function GET(
   currentY += 10
 
   // ─── Academic Record (Terms) ───
-  if (student.reportCards.length === 0) {
+  if (reportCardsList.length === 0) {
     doc.setFont("helvetica", "italic")
     doc.text("No academic records found.", 20, currentY)
   } else {
-    for (const rc of student.reportCards as any[]) {
+    for (const rc of reportCardsList as any[]) {
       const snapshot = rc.snapshot
       if (!snapshot || !snapshot.grades || snapshot.grades.length === 0) continue
 

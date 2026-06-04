@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { TermsManagerClient } from "./terms-client"
 import { SchoolWideReset } from "./school-wide-reset"
+import { SchoolYearArchive } from "./school-year-archive"
 
 export const metadata = { title: "Terms & School Years | Schoolyard" }
 
@@ -25,7 +26,7 @@ export default async function TermsSetupPage() {
   const allTerms = schoolYears.flatMap(year => year.terms)
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div>
         <Link href="/dashboard/calendar" className="text-sm font-bold text-slate-500 hover:text-indigo-600 uppercase tracking-widest transition-colors mb-2 inline-block">
           ← Back to Calendar
@@ -39,7 +40,10 @@ export default async function TermsSetupPage() {
 
       <TermsManagerClient schoolYears={schoolYears as any} />
 
-      <SchoolWideReset terms={allTerms} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <SchoolWideReset terms={allTerms} />
+        <SchoolYearArchive schoolYears={schoolYears as any} />
+      </div>
     </div>
   )
 }

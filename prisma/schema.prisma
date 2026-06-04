@@ -80,6 +80,7 @@ model Student {
 
   medicalAlerts  String? @db.Text
   accommodations String? @db.Text
+  isArchived     Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -819,4 +820,14 @@ model AuditLog {
   @@index([actorId])
   @@index([targetModel, targetId])
   @@index([createdAt])
+}
+
+model CompressedArchive {
+  id          String   @id @default(cuid())
+  entityType  String   // "STUDENT" or "SECTION"
+  entityId    String
+  data        String   @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
 }

@@ -40,6 +40,7 @@ export const mockDb = {
   enrollment: createModelMock(),
   attendance: createModelMock(),
   attendanceNotification: createModelMock(),
+  reportCard: createModelMock(),
   announcement: createModelMock(),
   incident: createModelMock(),
   incidentComment: createModelMock(),
@@ -50,6 +51,7 @@ export const mockDb = {
   schoolYear: createModelMock(),
   term: createModelMock(),
   termGrade: createModelMock(),
+  topic: createModelMock(),
   calendarDay: createModelMock(),
   communitySession: createModelMock(),
   communityEnrollment: createModelMock(),
@@ -58,6 +60,7 @@ export const mockDb = {
   document: createModelMock(),
   auditLog: createModelMock(),
   userToken: createModelMock(),
+  compressedArchive: createModelMock(),
   $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 }
 
