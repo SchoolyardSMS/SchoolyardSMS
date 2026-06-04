@@ -64,7 +64,7 @@ export function SectionForm({
       if (activeTerm?.type === "YEAR") return "YEAR"
     }
     return "SEMESTER"
-  }, [initialData?.termId, terms])
+  }, [initialData, terms])
 
   const [classType, setClassType] = React.useState<"YEAR" | "SEMESTER">(initialType)
 
