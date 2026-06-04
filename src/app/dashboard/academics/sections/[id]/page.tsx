@@ -115,7 +115,7 @@ export default async function SectionDetailsPage({
     select: { id: true, name: true, role: true }
   }) : []
 
-  const enrolledUserIds = section.enrollments.map((e: any) => e.student?.user?.id).filter(Boolean)
+  const enrolledUserIds = section.enrollments.flatMap((e: any) => e.student?.user?.id ? [e.student.user.id] : [])
   const now = new Date()
 
   // 1. Calculate possible nested terms for the school year
@@ -179,10 +179,10 @@ export default async function SectionDetailsPage({
           assignmentId: { in: activeAssignments.map((a: any) => a.id) }
         }
       })
-      const gradesList = activeAssignments.map((a: any) => {
+      const gradesList = activeAssignments.flatMap((a: any) => {
         const matchingGrade = studentGrades.find(g => g.assignmentId === a.id)
-        return matchingGrade !== undefined ? { assignmentId: a.id, score: matchingGrade.score } : null
-      }).filter(Boolean) as { assignmentId: string; score: number }[]
+        return matchingGrade !== undefined ? [{ assignmentId: a.id, score: matchingGrade.score }] : []
+      }) as { assignmentId: string; score: number }[]
       
       if (gradesList.length > 0) {
         const pct = calculateGrade(section, activeAssignments as any, gradesList)
@@ -199,10 +199,10 @@ export default async function SectionDetailsPage({
 
     const studentAverages = section.enrollments.map((enr: any) => {
       const studentGrades = activeGrades.filter(g => g.studentId === enr.student.id)
-      const gradesList = activeAssignments.map((a: any) => {
+      const gradesList = activeAssignments.flatMap((a: any) => {
         const matchingGrade = studentGrades.find(g => g.assignmentId === a.id)
-        return matchingGrade !== undefined ? { assignmentId: a.id, score: matchingGrade.score } : null
-      }).filter(Boolean) as { assignmentId: string; score: number }[]
+        return matchingGrade !== undefined ? [{ assignmentId: a.id, score: matchingGrade.score }] : []
+      }) as { assignmentId: string; score: number }[]
       
       return gradesList.length > 0 ? calculateGrade(section, activeAssignments as any, gradesList) : null
     }).filter((g: any) => g !== null) as number[]

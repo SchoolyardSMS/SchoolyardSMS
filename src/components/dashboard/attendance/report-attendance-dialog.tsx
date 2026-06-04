@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useReducer } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -20,31 +20,66 @@ interface ReportAttendanceDialogProps {
   children: { id: string; user: { name: string } }[]
 }
 
+type AttendanceType = "SICK" | "LATE" | "EARLY_DISMISSAL"
+
+interface FormState {
+  open: boolean
+  studentId: string
+  type: AttendanceType
+  date: string
+  reason: string
+  isSubmitting: boolean
+}
+
+type FormAction =
+  | { type: "OPEN" }
+  | { type: "CLOSE" }
+  | { type: "SET_STUDENT"; id: string }
+  | { type: "SET_TYPE"; attendanceType: AttendanceType }
+  | { type: "SET_DATE"; date: string }
+  | { type: "SET_REASON"; reason: string }
+  | { type: "SUBMIT_START" }
+  | { type: "SUBMIT_DONE" }
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "OPEN":        return { ...state, open: true }
+    case "CLOSE":       return { ...state, open: false, reason: "", isSubmitting: false }
+    case "SET_STUDENT": return { ...state, studentId: action.id }
+    case "SET_TYPE":    return { ...state, type: action.attendanceType }
+    case "SET_DATE":    return { ...state, date: action.date }
+    case "SET_REASON":  return { ...state, reason: action.reason }
+    case "SUBMIT_START": return { ...state, isSubmitting: true }
+    case "SUBMIT_DONE": return { ...state, isSubmitting: false, open: false, reason: "" }
+    default:            return state
+  }
+}
+
 export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [studentId, setStudentId] = useState(children[0]?.id || "")
-  const [type, setType] = useState<"SICK" | "LATE" | "EARLY_DISMISSAL">("SICK")
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [reason, setReason] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [state, dispatch] = useReducer(formReducer, {
+    open: false,
+    studentId: children[0]?.id || "",
+    type: "SICK",
+    date: new Date().toISOString().split('T')[0],
+    reason: "",
+    isSubmitting: false,
+  })
 
   const handleSubmit = async () => {
-    if (!studentId || !date) return
-    setIsSubmitting(true)
+    if (!state.studentId || !state.date) return
+    dispatch({ type: "SUBMIT_START" })
     try {
-      await reportAttendance(studentId, type, date, reason)
+      await reportAttendance(state.studentId, state.type, state.date, state.reason)
       toast.success("Attendance report submitted to school office")
-      setOpen(false)
-      setReason("")
+      dispatch({ type: "SUBMIT_DONE" })
     } catch (err) {
       toast.error("Failed to submit report")
-    } finally {
-      setIsSubmitting(false)
+      dispatch({ type: "SUBMIT_DONE" })
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={state.open} onOpenChange={(open) => dispatch({ type: open ? "OPEN" : "CLOSE" })}>
       <DialogTrigger render={
         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
           <AlertCircle className="h-4 w-4 mr-2" /> Report Absence / Late
@@ -58,8 +93,8 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Student</label>
             <select 
-              value={studentId} 
-              onChange={(e) => setStudentId(e.target.value)}
+              value={state.studentId} 
+              onChange={(e) => dispatch({ type: "SET_STUDENT", id: e.target.value })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="" disabled>Select a child</option>
@@ -75,8 +110,8 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
             <div className="space-y-2">
               <label className="text-sm font-medium">Type</label>
               <select 
-                value={type} 
-                onChange={(e) => setType(e.target.value as any)}
+                value={state.type} 
+                onChange={(e) => dispatch({ type: "SET_TYPE", attendanceType: e.target.value as AttendanceType })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="SICK">Sick (All Day)</option>
@@ -86,24 +121,24 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Date</label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input type="date" value={state.date} onChange={(e) => dispatch({ type: "SET_DATE", date: e.target.value })} />
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Reason / Note</label>
             <Textarea 
-              value={reason} 
-              onChange={(e) => setReason(e.target.value)} 
+              value={state.reason} 
+              onChange={(e) => dispatch({ type: "SET_REASON", reason: e.target.value })} 
               placeholder="e.g. Doctor's appointment, family emergency..."
               rows={3}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-            {isSubmitting ? "Submitting..." : "Submit Report"}
+          <Button variant="outline" onClick={() => dispatch({ type: "CLOSE" })}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={state.isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            {state.isSubmitting ? "Submitting..." : "Submit Report"}
           </Button>
         </DialogFooter>
       </DialogContent>

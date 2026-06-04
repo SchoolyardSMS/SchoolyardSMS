@@ -43,39 +43,35 @@ export async function checkSchoolWideGradesSubmission(termId: string) {
       }
     })
 
-    const statusList = []
-    let allFinished = true
+    const statusList = await Promise.all(
+      sections.map(async (section) => {
+        const enrollmentIds = section.enrollments.map(e => e.id)
 
-    for (const section of sections) {
-      const enrollmentIds = section.enrollments.map(e => e.id)
-      
-      // Count how many enrollments have posted term grades for this term
-      const postedGradesCount = await db.termGrade.count({
-        where: {
-          termId: termId,
-          enrollmentId: { in: enrollmentIds },
-          isPosted: true
+        // Count how many enrollments have posted term grades for this term
+        const postedGradesCount = await db.termGrade.count({
+          where: {
+            termId: termId,
+            enrollmentId: { in: enrollmentIds },
+            isPosted: true
+          }
+        })
+
+        const missingCount = section.enrollments.length - postedGradesCount
+
+        return {
+          sectionId: section.id,
+          courseCode: section.course.code,
+          courseName: section.course.name,
+          teacherName: section.teacher.user.name,
+          enrolledCount: section.enrollments.length,
+          postedCount: postedGradesCount,
+          missingCount,
+          isFinished: missingCount <= 0
         }
       })
+    )
 
-      const missingCount = section.enrollments.length - postedGradesCount
-      const isFinished = missingCount <= 0
-
-      if (!isFinished) {
-        allFinished = false
-      }
-
-      statusList.push({
-        sectionId: section.id,
-        courseCode: section.course.code,
-        courseName: section.course.name,
-        teacherName: section.teacher.user.name,
-        enrolledCount: section.enrollments.length,
-        postedCount: postedGradesCount,
-        missingCount,
-        isFinished
-      })
-    }
+    const allFinished = statusList.every(s => s.isFinished)
 
     return {
       success: true,
@@ -130,19 +126,20 @@ export async function runSchoolWideReset(termId: string) {
     })
     const gradingScale = Array.isArray(schoolSettings?.gradingScale) ? schoolSettings.gradingScale : []
 
-    // 2. Loop through every section and snapshot grades & archive assignments
-    for (const section of sections) {
+    // 2. Process each section: snapshot grades & archive assignments
+    await Promise.all(sections.map(async (section) => {
       const activeAssignmentIds = section.assignments.map(a => a.id)
       const activeGrades = await db.grade.findMany({
         where: { assignmentId: { in: activeAssignmentIds } }
       })
 
-      for (const enrollment of section.enrollments) {
+      // Snapshot term grades for all enrollments in parallel
+      await Promise.all(section.enrollments.map(async (enrollment) => {
         const studentGrades = activeGrades.filter(g => g.studentId === enrollment.student.id)
-        const studentGradesList = section.assignments.map(a => {
+        const studentGradesList = section.assignments.flatMap(a => {
           const matchingGrade = studentGrades.find(g => g.assignmentId === a.id)
-          return matchingGrade !== undefined ? { assignmentId: a.id, score: matchingGrade.score } : null
-        }).filter(Boolean) as { assignmentId: string; score: number }[]
+          return matchingGrade !== undefined ? [{ assignmentId: a.id, score: matchingGrade.score }] : []
+        }) as { assignmentId: string; score: number }[]
 
         const score = studentGradesList.length > 0
           ? calculateGrade(section, section.assignments as any, studentGradesList)
@@ -175,14 +172,14 @@ export async function runSchoolWideReset(termId: string) {
             }
           })
         }
-      }
+      }))
 
-      // Archive all active assignments in this section and assign them to this term
+      // Archive all active assignments in this section
       await db.assignment.updateMany({
         where: { sectionId: section.id, isArchived: false },
         data: { isArchived: true, archivedInTermId: termId }
       })
-    }
+    }))
 
     revalidatePath("/dashboard/academics/sections")
     revalidatePath("/dashboard/admin/calendar/terms")

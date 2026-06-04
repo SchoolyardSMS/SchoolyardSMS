@@ -741,10 +741,10 @@ export function TermGradesClient({
         const studentGrades = dbGrades.filter(g => g.studentId === student.id)
         
         // Calculate dynamic overall grade based on section configurations
-        const studentGradesList = assignments.map(a => {
+        const studentGradesList = assignments.flatMap(a => {
           const matchingGrade = studentGrades.find(g => g.assignmentId === a.id)
-          return matchingGrade !== undefined ? { assignmentId: a.id, score: matchingGrade.score } : null
-        }).filter(Boolean) as { assignmentId: string; score: number }[]
+          return matchingGrade !== undefined ? [{ assignmentId: a.id, score: matchingGrade.score }] : []
+        }) as { assignmentId: string; score: number }[]
 
         const isComposite = selectedTerm?.type === "SEMESTER" || selectedTerm?.type === "YEAR"
         

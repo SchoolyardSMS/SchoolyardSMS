@@ -36,10 +36,10 @@ export default async function AcademicAnalyticsPage() {
     let aCount = 0, bCount = 0, cCount = 0, dCount = 0, fCount = 0
 
     section.enrollments.forEach((enr: any) => {
-      const studentGradesList = section.assignments.map((a: any) => {
+      const studentGradesList = section.assignments.flatMap((a: any) => {
         const grade = a.grades.find((g: any) => g.studentId === enr.studentId)
-        return grade ? { assignmentId: a.id, score: grade.score } : null
-      }).filter(Boolean) as { assignmentId: string, score: number }[]
+        return grade ? [{ assignmentId: a.id, score: grade.score }] : []
+      }) as { assignmentId: string, score: number }[]
 
       if (studentGradesList.length > 0) {
         const pct = calculateGrade(section, section.assignments, studentGradesList)

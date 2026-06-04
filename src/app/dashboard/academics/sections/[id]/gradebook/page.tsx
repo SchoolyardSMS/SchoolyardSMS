@@ -275,10 +275,10 @@ export default async function GradebookPage({
             <TableBody>
               {section.enrollments.map(enrollment => {
                 const sId = enrollment.student.id
-                const studentGradesList = assignments.map(a => {
+                const studentGradesList = assignments.flatMap(a => {
                   const score = gradeMap[sId]?.[a.id]
-                  return score !== undefined ? { assignmentId: a.id, score } : null
-                }).filter(Boolean) as { assignmentId: string, score: number }[]
+                  return score !== undefined ? [{ assignmentId: a.id, score }] : []
+                }) as { assignmentId: string, score: number }[]
 
                 // Determine final GPA either from recalculated average (active) or the saved TermGrade snapshot
                 const snapshotGrade = snapshots.find(s => s.enrollmentId === enrollment.id)
