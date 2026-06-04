@@ -52,6 +52,14 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
 
   if (!course) return notFound()
 
+  // Pre-filter once to avoid double .filter() in JSX (chained-iterations fix)
+  const activeSections = (course.sections as any[]).filter(
+    (s: any) => !s.isArchived && s.term?.schoolYear?.isActive
+  )
+  const archivedSections = (course.sections as any[]).filter(
+    (s: any) => s.isArchived || !s.term?.schoolYear?.isActive
+  )
+
   // Fetch data for editing sections (Admin only)
   let teachers: any[] = []
   let periods: any[] = []
@@ -106,14 +114,14 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {course.sections.filter((s: any) => !s.isArchived && s.term?.schoolYear?.isActive).length === 0 ? (
+              {activeSections.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
                     No active sections found.
                   </TableCell>
                 </TableRow>
               ) : (
-                course.sections.filter((s: any) => !s.isArchived && s.term?.schoolYear?.isActive).map((section: any) => (
+                activeSections.map((section: any) => (
                   <TableRow key={section.id}>
                     <TableCell className="font-medium">
                       {section.term ? `${section.term.name} (${section.term.schoolYear.name})` : section.legacyTerm}
@@ -165,13 +173,13 @@ export default async function CourseDetailsPage({ params }: { params: Promise<{ 
       </div>
 
       {/* Archived Sections */}
-      {course.sections.some((s: any) => s.isArchived || !s.term?.schoolYear?.isActive) && (
+      {archivedSections.length > 0 && (
         <div className="mt-12 space-y-4 opacity-60 grayscale hover:grayscale-0 transition-all">
           <h3 className="text-xl font-semibold border-b pb-2 text-slate-500">Archived Sections</h3>
           <div className="rounded-md border bg-slate-50/50 dark:bg-slate-900/50">
             <Table>
               <TableBody>
-                {course.sections.filter((s: any) => s.isArchived || !s.term?.schoolYear?.isActive).map((section: any) => (
+                {archivedSections.map((section: any) => (
                   <TableRow key={section.id}>
                     <TableCell className="font-medium">
                       {section.term ? `${section.term.name} (${section.term.schoolYear.name})` : section.legacyTerm}

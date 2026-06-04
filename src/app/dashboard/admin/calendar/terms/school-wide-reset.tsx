@@ -77,11 +77,12 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row items-end gap-4 bg-slate-50/50 dark:bg-slate-800/10 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
           <div className="flex-1 space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <label htmlFor="reset-term-select" className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Select Term to Reset & Archive:
             </label>
             <div className="relative">
               <select
+                id="reset-term-select"
                 value={selectedTermId}
                 onChange={(e) => {
                   setSelectedTermId(e.target.value)

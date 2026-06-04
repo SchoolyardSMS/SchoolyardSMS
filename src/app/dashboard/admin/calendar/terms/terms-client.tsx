@@ -91,38 +91,47 @@ function TermRow({
   const connectorChar = depth > 0 ? "└" : null
 
   if (editing) {
+    const parentOptions: any[] = []
+    for (const t of allTerms) {
+      if (t.id !== term.id) {
+        parentOptions.push(
+          <option key={t.id} value={t.id}>
+            {t.name} ({t.type})
+          </option>
+        )
+      }
+    }
+
     return (
       <div className={indentClass}>
         <form onSubmit={handleEdit} className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 space-y-3 mt-1">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
-              <Input name="name" defaultValue={term.name} required className="h-8 text-sm" />
+              <label htmlFor={`edit-term-name-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
+              <Input id={`edit-term-name-${term.id}`} name="name" defaultValue={term.name} required className="h-8 text-sm" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Type</label>
-              <select name="type" defaultValue={term.type} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+              <label htmlFor={`edit-term-type-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Type</label>
+              <select id={`edit-term-type-${term.id}`} name="type" defaultValue={term.type} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
                 {TERM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-              <input type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`edit-term-start-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
+              <input id={`edit-term-start-${term.id}`} type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-              <input type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`edit-term-end-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
+              <input id={`edit-term-end-${term.id}`} type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Parent Term</label>
-            <select name="parentId" defaultValue={term.parentId || ""} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+            <label htmlFor={`edit-term-parent-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Parent Term</label>
+            <select id={`edit-term-parent-${term.id}`} name="parentId" defaultValue={term.parentId || ""} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
               <option value="">None (Top-level)</option>
-              {allTerms.filter(t => t.id !== term.id).map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
-              ))}
+              {parentOptions}
             </select>
           </div>
           <div className="flex gap-2">
@@ -166,12 +175,12 @@ function TermRow({
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">Duplicate Term</h5>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Name</label>
-              <Input name="name" defaultValue={`Copy of ${term.name}`} required className="h-8 text-sm" />
+              <label htmlFor={`dup-term-name-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Name</label>
+              <Input id={`dup-term-name-${term.id}`} name="name" defaultValue={`Copy of ${term.name}`} required className="h-8 text-sm" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Target School Year</label>
-              <select name="targetSchoolYearId" defaultValue={currentSchoolYearId} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+              <label htmlFor={`dup-term-year-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Target School Year</label>
+              <select id={`dup-term-year-${term.id}`} name="targetSchoolYearId" defaultValue={currentSchoolYearId} className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
                 {schoolYears.map(y => (
                   <option key={y.id} value={y.id}>{y.name}</option>
                 ))}
@@ -180,12 +189,12 @@ function TermRow({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
-              <input type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`dup-term-start-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
+              <input id={`dup-term-start-${term.id}`} type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
-              <input type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`dup-term-end-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
+              <input id={`dup-term-end-${term.id}`} type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           {allTerms.some(t => t.parentId === term.id) && (
@@ -387,10 +396,10 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
           <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-teal-600" onClick={() => setDuplicatingYear(e => !e)} title="Duplicate year">
             <Copy className="w-3.5 h-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-indigo-600" onClick={() => setEditingYear(e => !e)} title="Edit year">
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-indigo-600" onClick={() => setEditingYear(e => !e)} title="Edit year" aria-label="Edit year">
             <Pencil className="w-3.5 h-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-red-600" onClick={handleDeleteYear} disabled={pending} title="Delete year">
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-red-600" onClick={handleDeleteYear} disabled={pending} title="Delete year" aria-label="Delete year">
             {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
           </Button>
         </div>
@@ -400,16 +409,16 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
         <form onSubmit={handleEditYear} className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-900/30 space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Year Name</label>
-              <Input name="name" defaultValue={year.name} required className="h-8 text-sm" />
+              <label htmlFor={`edit-year-name-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Year Name</label>
+              <Input id={`edit-year-name-${year.id}`} name="name" defaultValue={year.name} required className="h-8 text-sm" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-              <input type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`edit-year-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
+              <input id={`edit-year-start-${year.id}`} type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-              <input type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`edit-year-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
+              <input id={`edit-year-end-${year.id}`} type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -426,16 +435,16 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
           <h4 className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest">Duplicate School Year</h4>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Year Name</label>
-              <Input name="name" defaultValue={`Copy of ${year.name}`} required className="h-8 text-sm" />
+              <label htmlFor={`dup-year-name-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">New Year Name</label>
+              <Input id={`dup-year-name-${year.id}`} name="name" defaultValue={`Copy of ${year.name}`} required className="h-8 text-sm" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
-              <input type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`dup-year-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
+              <input id={`dup-year-start-${year.id}`} type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
-              <input type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor={`dup-year-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
+              <input id={`dup-year-end-${year.id}`} type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -460,21 +469,21 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
             <form onSubmit={handleCreateTerm} className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3 mb-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
-                  <Input name="name" placeholder="e.g. Q1" required className="h-8 text-sm" />
+                  <label htmlFor={`create-term-name-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
+                  <Input id={`create-term-name-${year.id}`} name="name" placeholder="e.g. Q1" required className="h-8 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Type</label>
-                  <select name="type" className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+                  <label htmlFor={`create-term-type-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Type</label>
+                  <select id={`create-term-type-${year.id}`} name="type" className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
                     {TERM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                <label htmlFor={`create-term-parent-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
                   Parent Term <span className="text-slate-400 normal-case font-normal">(optional)</span>
                 </label>
-                <select name="parentId" className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
+                <select id={`create-term-parent-${year.id}`} name="parentId" className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900">
                   <option value="">None (Top-level under this year)</option>
                   {year.terms.map(t => (
                     <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
@@ -483,12 +492,12 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-                  <input type="date" name="startDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+                  <label htmlFor={`create-term-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
+                  <input id={`create-term-start-${year.id}`} type="date" name="startDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-                  <input type="date" name="endDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+                  <label htmlFor={`create-term-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
+                  <input id={`create-term-end-${year.id}`} type="date" name="endDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
                 </div>
               </div>
               <div className="flex gap-2">
@@ -560,16 +569,16 @@ export function TermsManagerClient({ schoolYears }: { schoolYears: SchoolYear[] 
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
-              <Input name="name" placeholder="2025-2026" required className="h-9 text-sm" />
+              <label htmlFor="create-year-name" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Name</label>
+              <Input id="create-year-name" name="name" placeholder="2025-2026" required className="h-9 text-sm" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
-              <input type="date" name="startDate" required className="h-9 w-full px-3 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor="create-year-start" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
+              <input id="create-year-start" type="date" name="startDate" required className="h-9 w-full px-3 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
-              <input type="date" name="endDate" required className="h-9 w-full px-3 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <label htmlFor="create-year-end" className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
+              <input id="create-year-end" type="date" name="endDate" required className="h-9 w-full px-3 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div className="flex gap-2">

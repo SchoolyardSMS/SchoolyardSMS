@@ -94,9 +94,10 @@ export function AttendanceTracker({ sectionId, enrollments, initialData }: any) 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
              <Calendar className="h-4 w-4 text-indigo-500" />
-             <label className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">Attendance Date:</label>
+             <label htmlFor="attendance-date-picker" className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">Attendance Date:</label>
           </div>
           <input 
+            id="attendance-date-picker"
             type="date" 
             value={date} 
             onChange={(e) => setDate(e.target.value)}

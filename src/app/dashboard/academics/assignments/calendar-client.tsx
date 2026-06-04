@@ -39,6 +39,16 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
   const utcDateStr = (d: Date) => d.toISOString().split('T')[0]
   const todayUtc = utcDateStr(now)
 
+  // Pre-group assignments by UTC date key for O(1) lookup per day
+  // Replaces the double .filter() per day (14 passes → 2 total)
+  const assignmentsByDate = new Map<string, typeof initialAssignments>()
+  for (const a of initialAssignments) {
+    const key = utcDateStr(new Date(a.dueDate))
+    const bucket = assignmentsByDate.get(key)
+    if (bucket) bucket.push(a)
+    else assignmentsByDate.set(key, [a])
+  }
+
   return (
     <div className="flex-1 space-y-6 p-4 sm:p-8 pt-6 min-h-screen">
       <div className="flex items-center justify-between pb-4 border-b dark:border-slate-800">
@@ -105,13 +115,15 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
                </div>
             </div>
             <div className="p-3 space-y-3 flex-1 overflow-y-auto bg-transparent">
-              {initialAssignments.filter(a => utcDateStr(new Date(a.dueDate)) === utcDateStr(date)).length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center opacity-10 py-20 grayscale">
-                   <CalendarIcon className="h-12 w-12 text-slate-400 mb-2" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Rest Day</span>
-                </div>
-              ) : (
-                initialAssignments.filter(a => utcDateStr(new Date(a.dueDate)) === utcDateStr(date)).map(ass => (
+               {(() => {
+                const dayAssignments = assignmentsByDate.get(utcDateStr(date)) ?? []
+                return dayAssignments.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center opacity-10 py-20 grayscale">
+                     <CalendarIcon className="h-12 w-12 text-slate-400 mb-2" />
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Rest Day</span>
+                  </div>
+                ) : (
+                  dayAssignments.map(ass => (
                   <Link 
                     key={ass.id} 
                     href={`/dashboard/academics/sections/${ass.sectionId}/assignments/${ass.id}`}
@@ -133,8 +145,9 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
                         )}
                      </div>
                   </Link>
-                ))
-              )}
+                  ))
+                );
+              })()}
             </div>
           </div>
         ))}

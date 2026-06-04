@@ -31,6 +31,7 @@ export function FileUploader({ assignmentId }: { assignmentId: string }) {
     <div className="flex flex-col gap-4 w-full">
       <input 
         type="file" 
+        aria-label="Choose submission file"
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-slate-900 dark:text-white"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
         disabled={isUploading}

@@ -44,8 +44,9 @@ export function HealthClient({ student }: { student: any }) {
         
         <div className="space-y-6 mb-6">
           <div>
-            <label className="block text-sm font-bold text-rose-700 dark:text-rose-400 mb-2">Medical Alerts (Allergies, Conditions)</label>
+            <label htmlFor="medical-alerts-input" className="block text-sm font-bold text-rose-700 dark:text-rose-400 mb-2">Medical Alerts (Allergies, Conditions)</label>
             <Textarea 
+              id="medical-alerts-input"
               value={medicalAlerts} 
               onChange={e => setMedicalAlerts(e.target.value)}
               className="bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900/30 min-h-[100px]"
@@ -54,8 +55,9 @@ export function HealthClient({ student }: { student: any }) {
           </div>
           
           <div>
-            <label className="block text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">Learning Plan & Accommodations</label>
+            <label htmlFor="accommodations-input" className="block text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">Learning Plan & Accommodations</label>
             <Textarea 
+              id="accommodations-input"
               value={accommodations} 
               onChange={e => setAccommodations(e.target.value)}
               className="bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-900/30 min-h-[100px]"

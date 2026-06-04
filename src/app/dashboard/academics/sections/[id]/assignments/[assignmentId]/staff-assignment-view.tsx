@@ -303,6 +303,7 @@ export function StaffAssignmentView({ assignment, enrollments, typeConfig }: any
                       <input
                         type="number"
                         name="score"
+                        aria-label={`Score for ${enr.student.user.name}`}
                         min={0}
                         max={assignment.maxScore}
                         defaultValue={grade?.score ?? ""}
@@ -320,6 +321,7 @@ export function StaffAssignmentView({ assignment, enrollments, typeConfig }: any
                     <input
                       type="text"
                       name="feedback"
+                      aria-label={`Feedback for ${enr.student.user.name}`}
                       defaultValue={grade?.feedback ?? ""}
                       placeholder="Feedback (optional)"
                       className="flex-1 lg:max-w-[200px] h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
