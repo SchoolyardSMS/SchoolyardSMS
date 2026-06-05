@@ -17,6 +17,7 @@ import { GradeCell } from "./grade-cell"
 import { Calculator, User, FileText, TrendingUp, ChevronLeft, Archive, Award } from "lucide-react"
 import { calculateGrade, getLetterGrade } from "@/lib/grading"
 import { GradebookClientControls } from "./gradebook-client-controls"
+import { PrintTrigger, PrintButton } from "./print-trigger"
 
 export const metadata = {
   title: "Gradebook | Schoolyard",
@@ -65,9 +66,31 @@ export default async function GradebookPage({
     return (
       <div className="p-8 max-w-7xl mx-auto space-y-6 bg-white text-black min-h-screen">
         <style dangerouslySetInnerHTML={{ __html: `
+          /* Hide sidebar, top mobile nav, and bottom mobile nav both on screen and print */
+          aside,
+          nav,
+          .md\\:hidden.fixed.bottom-0.left-0.right-0,
+          .md\\:hidden.flex.items-center.justify-between,
+          .no-print {
+            display: none !important;
+          }
+          /* Remove bottom padding of page container to allow full height */
+          div.pb-20 {
+            padding-bottom: 0 !important;
+          }
+          html, body, main {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          html::-webkit-scrollbar, body::-webkit-scrollbar, main::-webkit-scrollbar {
+            display: none !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
           @media print {
             body { background: white !important; color: black !important; }
-            .no-print { display: none !important; }
             @page { size: landscape; margin: 1cm; }
           }
           table { width: 100%; border-collapse: collapse; margin-top: 24px; }
@@ -84,9 +107,7 @@ export default async function GradebookPage({
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Schoolyard Academy • SIS Physical Record</p>
             </div>
             <div className="text-right no-print">
-              <Button onClick={() => window.print()} className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs px-4 py-2 flex items-center gap-2">
-                Print Sheet
-              </Button>
+              <PrintButton />
             </div>
           </div>
           
@@ -117,7 +138,7 @@ export default async function GradebookPage({
               <tr>
                 <th className="w-[220px]">Student Name</th>
                 {Array.from({ length: 10 }).map((_, i) => (
-                  <th key={i} className="text-center min-w-[70px]">Col {i + 1}</th>
+                  <th key={i} className="text-center min-w-[70px]">&nbsp;</th>
                 ))}
               </tr>
             </thead>
@@ -135,13 +156,7 @@ export default async function GradebookPage({
         </div>
 
         {/* Auto print trigger */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-              window.print();
-            }, 600);
-          });
-        `}} />
+        <PrintTrigger />
       </div>
     )
   }
@@ -355,6 +370,14 @@ export default async function GradebookPage({
             color: black !important;
             padding: 0 !important;
             margin: 0 !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          body::-webkit-scrollbar, html::-webkit-scrollbar, main::-webkit-scrollbar {
+            display: none !important;
+          }
+          div.pb-20 {
+            padding-bottom: 0 !important;
           }
           .rounded-3xl {
             border: none !important;

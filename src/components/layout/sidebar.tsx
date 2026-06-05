@@ -209,7 +209,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
   return (
     <>
       {/* Mobile Top Navigation */}
-      <div className="md:hidden flex items-center justify-between bg-sidebar border-b border-sidebar-border px-4 py-2 flex-shrink-0 z-40 bg-white dark:bg-slate-900">
+      <div className="md:hidden flex items-center justify-between bg-sidebar border-b border-sidebar-border px-4 py-2 flex-shrink-0 z-40 bg-white dark:bg-slate-900 no-print">
         <div className="flex items-center gap-3">
           <div
             className="flex h-8 w-8 items-center justify-center rounded-lg font-bold text-xs text-white shadow-sm overflow-hidden"
