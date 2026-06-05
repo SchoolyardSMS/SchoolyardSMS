@@ -224,6 +224,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
           <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate uppercase mt-0.5">{schoolName}</p>
         </div>
         <button
+          type="button"
           onClick={() => setMobileMenuOpen(true)}
           aria-label="Open mobile menu"
           className="p-2 -mr-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
@@ -264,6 +265,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
               )}
             </div>
             <button
+              type="button"
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
               className="hidden md:flex h-6 w-6 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
@@ -293,6 +295,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
             
             {/* Desktop Collapse Button */}
             <button
+              type="button"
               onClick={() => setCollapsed(true)}
               aria-label="Collapse sidebar"
               className="hidden md:flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
@@ -304,6 +307,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
             
             {/* Mobile Close Button */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
               className="md:hidden flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"

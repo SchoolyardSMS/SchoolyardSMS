@@ -17,12 +17,12 @@ export async function importUsersCsv(csvText: string) {
   let successCount = 0
   const defaultPassword = await bcrypt.hash("schoolyard2025", 10)
 
-  for (const row of data as any[]) {
+  const promises = (data as any[]).map(async (row) => {
     const email = row.Email?.trim().toLowerCase()
     const name = row.Name?.trim()
     const role = row.Role?.trim().toUpperCase()
 
-    if (!email || !name || !role) continue
+    if (!email || !name || !role) return false
 
     // Upsert User
     const user = await db.user.upsert({
@@ -49,8 +49,11 @@ export async function importUsersCsv(csvText: string) {
         create: { userId: user.id, department: row.Department || "General" }
       })
     }
-    successCount++
-  }
+    return true
+  })
+
+  const results = await Promise.all(promises)
+  successCount = results.filter(Boolean).length
 
   return { success: true, count: successCount }
 }
@@ -64,21 +67,24 @@ export async function importCoursesCsv(csvText: string) {
 
   let successCount = 0
 
-  for (const row of data as any[]) {
+  const promises = (data as any[]).map(async (row) => {
     const code = row.Code?.trim()
     const name = row.Name?.trim()
     const credits = parseFloat(row.Credits) || 1.0
     const description = row.Description?.trim()
 
-    if (!code || !name) continue
+    if (!code || !name) return false
 
     await db.course.upsert({
       where: { code },
       update: { name, credits, description },
       create: { code, name, credits, description }
     })
-    successCount++
-  }
+    return true
+  })
+
+  const results = await Promise.all(promises)
+  successCount = results.filter(Boolean).length
 
   return { success: true, count: successCount }
 }
@@ -92,19 +98,19 @@ export async function importSectionsCsv(csvText: string) {
 
   let successCount = 0
 
-  for (const row of data as any[]) {
+  const promises = (data as any[]).map(async (row) => {
     const courseCode = row.CourseCode?.trim()
     const teacherEmail = row.TeacherEmail?.trim().toLowerCase()
     const termId = row.TermID?.trim()
     const schedule = row.Schedule?.trim()
     const room = row.Room?.trim()
 
-    if (!courseCode || !teacherEmail || !termId) continue
+    if (!courseCode || !teacherEmail || !termId) return false
 
     const course = await db.course.findUnique({ where: { code: courseCode } })
     const teacherUser = await db.user.findUnique({ where: { email: teacherEmail }, include: { teacherProfile: true } })
     
-    if (!course || !teacherUser || !teacherUser.teacherProfile) continue
+    if (!course || !teacherUser || !teacherUser.teacherProfile) return false
 
     await (db.section as any).create({
       data: {
@@ -116,8 +122,11 @@ export async function importSectionsCsv(csvText: string) {
         room: room || "TBA"
       }
     })
-    successCount++
-  }
+    return true
+  })
+
+  const results = await Promise.all(promises)
+  successCount = results.filter(Boolean).length
 
   return { success: true, count: successCount }
 }
@@ -131,15 +140,15 @@ export async function importEnrollmentsCsv(csvText: string) {
 
   let successCount = 0
 
-  for (const row of data as any[]) {
+  const promises = (data as any[]).map(async (row) => {
     const studentEmail = row.StudentEmail?.trim().toLowerCase()
     const sectionId = row.SectionID?.trim()
 
-    if (!studentEmail || !sectionId) continue
+    if (!studentEmail || !sectionId) return false
 
     const studentUser = await db.user.findUnique({ where: { email: studentEmail }, include: { studentProfile: true } })
     
-    if (!studentUser || !studentUser.studentProfile) continue
+    if (!studentUser || !studentUser.studentProfile) return false
 
     // Enforce unique enrollment
     await db.enrollment.upsert({
@@ -155,8 +164,11 @@ export async function importEnrollmentsCsv(csvText: string) {
         sectionId: sectionId
       }
     })
-    successCount++
-  }
+    return true
+  })
+
+  const results = await Promise.all(promises)
+  successCount = results.filter(Boolean).length
 
   return { success: true, count: successCount }
 }

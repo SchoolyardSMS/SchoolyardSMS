@@ -65,40 +65,40 @@ export default async function BellScheduleManagePage() {
         <form action={upsertBellPeriod} className="space-y-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Period #</label>
-              <input name="periodNumber" type="number" min={1} max={12} defaultValue={1} required
+              <label htmlFor="period-num" className="text-sm font-medium">Period #</label>
+              <input id="period-num" name="periodNumber" type="number" min={1} max={12} defaultValue={1} required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="col-span-2 space-y-2 sm:col-span-1">
-              <label className="text-sm font-medium">Name <span className="text-red-500">*</span></label>
-              <input name="name" type="text" required placeholder="Period 1 / Advisory / Lunch"
+              <label htmlFor="period-name" className="text-sm font-medium">Name <span className="text-red-500">*</span></label>
+              <input id="period-name" name="name" type="text" required placeholder="Period 1 / Advisory / Lunch"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Start</label>
-              <input name="startTime" type="time" defaultValue="08:00" required
+              <label htmlFor="period-start" className="text-sm font-medium">Start</label>
+              <input id="period-start" name="startTime" type="time" defaultValue="08:00" required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">End</label>
-              <input name="endTime" type="time" defaultValue="08:55" required
+              <label htmlFor="period-end" className="text-sm font-medium">End</label>
+              <input id="period-end" name="endTime" type="time" defaultValue="08:55" required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">School Year <span className="text-red-500">*</span></label>
-            <input name="schoolYear" type="text" required defaultValue={defaultYear} placeholder="2025-2026"
+            <label htmlFor="period-year" className="text-sm font-medium">School Year <span className="text-red-500">*</span></label>
+            <input id="period-year" name="schoolYear" type="text" required defaultValue={defaultYear} placeholder="2025-2026"
               className="flex h-10 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Days</label>
+            <span className="block text-sm font-medium">Days</span>
             <div className="flex flex-wrap gap-2">
               {DAYS.map(d => (
                 <label key={d} className="flex items-center gap-1.5 cursor-pointer">

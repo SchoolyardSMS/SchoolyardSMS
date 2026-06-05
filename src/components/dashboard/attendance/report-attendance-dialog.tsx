@@ -91,8 +91,9 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Student</label>
+            <label htmlFor="report-student-select" className="text-sm font-medium">Select Student</label>
             <select 
+              id="report-student-select"
               value={state.studentId} 
               onChange={(e) => dispatch({ type: "SET_STUDENT", id: e.target.value })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -108,8 +109,9 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Type</label>
+              <label htmlFor="report-type-select" className="text-sm font-medium">Type</label>
               <select 
+                id="report-type-select"
                 value={state.type} 
                 onChange={(e) => dispatch({ type: "SET_TYPE", attendanceType: e.target.value as AttendanceType })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -120,14 +122,15 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Date</label>
-              <Input type="date" value={state.date} onChange={(e) => dispatch({ type: "SET_DATE", date: e.target.value })} />
+              <label htmlFor="report-date-input" className="text-sm font-medium">Date</label>
+              <Input id="report-date-input" type="date" value={state.date} onChange={(e) => dispatch({ type: "SET_DATE", date: e.target.value })} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Reason / Note</label>
+            <label htmlFor="report-reason-textarea" className="text-sm font-medium">Reason / Note</label>
             <Textarea 
+              id="report-reason-textarea"
               value={state.reason} 
               onChange={(e) => dispatch({ type: "SET_REASON", reason: e.target.value })} 
               placeholder="e.g. Doctor's appointment, family emergency..."

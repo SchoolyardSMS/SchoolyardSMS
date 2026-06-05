@@ -42,8 +42,8 @@ export function AcademicSettingsClient({
         <h3 className="font-semibold text-base border-b border-slate-200 dark:border-slate-800 pb-3">Global Configuration</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Active Term</label>
-            <input name="activeTerm" type="text"
+            <label htmlFor="setting-active-term" className="text-sm font-medium">Active Term</label>
+            <input id="setting-active-term" name="activeTerm" type="text"
               defaultValue={activeTerm}
               className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -56,9 +56,9 @@ export function AcademicSettingsClient({
         <h3 className="font-semibold text-base border-b border-slate-200 dark:border-slate-800 pb-3">Grading Scale Engine</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Minimum Passing Grade</label>
+            <label htmlFor="setting-passing-grade" className="text-sm font-medium">Minimum Passing Grade</label>
             <div className="flex items-center gap-2">
-              <input name="passingGrade" type="number" min="0" max="100"
+              <input id="setting-passing-grade" name="passingGrade" type="number" min="0" max="100"
                 defaultValue={passingGrade}
                 className="flex h-10 w-24 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -67,8 +67,8 @@ export function AcademicSettingsClient({
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Scores below this are flagged as failing.</p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">GPA Max Scale</label>
-            <select name="gpaScale" defaultValue={gpaScale}
+            <label htmlFor="setting-gpa-scale" className="text-sm font-medium">GPA Max Scale</label>
+            <select id="setting-gpa-scale" name="gpaScale" defaultValue={gpaScale}
               className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="4.0">Standard 4.0 Scale</option>

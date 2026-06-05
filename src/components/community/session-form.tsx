@@ -62,7 +62,7 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
       
       {isAdmin && !initialData && (
         <div className="space-y-1">
-          <label className="block text-sm font-medium">Teacher</label>
+          <span className="block text-sm font-medium">Teacher</span>
           <UserSearch 
             role="TEACHER" 
             placeholder="Search for a teacher..." 
@@ -74,8 +74,9 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="block text-sm font-medium">Date</label>
+          <label htmlFor="session-date-select" className="block text-sm font-medium">Date</label>
           <select 
+            id="session-date-select"
             value={dayId} 
             onChange={e => setDayId(e.target.value)} 
             required 
@@ -87,8 +88,9 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
           </select>
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium">Room</label>
+          <label htmlFor="session-room-input" className="block text-sm font-medium">Room</label>
           <input 
+            id="session-room-input"
             value={room} 
             onChange={e => setRoom(e.target.value)} 
             required 
@@ -99,8 +101,9 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium">Title</label>
+        <label htmlFor="session-title-input" className="block text-sm font-medium">Title</label>
         <input 
+          id="session-title-input"
           value={title} 
           onChange={e => setTitle(e.target.value)} 
           required 
@@ -111,8 +114,9 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="block text-sm font-medium">Capacity</label>
+          <label htmlFor="session-capacity-input" className="block text-sm font-medium">Capacity</label>
           <input 
+            id="session-capacity-input"
             type="number" 
             value={capacity} 
             onChange={e => setCapacity(Number(e.target.value))} 

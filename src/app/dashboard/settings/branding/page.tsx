@@ -34,8 +34,8 @@ export default async function BrandingSettingsPage() {
           <h3 className="font-semibold text-base border-b border-slate-200 dark:border-slate-800 pb-3">Identity</h3>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">School Name</label>
-            <input name="name" type="text" required
+            <label htmlFor="setting-school-name" className="text-sm font-medium">School Name</label>
+            <input id="setting-school-name" name="name" type="text" required
               defaultValue={settings?.name ?? "Schoolyard Academy"}
               className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -43,17 +43,17 @@ export default async function BrandingSettingsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label htmlFor="setting-school-initials" className="text-sm font-medium">
                 Initials <span className="text-slate-400 text-xs">(sidebar)</span>
               </label>
-              <input name="initials" type="text" maxLength={3}
+              <input id="setting-school-initials" name="initials" type="text" maxLength={3}
                 defaultValue={initials}
                 className="flex h-10 w-24 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tagline</label>
-              <input name="tagline" type="text"
+              <label htmlFor="setting-school-tagline" className="text-sm font-medium">Tagline</label>
+              <input id="setting-school-tagline" name="tagline" type="text"
                 defaultValue={settings?.tagline ?? "Excellence in Education"}
                 className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -70,24 +70,24 @@ export default async function BrandingSettingsPage() {
           <h3 className="font-semibold text-base border-b border-slate-200 dark:border-slate-800 pb-3">School Colors</h3>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Quick Presets</label>
+            <span className="block text-sm font-medium">Quick Presets</span>
             <ColorPresets />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Primary Color</label>
+              <label htmlFor="setting-primary-color" className="text-sm font-medium">Primary Color</label>
               <div className="flex items-center gap-3">
-                <input name="primaryColor" type="color" defaultValue={primary}
+                <input id="setting-primary-color" name="primaryColor" type="color" defaultValue={primary}
                   className="h-10 w-16 cursor-pointer rounded-md border border-slate-200 dark:border-slate-800 p-0.5 bg-white dark:bg-slate-900"
                 />
                 <span className="text-xs text-slate-500">Sidebar, active states</span>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Secondary Color</label>
+              <label htmlFor="setting-secondary-color" className="text-sm font-medium">Secondary Color</label>
               <div className="flex items-center gap-3">
-                <input name="secondaryColor" type="color" defaultValue={secondary}
+                <input id="setting-secondary-color" name="secondaryColor" type="color" defaultValue={secondary}
                   className="h-10 w-16 cursor-pointer rounded-md border border-slate-200 dark:border-slate-800 p-0.5 bg-white dark:bg-slate-900"
                 />
                 <span className="text-xs text-slate-500">Accents, borders</span>
@@ -122,7 +122,7 @@ export default async function BrandingSettingsPage() {
             </div>
             <div className="space-y-2">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Inject additional CSS custom properties directly into the theme root.</p>
-              <textarea name="themeConfig" rows={4}
+              <textarea name="themeConfig" aria-label="Advanced Theme Config (Raw JSON)" rows={4}
                 defaultValue={settings?.themeConfig ? JSON.stringify(settings.themeConfig, null, 2) : '{\n  "borderRadius": "0.5rem",\n  "fontFamily": "Inter"\n}'}
                 className="flex w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-mono outline-none focus:ring-2 focus:ring-indigo-500"
               />

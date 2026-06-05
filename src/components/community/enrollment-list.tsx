@@ -63,6 +63,7 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
                   )}
                 </div>
                 <button 
+                  type="button"
                   onClick={() => handleRemove(enr.id)} 
                   className="p-1 text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
                   title="Remove student"
@@ -73,6 +74,7 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
 
               <div className="flex items-center gap-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
                 <button
+                  type="button"
                   onClick={() => handleAttendance(enr.id, "PRESENT")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all",
@@ -85,6 +87,7 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
                   Present
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleAttendance(enr.id, "ABSENT")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all",
@@ -97,6 +100,7 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
                   Absent
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleAttendance(enr.id, "EXCUSED")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all",

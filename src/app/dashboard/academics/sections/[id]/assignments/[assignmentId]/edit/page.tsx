@@ -45,16 +45,16 @@ export default async function EditAssignmentPage({ params }: { params: Promise<{
         
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Assignment Title <span className="text-red-500">*</span></label>
-            <input name="title" type="text" required defaultValue={assignment.title}
+            <label htmlFor="edit-assignment-title" className="text-sm font-medium">Assignment Title <span className="text-red-500">*</span></label>
+            <input id="edit-assignment-title" name="title" type="text" required defaultValue={assignment.title}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Assignment Type</label>
-              <select name="type" defaultValue={assignment.type}
+              <label htmlFor="edit-assignment-type" className="text-sm font-medium">Assignment Type</label>
+              <select id="edit-assignment-type" name="type" defaultValue={assignment.type}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="HOMEWORK">Homework</option>
@@ -66,8 +66,8 @@ export default async function EditAssignmentPage({ params }: { params: Promise<{
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <select name="status" defaultValue={assignment.status}
+              <label htmlFor="edit-assignment-status" className="text-sm font-medium">Status</label>
+              <select id="edit-assignment-status" name="status" defaultValue={assignment.status}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="DRAFT">Draft (Always hidden until manual publish)</option>
@@ -79,15 +79,15 @@ export default async function EditAssignmentPage({ params }: { params: Promise<{
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Go Live Date (ET)</label>
-              <input name="publishDate" type="date" defaultValue={formattedPubDate}
+              <label htmlFor="edit-assignment-publish-date" className="text-sm font-medium">Go Live Date (ET)</label>
+              <input id="edit-assignment-publish-date" name="publishDate" type="date" defaultValue={formattedPubDate}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <p className="text-[10px] text-muted-foreground italic">Optional: Leave blank to publish immediately.</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Go Live Time (ET)</label>
-              <input name="publishTime" type="time" defaultValue={formattedPubTime}
+              <label htmlFor="edit-assignment-publish-time" className="text-sm font-medium">Go Live Time (ET)</label>
+              <input id="edit-assignment-publish-time" name="publishTime" type="time" defaultValue={formattedPubTime}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -95,14 +95,14 @@ export default async function EditAssignmentPage({ params }: { params: Promise<{
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Score <span className="text-red-500">*</span></label>
-              <input name="maxScore" type="number" required defaultValue={assignment.maxScore}
+              <label htmlFor="edit-assignment-max-score" className="text-sm font-medium">Max Score <span className="text-red-500">*</span></label>
+              <input id="edit-assignment-max-score" name="maxScore" type="number" required defaultValue={assignment.maxScore}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Due Date <span className="text-red-500">*</span></label>
-              <input name="dueDate" type="date" required defaultValue={formattedDueDate}
+              <label htmlFor="edit-assignment-due-date" className="text-sm font-medium">Due Date <span className="text-red-500">*</span></label>
+              <input id="edit-assignment-due-date" name="dueDate" type="date" required defaultValue={formattedDueDate}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -110,10 +110,10 @@ export default async function EditAssignmentPage({ params }: { params: Promise<{
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Instructions / Description</label>
+              <label htmlFor="edit-assignment-description" className="text-sm font-medium">Instructions / Description</label>
               <span className="text-[10px] text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Markdown Editor</span>
             </div>
-            <MarkdownEditor name="description" defaultValue={assignment.description || ""} placeholder="Provide clear instructions for the students..." />
+            <MarkdownEditor id="edit-assignment-description" name="description" defaultValue={assignment.description || ""} placeholder="Provide clear instructions for the students..." />
           </div>
 
           <div className="flex items-center gap-2 pt-2">

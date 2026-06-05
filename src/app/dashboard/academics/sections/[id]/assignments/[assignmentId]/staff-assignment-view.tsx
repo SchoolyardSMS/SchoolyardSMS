@@ -91,6 +91,7 @@ export function StaffAssignmentView({ assignment, enrollments, typeConfig }: any
               </div>
             </div>
             <button
+              type="button"
               onClick={async () => {
                 const { duplicateAssignment } = await import("@/app/actions/academics")
                 try {
@@ -110,18 +111,21 @@ export function StaffAssignmentView({ assignment, enrollments, typeConfig }: any
         {/* Tabs */}
         <div className="flex space-x-1 border-b border-border pt-4">
           <button 
+            type="button"
             onClick={() => setActiveTab("OVERVIEW")}
             className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 ${activeTab === "OVERVIEW" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >
             Overview
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab("SUBMISSIONS")}
             className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 ${activeTab === "SUBMISSIONS" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >
             Submissions
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab("GRADING")}
             className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 ${activeTab === "GRADING" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >

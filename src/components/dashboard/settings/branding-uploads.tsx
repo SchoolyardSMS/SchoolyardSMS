@@ -45,7 +45,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Logo Upload */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">School Logo</label>
+          <label htmlFor="logo-upload" className="text-sm font-medium">School Logo</label>
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900 overflow-hidden relative group">
               {logoUrl ? (
@@ -72,6 +72,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
                 className="hidden" 
                 accept="image/*"
                 onChange={(e) => handleUpload("logo", e)}
+                aria-label="School Logo"
               />
               <Button 
                 type="button" 
@@ -89,7 +90,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
 
         {/* Favicon Upload */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">Favicon</label>
+          <label htmlFor="favicon-upload" className="text-sm font-medium">Favicon</label>
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900 overflow-hidden relative group">
               {faviconUrl ? (
@@ -116,6 +117,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
                 className="hidden" 
                 accept="image/x-icon,image/png"
                 onChange={(e) => handleUpload("favicon", e)}
+                aria-label="Favicon"
               />
               <Button 
                 type="button" 

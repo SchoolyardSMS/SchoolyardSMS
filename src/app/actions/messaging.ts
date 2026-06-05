@@ -295,10 +295,10 @@ export async function sendSystemBatchMessages(senderId: string, recipients: { us
   const fromEmail = `${sender?.name || 'Schoolyard'} <messaging@${process.env.RESEND_DOMAIN || 'schoolyard.qzz.io'}>`
 
   const batchSize = 100
-  let totalSent = 0
 
-  for (let i = 0; i < recipients.length; i += batchSize) {
-    const chunk = recipients.slice(i, i + batchSize)
+  const chunkCount = Math.ceil(recipients.length / batchSize)
+  const chunkPromises = Array.from({ length: chunkCount }).map(async (_, chunkIndex) => {
+    const chunk = recipients.slice(chunkIndex * batchSize, (chunkIndex + 1) * batchSize)
     
     // Create DB records first to get IDs for replyTo
     const messagePromises = chunk.map(r => db.message.create({
@@ -337,10 +337,14 @@ export async function sendSystemBatchMessages(senderId: string, recipients: { us
           })
         })
         await Promise.all(updatePromises)
-        totalSent += chunk.length
+        return chunk.length
       }
     }
-  }
+    return 0
+  })
+
+  const results = await Promise.all(chunkPromises)
+  const totalSent = results.reduce((sum, count) => sum + count, 0)
 
   return totalSent
 }

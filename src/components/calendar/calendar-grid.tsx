@@ -84,16 +84,17 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+          <button type="button" onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
             &larr;
           </button>
           <h2 className="text-xl font-bold">{format(currentDate, 'MMMM yyyy')}</h2>
-          <button onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+          <button type="button" onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
             &rarr;
           </button>
         </div>
         {!readOnly && (
           <button
+            type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
             className="px-4 py-2 bg-[var(--school-primary,#4f46e5)] text-white rounded-lg text-sm font-medium disabled:opacity-50"
@@ -173,7 +174,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Day Type</label>
+                <label htmlFor="dayType" className="block text-sm font-medium mb-1">Day Type</label>
                 <select
                   id="dayType"
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-700 p-2 bg-transparent"
@@ -189,7 +190,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Block Day</label>
+                  <label htmlFor="blockDay" className="block text-sm font-medium mb-1">Block Day</label>
                   <select
                     id="blockDay"
                     className="w-full rounded-lg border border-slate-300 dark:border-slate-700 p-2 bg-transparent text-sm"
@@ -208,7 +209,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Label (Optional)</label>
+                <label htmlFor="dayName" className="block text-sm font-medium mb-1">Label (Optional)</label>
                 <input
                   id="dayName"
                   type="text"
@@ -245,6 +246,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
             <div className="mt-6 flex justify-between gap-3">
               {selectedDay.type === "INSTRUCTIONAL" && (
                 <button
+                  type="button"
                   onClick={() => {
                     if(confirm("Are you sure? This will shift all future block days forward.")) {
                       handleDeclareSnowDay(new Date(selectedDay.date))
@@ -257,12 +259,14 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
               )}
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setSelectedDay(null)}
                   className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     const type = (document.getElementById('dayType') as HTMLSelectElement).value as DayType
                     const name = (document.getElementById('dayName') as HTMLInputElement).value

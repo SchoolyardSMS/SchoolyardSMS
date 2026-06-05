@@ -62,11 +62,12 @@ export function SchoolYearArchive({ schoolYears }: { schoolYears: SchoolYear[] }
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <label htmlFor="archive-school-year" className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Select School Year to Archive:
             </label>
             <div className="relative">
               <select
+                id="archive-school-year"
                 value={selectedYearId}
                 onChange={(e) => setSelectedYearId(e.target.value)}
                 className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 pr-10 rounded-xl text-xs font-bold focus:outline-none cursor-pointer"
@@ -83,10 +84,11 @@ export function SchoolYearArchive({ schoolYears }: { schoolYears: SchoolYear[] }
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <label htmlFor="graduating-grade-level" className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Graduating Grade Level:
             </label>
             <select
+              id="graduating-grade-level"
               value={graduatingGrade}
               onChange={(e) => setGraduatingGrade(Number(e.target.value))}
               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 pr-10 rounded-xl text-xs font-bold focus:outline-none cursor-pointer"

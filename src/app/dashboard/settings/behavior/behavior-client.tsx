@@ -56,9 +56,10 @@ export function BehaviorSettingsClient({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Chronic Absence Threshold</label>
+            <label htmlFor="setting-absence-threshold" className="text-sm font-medium">Chronic Absence Threshold</label>
             <div className="flex items-center gap-2">
               <input
+                id="setting-absence-threshold"
                 name="attendanceThreshold"
                 type="number"
                 min="1"

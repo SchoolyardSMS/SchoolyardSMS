@@ -91,6 +91,7 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
          {dates.map((date, i) => (
            <button
              key={i}
+             type="button"
              onClick={() => setMobileDayIndex(i)}
              className={`flex flex-col items-center p-2 rounded-xl transition-all w-12 ${mobileDayIndex === i ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
            >

@@ -41,8 +41,8 @@ export default async function EditIncidentPage({ params }: { params: Promise<{ i
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <select name="status" defaultValue={incident.status}
+              <label htmlFor="edit-incident-status" className="text-sm font-medium">Status</label>
+              <select id="edit-incident-status" name="status" defaultValue={incident.status}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="OPEN">Open</option>
@@ -52,8 +52,8 @@ export default async function EditIncidentPage({ params }: { params: Promise<{ i
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Follow-up Date</label>
-              <input type="date" name="followUpDate"
+              <label htmlFor="edit-incident-followup" className="text-sm font-medium">Follow-up Date</label>
+              <input id="edit-incident-followup" type="date" name="followUpDate"
                 defaultValue={toDateInputValue(incident.followUpDate)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
@@ -61,8 +61,8 @@ export default async function EditIncidentPage({ params }: { params: Promise<{ i
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Action Taken</label>
-            <textarea name="actionTaken" rows={5} defaultValue={incident.actionTaken ?? ""}
+            <label htmlFor="edit-incident-action" className="text-sm font-medium">Action Taken</label>
+            <textarea id="edit-incident-action" name="actionTaken" rows={5} defaultValue={incident.actionTaken ?? ""}
               placeholder="Describe what steps have been taken to address the situation..."
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
             />

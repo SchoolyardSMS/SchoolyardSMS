@@ -89,8 +89,9 @@ export function RegistrarClient({
         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Demographics</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Date of Birth</label>
+            <label htmlFor="student-dob" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Date of Birth</label>
             <Input 
+              id="student-dob"
               type="date" 
               value={dob} 
               onChange={e => setDob(e.target.value)}
@@ -98,8 +99,9 @@ export function RegistrarClient({
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Grade Level</label>
+            <label htmlFor="student-grade" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Grade Level</label>
             <Input 
+              id="student-grade"
               type="number" 
               value={grade} 
               onChange={e => setGrade(e.target.value)}

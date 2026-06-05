@@ -82,7 +82,7 @@ export function JsonEditor({ name, defaultValue = "", rows = 8, label, descripti
     <div className="space-y-2">
       {label && (
         <div className="flex justify-between items-center">
-          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</label>
+          <label htmlFor={name} className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</label>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -125,7 +125,9 @@ export function JsonEditor({ name, defaultValue = "", rows = 8, label, descripti
 
         <textarea
           ref={textareaRef}
+          id={name}
           name={name}
+          aria-label={label || name}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}

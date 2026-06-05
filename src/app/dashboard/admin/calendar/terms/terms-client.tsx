@@ -120,11 +120,11 @@ function TermRow({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor={`edit-term-start-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-              <input id={`edit-term-start-${term.id}`} type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`edit-term-start-${term.id}`} aria-label="Start Date" type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
               <label htmlFor={`edit-term-end-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-              <input id={`edit-term-end-${term.id}`} type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`edit-term-end-${term.id}`} aria-label="End Date" type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div>
@@ -190,16 +190,16 @@ function TermRow({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor={`dup-term-start-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
-              <input id={`dup-term-start-${term.id}`} type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`dup-term-start-${term.id}`} aria-label="Start Date" type="date" name="startDate" defaultValue={toDateInput(term.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
               <label htmlFor={`dup-term-end-${term.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
-              <input id={`dup-term-end-${term.id}`} type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`dup-term-end-${term.id}`} aria-label="End Date" type="date" name="endDate" defaultValue={toDateInput(term.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           {allTerms.some(t => t.parentId === term.id) && (
             <div className="flex items-center gap-2">
-              <input type="checkbox" name="duplicateChildren" id={`dup-child-${term.id}`} defaultChecked className="rounded border-slate-300 bg-white text-teal-600 focus:ring-teal-500 h-4 w-4" />
+              <input type="checkbox" name="duplicateChildren" id={`dup-child-${term.id}`} aria-label="Duplicate sub-terms recursively" defaultChecked className="rounded border-slate-300 bg-white text-teal-600 focus:ring-teal-500 h-4 w-4" />
               <label htmlFor={`dup-child-${term.id}`} className="text-xs text-slate-600 dark:text-slate-400 select-none">Duplicate sub-terms recursively</label>
             </div>
           )}
@@ -370,7 +370,7 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
     <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
       {/* Year Header */}
       <div className="p-4 flex justify-between items-center bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-        <button onClick={() => setExpanded(e => !e)} className="flex items-center gap-2 flex-1 text-left">
+        <button type="button" onClick={() => setExpanded(e => !e)} className="flex items-center gap-2 flex-1 text-left">
           {expanded ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
           {editingYear ? null : (
             <div>
@@ -414,11 +414,11 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
             </div>
             <div>
               <label htmlFor={`edit-year-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-              <input id={`edit-year-start-${year.id}`} type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`edit-year-start-${year.id}`} aria-label="Start Date" type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
               <label htmlFor={`edit-year-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-              <input id={`edit-year-end-${year.id}`} type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`edit-year-end-${year.id}`} aria-label="End Date" type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -440,11 +440,11 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
             </div>
             <div>
               <label htmlFor={`dup-year-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start Date</label>
-              <input id={`dup-year-start-${year.id}`} type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`dup-year-start-${year.id}`} aria-label="Start Date" type="date" name="startDate" defaultValue={toDateInput(year.startDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
             <div>
               <label htmlFor={`dup-year-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End Date</label>
-              <input id={`dup-year-end-${year.id}`} type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+              <input id={`dup-year-end-${year.id}`} aria-label="End Date" type="date" name="endDate" defaultValue={toDateInput(year.endDate)} required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -493,11 +493,11 @@ function SchoolYearCard({ year, schoolYears }: { year: SchoolYear; schoolYears: 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label htmlFor={`create-term-start-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Start</label>
-                  <input id={`create-term-start-${year.id}`} type="date" name="startDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+                  <input id={`create-term-start-${year.id}`} aria-label="Start Date" type="date" name="startDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
                 </div>
                 <div>
                   <label htmlFor={`create-term-end-${year.id}`} className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">End</label>
-                  <input id={`create-term-end-${year.id}`} type="date" name="endDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
+                  <input id={`create-term-end-${year.id}`} aria-label="End Date" type="date" name="endDate" required className="h-8 w-full px-2 rounded-md border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900" />
                 </div>
               </div>
               <div className="flex gap-2">

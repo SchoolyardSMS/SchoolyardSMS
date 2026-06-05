@@ -65,6 +65,7 @@ export function ReportCardDownloader({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
         className="w-full inline-flex items-center justify-between rounded-xl bg-indigo-600 hover:bg-indigo-700 transition-colors text-white font-semibold text-sm px-4 py-2.5 shadow-md shadow-indigo-200 dark:shadow-none"
       >

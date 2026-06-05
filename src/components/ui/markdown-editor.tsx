@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils'
 
 interface MarkdownEditorProps {
   name: string
+  id?: string
   defaultValue?: string
   value?: string
   onChange?: (value: string) => void
@@ -135,7 +136,7 @@ const Toolbar = ({ editor }: { editor: any }) => {
   )
 }
 
-export function MarkdownEditor({ name, defaultValue = "", value, onChange, placeholder, className, rows = 5 }: MarkdownEditorProps) {
+export function MarkdownEditor({ name, id, defaultValue = "", value, onChange, placeholder, className, rows = 5 }: MarkdownEditorProps) {
   const [content, setContent] = useState(defaultValue)
 
   const editor = useEditor({
@@ -157,6 +158,7 @@ export function MarkdownEditor({ name, defaultValue = "", value, onChange, place
     },
     editorProps: {
       attributes: {
+        id: id || "",
         class: cn(
           "prose prose-slate dark:prose-invert max-w-none focus:outline-none p-4 min-h-[150px] text-sm sm:text-base",
           "prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2",
@@ -186,7 +188,7 @@ export function MarkdownEditor({ name, defaultValue = "", value, onChange, place
       <Toolbar editor={editor} />
       <EditorContent editor={editor} />
       {/* Hidden input for form submission */}
-      <input type="hidden" name={name} value={content} />
+      <input type="hidden" name={name} id={id ? `hidden-${id}` : undefined} value={content} />
       <style jsx global>{`
         .tiptap p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);

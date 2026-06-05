@@ -72,12 +72,13 @@ export function StudentCommunityView({ studentId, upcomingDays, allSessions, myE
                         
                         {isMySession ? (
                           isForced ? (
-                            <button disabled className="w-full py-1.5 text-sm font-medium rounded-md bg-slate-100 text-slate-400 cursor-not-allowed">Required (Cannot Drop)</button>
+                            <button type="button" disabled className="w-full py-1.5 text-sm font-medium rounded-md bg-slate-100 text-slate-400 cursor-not-allowed">Required (Cannot Drop)</button>
                           ) : (
-                            <button onClick={() => handleDrop(session.id)} className="w-full py-1.5 text-sm font-medium rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors">Drop</button>
+                            <button type="button" onClick={() => handleDrop(session.id)} className="w-full py-1.5 text-sm font-medium rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors">Drop</button>
                           )
                         ) : (
                           <button 
+                            type="button"
                             onClick={() => handleEnroll(session.id)} 
                             disabled={isFull || !!myEnrollmentForDay || session.isRestricted}
                             className="w-full py-1.5 text-sm font-medium rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

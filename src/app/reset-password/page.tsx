@@ -51,16 +51,18 @@ function ResetPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+        <label htmlFor="reset-email" className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
         <Input
+          id="reset-email"
           value={email}
           disabled
           className="bg-slate-100 dark:bg-slate-800 border-none"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
+        <label htmlFor="reset-password" className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
         <Input
+          id="reset-password"
           name="password"
           type="password"
           required

@@ -71,6 +71,7 @@ export function SuccessClientTable({ initialData }: { initialData: StudentData[]
             placeholder="Search students..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            aria-label="Search students"
             className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>

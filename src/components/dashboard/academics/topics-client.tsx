@@ -114,15 +114,16 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Topic Title</label>
-                  <Input value={topicTitle} onChange={(e) => setTopicTitle(e.target.value)} placeholder="e.g. Unit 1: Introduction to Algebra" />
+                  <label htmlFor="new-topic-title" className="text-sm font-medium">Topic Title</label>
+                  <Input id="new-topic-title" value={topicTitle} onChange={(e) => setTopicTitle(e.target.value)} placeholder="e.g. Unit 1: Introduction to Algebra" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Description (Optional)</label>
+                    <label htmlFor="new-topic-description" className="text-sm font-medium">Description (Optional)</label>
                     <span className="text-[10px] text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Markdown Editor</span>
                   </div>
                   <MarkdownEditor 
+                    id="new-topic-description"
                     name="topicDesc" 
                     value={topicDesc} 
                     onChange={setTopicDesc} 
@@ -235,12 +236,13 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Title</label>
-              <Input value={matTitle} onChange={(e) => setMatTitle(e.target.value)} placeholder="e.g. Syllabus PDF or Chapter 1 Slides" />
+              <label htmlFor="new-material-title" className="text-sm font-medium">Title</label>
+              <Input id="new-material-title" value={matTitle} onChange={(e) => setMatTitle(e.target.value)} placeholder="e.g. Syllabus PDF or Chapter 1 Slides" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Type</label>
+              <label htmlFor="new-material-type" className="text-sm font-medium">Type</label>
               <select 
+                id="new-material-type"
                 value={matType} 
                 onChange={(e) => setMatType(e.target.value as any)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -250,10 +252,11 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{matType === "FILE" ? "Upload File" : "URL"}</label>
+              <label htmlFor="material-source" className="text-sm font-medium">{matType === "FILE" ? "Upload File" : "URL"}</label>
               {matType === "FILE" ? (
                 <div className="space-y-2">
                   <input 
+                    id="material-source"
                     type="file" 
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -261,7 +264,7 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
                   {matUrl && <p className="text-[10px] text-muted-foreground">Current URL: {matUrl}</p>}
                 </div>
               ) : (
-                <Input value={matUrl} onChange={(e) => setMatUrl(e.target.value)} placeholder="https://..." />
+                <Input id="material-source" value={matUrl} onChange={(e) => setMatUrl(e.target.value)} placeholder="https://..." />
               )}
               <p className="text-[10px] text-muted-foreground">
                 {matType === "FILE" 

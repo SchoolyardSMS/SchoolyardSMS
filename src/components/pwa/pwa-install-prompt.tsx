@@ -61,6 +61,7 @@ export function PWAInstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 z-[100] md:left-auto md:max-w-sm animate-in fade-in slide-in-from-bottom-8 duration-500">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 flex flex-col gap-4">
         <button 
+          type="button"
           onClick={() => setShowPrompt(false)}
           className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
         >

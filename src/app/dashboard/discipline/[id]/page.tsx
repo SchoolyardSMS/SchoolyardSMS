@@ -146,8 +146,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <select name="status" defaultValue={incident.status}
+                <label htmlFor="update-incident-status" className="text-sm font-medium">Status</label>
+                <select id="update-incident-status" name="status" defaultValue={incident.status}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="OPEN">Open</option>
@@ -157,8 +157,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Follow-up Date</label>
-                <input type="date" name="followUpDate"
+                <label htmlFor="update-incident-followup" className="text-sm font-medium">Follow-up Date</label>
+                <input id="update-incident-followup" type="date" name="followUpDate"
                   defaultValue={incident.followUpDate ? new Date(incident.followUpDate).toISOString().split("T")[0] : ""}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
@@ -166,8 +166,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Action Taken / Notes</label>
-              <textarea name="actionTaken" rows={3}
+              <label htmlFor="update-incident-action" className="text-sm font-medium">Action Taken / Notes</label>
+              <textarea id="update-incident-action" name="actionTaken" rows={3}
                 defaultValue={incident.actionTaken ?? ""}
                 placeholder="Describe actions taken, consequences assigned, parent communication..."
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
@@ -235,7 +235,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
         {isStaff && (
           <form action={addIncidentComment} className="mt-4 border-t border-border pt-4 space-y-3">
             <input type="hidden" name="incidentId" value={incident.id} />
-            <textarea name="body" rows={3} required
+            <textarea name="body" aria-label="Investigation timeline comment body" rows={3} required
               placeholder="Add a note, update, or observation to the timeline..."
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
             />

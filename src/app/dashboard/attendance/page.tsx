@@ -203,8 +203,9 @@ export default async function AttendancePage({
       {isAdminOrTeacher && (
         <form className="flex items-center gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <label className="text-sm font-bold text-slate-700 dark:text-slate-300 shrink-0">Filter by Date:</label>
+          <label htmlFor="attendance-date" className="text-sm font-bold text-slate-700 dark:text-slate-300 shrink-0">Filter by Date:</label>
           <input
+            id="attendance-date"
             type="date"
             name="date"
             defaultValue={dateFilter || ""}

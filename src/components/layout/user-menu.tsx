@@ -24,6 +24,7 @@ export function UserMenu({ name, email, role }: UserMenuProps) {
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen(v => !v)}
         aria-label="User profile menu"
         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-sidebar-accent transition-colors text-left"
@@ -60,6 +61,7 @@ export function UserMenu({ name, email, role }: UserMenuProps) {
               My Profile
             </Link>
             <button
+              type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >

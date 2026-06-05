@@ -33,8 +33,8 @@ export default async function NewIncidentPage() {
           {/* Student + Date side-by-side */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Student <span className="text-red-500">*</span></label>
-              <select name="studentId" required
+              <label htmlFor="incident-student-select" className="text-sm font-medium">Student <span className="text-red-500">*</span></label>
+              <select id="incident-student-select" name="studentId" required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">– Select student –</option>
@@ -44,8 +44,8 @@ export default async function NewIncidentPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Incident Date <span className="text-red-500">*</span></label>
-              <input type="date" name="date" defaultValue={todayStr} required
+              <label htmlFor="incident-date" className="text-sm font-medium">Incident Date <span className="text-red-500">*</span></label>
+              <input id="incident-date" type="date" name="date" defaultValue={todayStr} required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -53,8 +53,8 @@ export default async function NewIncidentPage() {
 
           {/* Title */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Incident Title <span className="text-red-500">*</span></label>
-            <input name="title" type="text" required placeholder="Brief summary of the incident"
+            <label htmlFor="incident-title" className="text-sm font-medium">Incident Title <span className="text-red-500">*</span></label>
+            <input id="incident-title" name="title" type="text" required placeholder="Brief summary of the incident"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -62,8 +62,8 @@ export default async function NewIncidentPage() {
           {/* Category + Severity */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Category <span className="text-red-500">*</span></label>
-              <select name="category" required
+              <label htmlFor="incident-category" className="text-sm font-medium">Category <span className="text-red-500">*</span></label>
+              <select id="incident-category" name="category" required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="BEHAVIOR">Behavior</option>
@@ -76,8 +76,8 @@ export default async function NewIncidentPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Severity <span className="text-red-500">*</span></label>
-              <select name="severity" required
+              <label htmlFor="incident-severity" className="text-sm font-medium">Severity <span className="text-red-500">*</span></label>
+              <select id="incident-severity" name="severity" required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="MINOR">Minor</option>
@@ -89,8 +89,8 @@ export default async function NewIncidentPage() {
 
           {/* Description */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Incident Description <span className="text-red-500">*</span></label>
-            <textarea name="description" rows={5} required
+            <label htmlFor="incident-description" className="text-sm font-medium">Incident Description <span className="text-red-500">*</span></label>
+            <textarea id="incident-description" name="description" rows={5} required
               placeholder="Provide a detailed, factual account of what occurred — who was involved, where it happened, what was witnessed..."
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
             />
@@ -100,8 +100,8 @@ export default async function NewIncidentPage() {
           <div className="border-t border-border pt-4 space-y-5">
             {/* Action Taken */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Immediate Action Taken</label>
-              <textarea name="actionTaken" rows={3}
+              <label htmlFor="incident-action" className="text-sm font-medium">Immediate Action Taken</label>
+              <textarea id="incident-action" name="actionTaken" rows={3}
                 placeholder="e.g. Student sent to principal's office, parent notified by phone, verbal warning issued..."
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
               />
@@ -109,8 +109,8 @@ export default async function NewIncidentPage() {
 
             {/* Follow-up date */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Follow-up Date</label>
-              <input type="date" name="followUpDate"
+              <label htmlFor="incident-followup" className="text-sm font-medium">Follow-up Date</label>
+              <input id="incident-followup" type="date" name="followUpDate"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <p className="text-xs text-muted-foreground">Schedule a date to check in or close the incident.</p>

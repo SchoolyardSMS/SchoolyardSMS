@@ -20,7 +20,7 @@ export async function generateCalendar(year: number, month: number) {
   }
 
   // Create entries only if they don't exist
-  for (const date of dates) {
+  const promises = dates.map(async (date) => {
     const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6
     const dayType = isWeekend ? "OTHER" : "INSTRUCTIONAL"
     
@@ -44,7 +44,8 @@ export async function generateCalendar(year: number, month: number) {
         termId: term?.id || null
       }
     })
-  }
+  })
+  await Promise.all(promises)
 
   revalidatePath("/dashboard/admin/calendar")
   revalidatePath("/dashboard/calendar")
@@ -61,6 +62,17 @@ export async function declareSnowDay(dateStr: string) {
   const targetDay = await db.calendarDay.findUnique({ where: { date: snowDate } })
   if (!targetDay) throw new Error("Date not found in calendar")
 
+  if (targetDay.blockDay === "NONE") {
+    // If it wasn't an instructional block day anyway, no need to shift
+    await db.calendarDay.update({
+      where: { date: snowDate },
+      data: { type: "SNOW_DAY", name: "Snow Day", blockDay: "NONE" }
+    })
+    revalidatePath("/dashboard/admin/calendar")
+    revalidatePath("/dashboard/calendar")
+    return { success: true }
+  }
+
   await db.calendarDay.update({
     where: { date: snowDate },
     data: {
@@ -69,13 +81,6 @@ export async function declareSnowDay(dateStr: string) {
       blockDay: "NONE"
     }
   })
-
-  if (targetDay.blockDay === "NONE") {
-    // If it wasn't an instructional block day anyway, no need to shift
-    revalidatePath("/dashboard/admin/calendar")
-    revalidatePath("/dashboard/calendar")
-    return { success: true }
-  }
 
   // 2. Shift all subsequent block days forward
   const futureDays = await db.calendarDay.findMany({
@@ -88,18 +93,14 @@ export async function declareSnowDay(dateStr: string) {
 
   // We have a sequence of block days that need to be shifted right by one index
   // The first future day gets the block day that was originally on the snow day
-  let nextBlockDayToAssign: any = targetDay.blockDay
-
-  for (const day of futureDays) {
-    const currentBlockDayOfThisDay = day.blockDay
-    
-    await db.calendarDay.update({
+  const updatePromises = futureDays.map((day, i) => {
+    const newBlockDay = i === 0 ? targetDay.blockDay : futureDays[i - 1].blockDay
+    return db.calendarDay.update({
       where: { id: day.id },
-      data: { blockDay: nextBlockDayToAssign }
+      data: { blockDay: newBlockDay }
     })
-
-    nextBlockDayToAssign = currentBlockDayOfThisDay
-  }
+  })
+  await Promise.all(updatePromises)
 
   // The last block day simply falls off the edge of the calendar (dropped)
   

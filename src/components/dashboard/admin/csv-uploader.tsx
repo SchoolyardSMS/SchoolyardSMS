@@ -39,7 +39,7 @@ export function CsvUploader({ title, description, action, expectedHeaders }: Csv
       
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Required Columns</label>
+          <span className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Required Columns</span>
           <div className="flex flex-wrap gap-2">
             {expectedHeaders.map(h => (
               <span key={h} className="px-2 py-1 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-mono rounded">
@@ -53,6 +53,7 @@ export function CsvUploader({ title, description, action, expectedHeaders }: Csv
           <input 
             type="file" 
             accept=".csv"
+            aria-label="CSV file upload"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="flex-1 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
           />

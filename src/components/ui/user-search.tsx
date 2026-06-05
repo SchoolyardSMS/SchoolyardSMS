@@ -49,6 +49,7 @@ export function UserSearch({ onSelect, role, placeholder = "Search for a user...
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={
         <button
+          type="button"
           role="combobox"
           aria-expanded={open}
           className={cn(

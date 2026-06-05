@@ -31,7 +31,7 @@ export async function submitAttendance(
     sectionId: z.string().min(1),
     studentId: z.string().min(1),
     date: z.date(),
-    status: z.nativeEnum(AttendanceStatus),
+    status: z.enum([AttendanceStatus.PRESENT, AttendanceStatus.ABSENT, AttendanceStatus.TARDY, AttendanceStatus.EXCUSED]),
     details: z.object({
       checkInTime: z.string().optional(),
       checkOutTime: z.string().optional(),
@@ -155,7 +155,7 @@ export async function submitBulkAttendance(sectionId: string, studentIds: string
     sectionId: z.string().min(1),
     studentIds: z.array(z.string().min(1)).min(1),
     date: z.date(),
-    status: z.nativeEnum(AttendanceStatus)
+    status: z.enum([AttendanceStatus.PRESENT, AttendanceStatus.ABSENT, AttendanceStatus.TARDY, AttendanceStatus.EXCUSED])
   })
   bulkSchema.parse({ sectionId, studentIds, date, status })
 

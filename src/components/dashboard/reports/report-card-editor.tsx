@@ -188,10 +188,10 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                   }`}
                 >
                   <div className="flex flex-col gap-1">
-                     <button onClick={(e) => { e.stopPropagation(); moveSection(index, "up"); }} disabled={index === 0} className="text-slate-400 hover:text-indigo-600 disabled:opacity-0">
+                     <button type="button" onClick={(e) => { e.stopPropagation(); moveSection(index, "up"); }} disabled={index === 0} className="text-slate-400 hover:text-indigo-600 disabled:opacity-0">
                        <ChevronUp className="h-3 w-3" />
                      </button>
-                     <button onClick={(e) => { e.stopPropagation(); moveSection(index, "down"); }} disabled={index === sections.length - 1} className="text-slate-400 hover:text-indigo-600 disabled:opacity-0">
+                     <button type="button" onClick={(e) => { e.stopPropagation(); moveSection(index, "down"); }} disabled={index === sections.length - 1} className="text-slate-400 hover:text-indigo-600 disabled:opacity-0">
                        <ChevronDown className="h-3 w-3" />
                      </button>
                   </div>
@@ -199,7 +199,7 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                     <p className="text-sm font-bold truncate">{section.type.replace(/_/g,' ')}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{section.id}</p>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); deleteSection(section.id); }} className="text-slate-300 hover:text-rose-500 p-1">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); deleteSection(section.id); }} className="text-slate-300 hover:text-rose-500 p-1">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -368,8 +368,9 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
               {selectedSection ? (
                 <div className="space-y-6">
                    <div className="space-y-2">
-                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Label / Title</label>
+                     <label htmlFor="config-section-title" className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Label / Title</label>
                      <Input 
+                        id="config-section-title"
                         value={selectedSection.config.title || ""} 
                         onChange={(e) => updateSectionConfig(selectedSection.id, { title: e.target.value })}
                         placeholder="Section title..."
@@ -380,8 +381,9 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                    {selectedSection.type === "HEADER" && (
                      <div className="space-y-4">
                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-muted-foreground uppercase">Subtitle / School Name</label>
+                          <label htmlFor="config-header-subtitle" className="text-xs font-bold text-muted-foreground uppercase">Subtitle / School Name</label>
                           <Input 
+                             id="config-header-subtitle"
                              value={selectedSection.config.subtitle || ""} 
                              onChange={(e) => updateSectionConfig(selectedSection.id, { subtitle: e.target.value })}
                              placeholder={schoolSettings?.name || "School Name"}
@@ -390,12 +392,13 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                        </div>
                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                           <input 
+                             id="config-show-logo"
                              type="checkbox" 
                              checked={selectedSection.config.showLogo} 
                              onChange={(e) => updateSectionConfig(selectedSection.id, { showLogo: e.target.checked })}
                              className="rounded border-slate-300 text-indigo-600 h-4 w-4 focus:ring-indigo-500"
                           />
-                          <label className="text-sm font-medium">Show School Logo</label>
+                          <label htmlFor="config-show-logo" className="text-sm font-medium">Show School Logo</label>
                        </div>
                      </div>
                    )}
@@ -403,9 +406,10 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                    {selectedSection.type === "GRADES_TABLE" && (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                           <label className="text-xs font-bold text-muted-foreground uppercase">Header Color (HEX)</label>
+                           <label htmlFor="config-header-color" className="text-xs font-bold text-muted-foreground uppercase">Header Color (HEX)</label>
                            <div className="flex gap-2">
                               <Input 
+                                 id="config-header-color"
                                  value={selectedSection.config.headerColorHex || "#0f172a"} 
                                  onChange={(e) => updateSectionConfig(selectedSection.id, { headerColorHex: e.target.value })}
                                  className="bg-slate-50 dark:bg-slate-800 border-none font-mono"
@@ -414,13 +418,15 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                            </div>
                         </div>
                         <div className="space-y-2">
-                           <label className="text-xs font-bold text-muted-foreground uppercase">Visible Columns</label>
+                           <span className="block text-xs font-bold text-muted-foreground uppercase">Visible Columns</span>
                            <div className="grid grid-cols-2 gap-2">
                               {["Subject", "Instructor", "Term", "Percentage", "Grade"].map(col => (
                                 <div key={col} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-md border border-slate-100 dark:border-slate-800">
                                    <input 
+                                      id={`col-chk-${col}`}
                                       type="checkbox" 
                                       checked={selectedSection.config.columns?.includes(col)} 
+                                      aria-label={col}
                                       onChange={(e) => {
                                         const cols = selectedSection.config.columns || []
                                         const newCols = e.target.checked 
@@ -430,7 +436,7 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
                                       }}
                                       className="rounded border-slate-300 text-indigo-600 h-4 w-4"
                                    />
-                                   <label className="text-[10px] font-bold uppercase">{col}</label>
+                                   <label htmlFor={`col-chk-${col}`} className="text-[10px] font-bold uppercase">{col}</label>
                                 </div>
                               ))}
                            </div>
@@ -440,17 +446,19 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
 
                    {selectedSection.type === "SIGNATURE_BLOCKS" && (
                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-muted-foreground uppercase">Visible Signatures</label>
+                        <span className="block text-xs font-bold text-muted-foreground uppercase">Visible Signatures</span>
                         <div className="space-y-2">
                            {["principal", "teacher", "advisor"].map(role => (
                              <div key={role} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-md border border-slate-100 dark:border-slate-800">
                                 <input 
+                                   id={`sig-chk-${role}`}
                                    type="checkbox" 
                                    checked={selectedSection.config[role]} 
+                                   aria-label={role}
                                    onChange={(e) => updateSectionConfig(selectedSection.id, { [role]: e.target.checked })}
                                    className="rounded border-slate-300 text-indigo-600 h-4 w-4"
                                 />
-                                <label className="text-xs font-medium uppercase">{role}</label>
+                                <label htmlFor={`sig-chk-${role}`} className="text-xs font-medium uppercase">{role}</label>
                              </div>
                            ))}
                         </div>
@@ -459,8 +467,9 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
 
                    {selectedSection.type === "CUSTOM_TEXT" && (
                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Content</label>
+                        <label htmlFor="config-custom-text-content" className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Content</label>
                         <textarea
+                           id="config-custom-text-content"
                            value={selectedSection.config.content || ""}
                            onChange={(e) => updateSectionConfig(selectedSection.id, { content: e.target.value })}
                            className="w-full h-48 rounded-md bg-slate-50 dark:bg-slate-800 border-none p-4 text-sm resize-none focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-inner"
@@ -470,8 +479,9 @@ export function ReportCardEditor({ template: initialTemplate }: { template: Temp
 
                    {selectedSection.type === "FOOTER" && (
                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Footer Text</label>
+                        <label htmlFor="config-footer-text" className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-indigo-600">Footer Text</label>
                         <textarea
+                           id="config-footer-text"
                            value={selectedSection.config.text || ""}
                            onChange={(e) => updateSectionConfig(selectedSection.id, { text: e.target.value })}
                            className="w-full h-32 rounded-md bg-slate-50 dark:bg-slate-800 border-none p-4 text-sm resize-none focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-inner"

@@ -41,25 +41,29 @@ export function BellPeriodList({ periods, years }: { periods: any[], years: stri
                     
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Period #</label>
-                        <input name="periodNumber" type="number" defaultValue={period.periodNumber} required
+                        <label htmlFor={`period-number-${period.id}`} className="text-xs font-bold uppercase text-muted-foreground">Period #</label>
+                        <input id={`period-number-${period.id}`} name="periodNumber" type="number" defaultValue={period.periodNumber} required
+                          aria-label="Period Number"
                           className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
                       <div className="col-span-2 space-y-2 sm:col-span-1">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Name</label>
-                        <input name="name" type="text" defaultValue={period.name} required
+                        <label htmlFor={`period-name-${period.id}`} className="text-xs font-bold uppercase text-muted-foreground">Name</label>
+                        <input id={`period-name-${period.id}`} name="name" type="text" defaultValue={period.name} required
+                          aria-label="Period Name"
                           className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Times</label>
+                        <label htmlFor={`period-start-${period.id}`} className="text-xs font-bold uppercase text-muted-foreground">Times</label>
                         <div className="flex items-center gap-2">
-                          <input name="startTime" type="time" defaultValue={period.startTime} required
+                          <input id={`period-start-${period.id}`} name="startTime" type="time" defaultValue={period.startTime} required
+                            aria-label="Start Time"
                             className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
                           />
                           <span className="text-muted-foreground">–</span>
-                          <input name="endTime" type="time" defaultValue={period.endTime} required
+                          <input id={`period-end-${period.id}`} name="endTime" type="time" defaultValue={period.endTime} required
+                            aria-label="End Time"
                             className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
                           />
                         </div>
@@ -67,7 +71,7 @@ export function BellPeriodList({ periods, years }: { periods: any[], years: stri
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-muted-foreground">Days</label>
+                      <span className="block text-xs font-bold uppercase text-muted-foreground">Days</span>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
                           <label key={d} className="flex items-center gap-1 cursor-pointer">

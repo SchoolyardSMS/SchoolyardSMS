@@ -35,16 +35,16 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
         
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Assignment Title <span className="text-red-500">*</span></label>
-            <input name="title" type="text" required placeholder="e.g. Chapter 1 Quiz, Lab Report #2"
+            <label htmlFor="assignment-title" className="text-sm font-medium">Assignment Title <span className="text-red-500">*</span></label>
+            <input id="assignment-title" name="title" type="text" required placeholder="e.g. Chapter 1 Quiz, Lab Report #2"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Assignment Type</label>
-              <select name="type" defaultValue="HOMEWORK"
+              <label htmlFor="assignment-type" className="text-sm font-medium">Assignment Type</label>
+              <select id="assignment-type" name="type" defaultValue="HOMEWORK"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="HOMEWORK">Homework</option>
@@ -56,8 +56,8 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Initial Status</label>
-              <select name="status" defaultValue="PUBLISHED"
+              <label htmlFor="assignment-status" className="text-sm font-medium">Initial Status</label>
+              <select id="assignment-status" name="status" defaultValue="PUBLISHED"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="DRAFT">Draft (Always hidden until manual publish)</option>
@@ -69,15 +69,15 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Go Live Date (ET)</label>
-              <input name="publishDate" type="date"
+              <label htmlFor="assignment-publish-date" className="text-sm font-medium">Go Live Date (ET)</label>
+              <input id="assignment-publish-date" name="publishDate" type="date"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <p className="text-[10px] text-muted-foreground italic">Optional: Leave blank to publish immediately.</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Go Live Time (ET)</label>
-              <input name="publishTime" type="time" defaultValue="08:00"
+              <label htmlFor="assignment-publish-time" className="text-sm font-medium">Go Live Time (ET)</label>
+              <input id="assignment-publish-time" name="publishTime" type="time" defaultValue="08:00"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -85,14 +85,14 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Score <span className="text-red-500">*</span></label>
-              <input name="maxScore" type="number" required defaultValue={100}
+              <label htmlFor="assignment-max-score" className="text-sm font-medium">Max Score <span className="text-red-500">*</span></label>
+              <input id="assignment-max-score" name="maxScore" type="number" required defaultValue={100}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Due Date <span className="text-red-500">*</span></label>
-              <input name="dueDate" type="date" required 
+              <label htmlFor="assignment-due-date" className="text-sm font-medium">Due Date <span className="text-red-500">*</span></label>
+              <input id="assignment-due-date" name="dueDate" type="date" required 
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -100,10 +100,10 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Instructions / Description</label>
+              <label htmlFor="assignment-description" className="text-sm font-medium">Instructions / Description</label>
               <span className="text-[10px] text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Markdown Editor</span>
             </div>
-            <MarkdownEditor name="description" placeholder="Provide clear instructions for the students..." />
+            <MarkdownEditor id="assignment-description" name="description" placeholder="Provide clear instructions for the students..." />
           </div>
 
           <div className="flex items-center gap-2 pt-2">
