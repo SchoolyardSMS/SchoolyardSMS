@@ -79,6 +79,10 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
       where: { userId },
       include: {
         sections: {
+          where: {
+            isArchived: false,
+            course: { isArchived: false }
+          },
           include: {
             course: true,
             bellPeriod: true,
@@ -106,9 +110,16 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         },
       },
     })
-    sections = (student?.enrollments ?? []).map((e) => e.section)
+    // Filter out archived sections or sections with archived courses in JS
+    sections = (student?.enrollments ?? []).flatMap((e) =>
+      e.section && !e.section.isArchived && !e.section.course.isArchived ? [e.section] : []
+    )
   } else {
     sections = await db.section.findMany({
+      where: {
+        isArchived: false,
+        course: { isArchived: false }
+      },
       include: {
         course: true,
         teacher: { include: { user: true } },

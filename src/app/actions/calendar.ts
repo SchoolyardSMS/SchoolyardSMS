@@ -24,13 +24,24 @@ export async function generateCalendar(year: number, month: number) {
     const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6
     const dayType = isWeekend ? "OTHER" : "INSTRUCTIONAL"
     
+    // Find matching term for this date
+    const term = await db.term.findFirst({
+      where: {
+        startDate: { lte: date },
+        endDate: { gte: date }
+      }
+    })
+
     await db.calendarDay.upsert({
       where: { date },
-      update: {},
+      update: {
+        termId: term?.id || null
+      },
       create: {
         date,
         type: dayType,
-        name: isWeekend ? "Weekend" : null
+        name: isWeekend ? "Weekend" : null,
+        termId: term?.id || null
       }
     })
   }
@@ -103,9 +114,20 @@ export async function updateCalendarDay(dateStr: string, updates: { type?: DayTy
 
   const date = new Date(dateStr)
   
+  // Find matching term for this date
+  const term = await db.term.findFirst({
+    where: {
+      startDate: { lte: date },
+      endDate: { gte: date }
+    }
+  })
+  
   await db.calendarDay.upsert({
     where: { date },
-    update: updates,
+    update: {
+      ...updates,
+      termId: term?.id || null
+    },
     create: {
       date,
       type: updates.type || "INSTRUCTIONAL",
@@ -113,7 +135,8 @@ export async function updateCalendarDay(dateStr: string, updates: { type?: DayTy
       name: updates.name || null,
       blockDay: updates.blockDay || "NONE",
       isMidterm: updates.isMidterm || false,
-      isFinal: updates.isFinal || false
+      isFinal: updates.isFinal || false,
+      termId: term?.id || null
     }
   })
 

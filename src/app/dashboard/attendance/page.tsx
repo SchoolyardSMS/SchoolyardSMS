@@ -51,6 +51,18 @@ export default async function AttendancePage({
   const threshold = settings?.attendanceThreshold ?? 5
 
   if (isAdminOrTeacher) {
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    // Archive attendance notifications whose date has passed (after the day is finished)
+    await db.attendanceNotification.updateMany({
+      where: {
+        date: { lt: today },
+        isArchived: false
+      },
+      data: { isArchived: true }
+    })
+
     // Build date filter: if user picks a date, filter to that day; otherwise show last 30 days
     const filterDate = dateFilter ? new Date(`${dateFilter}T12:00:00`) : null
     const thirtyDaysAgo = new Date()
@@ -75,6 +87,7 @@ export default async function AttendancePage({
       }
     })
     attendanceNotifications = await db.attendanceNotification.findMany({
+      where: { isArchived: false },
       orderBy: { createdAt: 'desc' },
       include: {
         student: { include: { user: true } },
@@ -83,8 +96,6 @@ export default async function AttendancePage({
       take: 100
     })
 
-    const today = new Date()
-    today.setUTCHours(0, 0, 0, 0)
     totalAbsencesToday = await db.attendance.count({
       where: { date: { gte: today }, status: "ABSENT", isArchived: false }
     })

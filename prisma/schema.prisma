@@ -176,6 +176,7 @@ model Term {
   termGrades  TermGrade[]
   reportCards         ReportCard[]
   archivedAssignments Assignment[] @relation("ArchivedAssignments")
+  calendarDays        CalendarDay[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -709,6 +710,7 @@ model AttendanceNotification {
   status         AttendanceNotificationStatus @default(PENDING)
   acknowledgedBy String?
   acknowledgedAt DateTime?
+  isArchived     Boolean                      @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -750,10 +752,15 @@ model CalendarDay {
   isMidterm Boolean  @default(false)
   isFinal   Boolean  @default(false)
 
+  termId String?
+  term   Term? @relation(fields: [termId], references: [id], onDelete: SetNull)
+
   sessions CommunitySession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([termId])
 }
 
 model CommunitySession {

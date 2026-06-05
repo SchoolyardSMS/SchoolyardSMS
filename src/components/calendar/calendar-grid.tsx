@@ -58,6 +58,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
           blockDay: updates.blockDay || "NONE",
           isMidterm: updates.isMidterm || false,
           isFinal: updates.isFinal || false,
+          termId: null,
           createdAt: new Date(),
           updatedAt: new Date()
         }]
@@ -126,7 +127,7 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
           return (
             <div
               key={date.toString()}
-              onClick={() => !readOnly && setSelectedDay(dayData || { id: "", date, type: "INSTRUCTIONAL", hasCommunityPeriod: false, name: null, blockDay: "NONE", isMidterm: false, isFinal: false, createdAt: new Date(), updatedAt: new Date() })}
+              onClick={() => !readOnly && setSelectedDay(dayData || { id: "", date, type: "INSTRUCTIONAL", hasCommunityPeriod: false, name: null, blockDay: "NONE", isMidterm: false, isFinal: false, termId: null, createdAt: new Date(), updatedAt: new Date() })}
               className={`bg-white dark:bg-slate-900 min-h-[100px] p-2 border-t border-transparent relative transition-colors
                 ${!readOnly ? "hover:border-[var(--school-primary,#4f46e5)] cursor-pointer" : "cursor-default"}
                 ${dayData?.type === "HOLIDAY" ? "bg-red-50 dark:bg-red-900/10" : ""}

@@ -7,6 +7,7 @@
  * All users share the password: password
  */
 
+import "dotenv/config";
 import {
   AttendanceStatus,
   AssignmentStatus,
@@ -21,17 +22,18 @@ import {
   IncidentCategory,
   IncidentSeverity,
   IncidentStatus,
-  PrismaClient,
   Role,
   TermType,
 } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
+import zlib from "zlib";
+import { encrypt } from "../src/lib/encryption";
+import { db as prisma } from "../src/lib/db";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 faker.seed(8675309);
-const prisma = new PrismaClient();
 const HASHED_PW = bcrypt.hashSync("password", 10);
 
 // Friendly fixed identities so the demo always has recognisable people
@@ -165,6 +167,7 @@ async function main() {
     prisma.schoolSettings.deleteMany(),
     prisma.reportCardTemplate.deleteMany(),
     prisma.userToken.deleteMany(),
+    prisma.compressedArchive.deleteMany(),
   ]);
   console.log("✓ Database cleared");
 
@@ -913,30 +916,63 @@ async function main() {
   await prisma.broadcastDelivery.createMany({ data: broadcastDeliveries });
   console.log(`✓ Direct messaging threads & ${broadcastDeliveries.length} broadcast system deliveries`);
 
+  function allDaysBetween(start: Date, end: Date): Date[] {
+    const days: Date[] = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      days.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+  }
+
   // ── 15. Calendar Days (Schedules) ────────────────────────────────────────
-  const thirtyDays = schoolDaysBetween(daysAgo(15), daysFromNow(15));
-  const createdCalendarDays = [];
+  console.log("🌱 Generating calendar days for the entire school year...");
+  const schoolYearDays = allDaysBetween(new Date("2024-08-26"), new Date("2025-06-13"));
   let toggleBlock = true;
 
-  for (const date of thirtyDays) {
-    const cDay = await prisma.calendarDay.create({
-      data: {
-        date,
-        type: DayType.INSTRUCTIONAL,
-        blockDay: toggleBlock ? BlockDay.A : BlockDay.B,
-        hasCommunityPeriod: true,
-      },
+  const calendarDaysData = [];
+  for (const date of schoolYearDays) {
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const dayType = isWeekend ? DayType.OTHER : DayType.INSTRUCTIONAL;
+    const blockDay = isWeekend ? BlockDay.NONE : (toggleBlock ? BlockDay.A : BlockDay.B);
+    if (!isWeekend) toggleBlock = !toggleBlock;
+
+    // Find termId
+    let termId = null;
+    if (date >= new Date("2024-08-26") && date <= new Date("2025-01-17")) {
+      termId = termFall.id;
+    } else if (date >= new Date("2025-01-21") && date <= new Date("2025-06-13")) {
+      termId = termSpring.id;
+    }
+
+    calendarDaysData.push({
+      date,
+      type: dayType,
+      blockDay,
+      hasCommunityPeriod: !isWeekend, // Community periods on school days
+      termId,
     });
-    createdCalendarDays.push(cDay);
-    toggleBlock = !toggleBlock;
   }
-  console.log(`✓ ${createdCalendarDays.length} calendar days created`);
+
+  await prisma.calendarDay.createMany({ data: calendarDaysData });
+  console.log(`✓ ${calendarDaysData.length} calendar days created`);
+
+  // Retrieve the generated calendar days to get their IDs
+  const allDbDays = await prisma.calendarDay.findMany({
+    orderBy: { date: "asc" }
+  });
 
   // ── 16. Community Periods (Sessions & Enrollments) ───────────────────────
   let totalCommunitySessions = 0;
   let totalCommunityEnrollments = 0;
 
-  for (const cDay of createdCalendarDays) {
+  // Seed community sessions for a 60-day window around NOW (from 30 days ago to 30 days from now)
+  const windowStart = daysAgo(30);
+  const windowEnd = daysFromNow(30);
+  const communityDays = allDbDays.filter(d => d.type === DayType.INSTRUCTIONAL && d.date >= windowStart && d.date <= windowEnd);
+
+  for (const cDay of communityDays) {
     const sessionsToCreate = faker.number.int({ min: 1, max: 2 });
     
     for (let i = 0; i < sessionsToCreate; i++) {
@@ -1029,6 +1065,228 @@ async function main() {
   ];
   await prisma.auditLog.createMany({ data: auditLogsToCreate });
   console.log(`✓ ${auditLogsToCreate.length} active administrative audit logs recorded`);
+
+  // ── 19. Seed Archive Logic Data (Archived Year, Course, Section, Student & CompressedArchives) ──
+  console.log("🌱 Seeding archived history data for verification...");
+  
+  // 19.1 Archived School Year
+  const archivedSchoolYear = await prisma.schoolYear.create({
+    data: {
+      name: "2023-2024",
+      startDate: new Date("2023-08-28"),
+      endDate:   new Date("2024-06-14"),
+      isActive: false,
+    },
+  });
+
+  const archivedTermSpring = await prisma.term.create({
+    data: {
+      schoolYearId: archivedSchoolYear.id,
+      name: "Spring 2024",
+      type: TermType.SEMESTER,
+      startDate: new Date("2024-01-22"),
+      endDate:   new Date("2024-06-14"),
+    },
+  });
+
+  // 19.2 Archived Course
+  const archivedCourse = await prisma.course.create({
+    data: {
+      code: "AP-ART-2023",
+      name: "AP Art History (2023)",
+      description: "A historical survey of art and architecture from ancient times to the modern era.",
+      credits: 1.0,
+      isArchived: true,
+    },
+  });
+
+  // 19.3 Archived Section
+  const archivedSection = await prisma.section.create({
+    data: {
+      id: "archived-sec-id-1",
+      courseId:    archivedCourse.id,
+      teacherId:   teacherProfiles[0].id, // Margaret Chen
+      termId:      archivedTermSpring.id,
+      schedule:    "Mon/Wed/Fri 09:05 AM",
+      room:        "103",
+      isArchived:  true,
+    },
+  });
+
+  // 19.4 Graduated/Archived Student
+  const archivedStudentUser = await prisma.user.create({
+    data: {
+      email: "graduated.student@students.schoolyard.demo",
+      name: "Jane Smith (Graduated)",
+      role: Role.STUDENT,
+      hashedPassword: HASHED_PW,
+      deletedAt: new Date("2024-06-15"),
+    },
+  });
+
+  const archivedStudentProfile = await prisma.student.create({
+    data: {
+      id: "archived-student-id-1",
+      userId: archivedStudentUser.id,
+      dateOfBirth: new Date("2006-05-15"),
+      gradeLevel: 12,
+      medicalAlerts: encrypt("Nut allergy — EpiPen in main office"),
+      accommodations: encrypt("Extended testing time (50%)"),
+      isArchived: true,
+    },
+  });
+
+  // 19.5 Compress & Save Section Archive
+  const sectionPayload = {
+    sectionId: archivedSection.id,
+    course: {
+      id: archivedCourse.id,
+      name: archivedCourse.name,
+      code: archivedCourse.code,
+      credits: archivedCourse.credits,
+      description: archivedCourse.description,
+    },
+    teacherId: archivedSection.teacherId,
+    schedule: archivedSection.schedule,
+    room: archivedSection.room,
+    isArchived: true,
+    assignments: [
+      {
+        id: "archived-assign-id-1",
+        title: "AP Art History Essay 1",
+        description: "Comparative analysis of Renaissance and Baroque masters",
+        maxScore: 100,
+        type: AssignmentType.PROJECT,
+        allowUpload: true,
+        dueDate: new Date("2024-03-15"),
+        status: AssignmentStatus.PUBLISHED,
+        grades: [
+          { studentId: archivedStudentProfile.id, score: 95.0, feedback: "Superb depth of insight!" }
+        ],
+        submissions: [
+          { studentId: archivedStudentProfile.id, status: "GRADED", submittedAt: new Date("2024-03-14") }
+        ]
+      },
+      {
+        id: "archived-assign-id-2",
+        title: "Unit 3 Midterm Examination",
+        description: "Visual analysis of classical Greek structures",
+        maxScore: 100,
+        type: AssignmentType.TEST,
+        allowUpload: false,
+        dueDate: new Date("2024-03-22"),
+        status: AssignmentStatus.PUBLISHED,
+        grades: [
+          { studentId: archivedStudentProfile.id, score: 88.0, feedback: "Strong analysis of proportions." }
+        ],
+        submissions: []
+      }
+    ],
+    attendance: [
+      { studentId: archivedStudentProfile.id, date: new Date("2024-03-10"), status: AttendanceStatus.PRESENT, notes: "On time" },
+      { studentId: archivedStudentProfile.id, date: new Date("2024-03-12"), status: AttendanceStatus.PRESENT, notes: "" }
+    ],
+    enrollments: [
+      {
+        id: "archived-enr-id-1",
+        studentId: archivedStudentProfile.id,
+        status: EnrollmentStatus.COMPLETED,
+        termGrades: [
+          {
+            termId: archivedTermSpring.id,
+            calculatedScore: 91.5,
+            overrideScore: 91.5,
+            letterGrade: "A",
+            isPosted: true,
+            postedAt: new Date("2024-06-10")
+          }
+        ]
+      }
+    ],
+    topics: [
+      { id: "topic-archived-1", title: "Renaissance Art", description: "Study of Italian and Northern Renaissance masters" }
+    ],
+    announcements: [
+      { id: "ann-archived-1", authorId: teacherUsers[0].id, content: "Don't forget to submit your term essay", createdAt: new Date("2024-03-01") }
+    ]
+  };
+
+  const sectionCompressed = zlib.gzipSync(Buffer.from(JSON.stringify(sectionPayload))).toString("base64");
+
+  await prisma.compressedArchive.create({
+    data: {
+      id: `section-archive-${archivedSection.id}`,
+      entityType: "SECTION",
+      entityId: archivedSection.id,
+      data: sectionCompressed,
+    },
+  });
+
+  // 19.6 Compress & Save Student Archive
+  const studentPayload = {
+    studentId: archivedStudentProfile.id,
+    gradeLevel: archivedStudentProfile.gradeLevel,
+    dateOfBirth: archivedStudentProfile.dateOfBirth,
+    medicalAlerts: archivedStudentProfile.medicalAlerts,
+    accommodations: archivedStudentProfile.accommodations,
+    user: {
+      id: archivedStudentUser.id,
+      name: archivedStudentUser.name,
+      email: archivedStudentUser.email,
+      role: Role.STUDENT,
+    },
+    attendance: [
+      { sectionId: archivedSection.id, date: new Date("2024-03-10"), status: AttendanceStatus.PRESENT, notes: "On time" }
+    ],
+    grades: [
+      { assignmentId: "archived-assign-id-1", score: 95.0, feedback: "Superb depth of insight!" }
+    ],
+    reportCards: [
+      {
+        id: "archived-rc-id-1",
+        termId: archivedTermSpring.id,
+        publishedAt: new Date("2024-06-10"),
+        isPublished: true,
+        snapshot: {
+          calculatedGPA: 3.8,
+          attendanceRate: "98.5%",
+          conduct: "Excellent",
+          academicYear: "2023-2024"
+        }
+      }
+    ],
+    enrollments: [
+      {
+        sectionId: archivedSection.id,
+        courseName: archivedCourse.name,
+        courseCode: archivedCourse.code,
+        status: EnrollmentStatus.COMPLETED,
+        termGrades: [
+          {
+            termId: archivedTermSpring.id,
+            calculatedScore: 91.5,
+            overrideScore: 91.5,
+            letterGrade: "A",
+            isPosted: true,
+            postedAt: new Date("2024-06-10")
+          }
+        ]
+      }
+    ]
+  };
+
+  const studentCompressed = zlib.gzipSync(Buffer.from(JSON.stringify(studentPayload))).toString("base64");
+
+  await prisma.compressedArchive.create({
+    data: {
+      id: `student-archive-${archivedStudentProfile.id}`,
+      entityType: "STUDENT",
+      entityId: archivedStudentProfile.id,
+      data: studentCompressed,
+    },
+  });
+
+  console.log("✓ Archived history records seeded successfully");
 
   console.log("\n✅ Seeding complete! Database is ready for demo.");
 }
