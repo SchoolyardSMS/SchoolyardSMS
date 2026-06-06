@@ -2,18 +2,11 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { AttendanceNotificationsTable } from "@/components/dashboard/attendance/attendance-notifications-table"
+import { AttendanceDailyLogTable } from "@/components/dashboard/attendance/attendance-daily-log-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ReportAttendanceDialog } from "@/components/dashboard/attendance/report-attendance-dialog"
-import { acknowledgeAttendanceNotification } from "@/app/actions/attendance"
 import { CheckCircle, AlertCircle, Clock, LogOut, Download, ClipboardCheck, Filter } from "lucide-react"
 import { DashboardPageHeader } from "@/components/dashboard/page-header"
 import { cn } from "@/lib/utils"
@@ -224,144 +217,18 @@ export default async function AttendancePage({
 
       {/* ── NOTIFICATIONS / CALL-OUTS ── */}
       {(isParent || isAdminOrTeacher) && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <AlertCircle className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              {isParent ? "Recent Absence Reports" : "Parent Absence Notifications"}
-            </h3>
-          </div>
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <TableHead className="font-bold">Student</TableHead>
-                  <TableHead className="font-bold">Type</TableHead>
-                  <TableHead className="font-bold">Date</TableHead>
-                  <TableHead className="font-bold">Reason</TableHead>
-                  <TableHead className="font-bold">Status</TableHead>
-                  {isAdmin && <TableHead className="text-right font-bold">Action</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendanceNotifications.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={isAdmin ? 6 : 5} className="text-center h-32 text-slate-500 italic">
-                      No active notifications or reports found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  attendanceNotifications.map((n) => (
-                    <TableRow key={n.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                      <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{n.student.user.name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            n.type === "SICK" ? "bg-rose-500" :
-                            n.type === "LATE" ? "bg-amber-500" : "bg-blue-500"
-                          )} />
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                            {n.type.replace("_", " ")}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
-                        {formatDate(n.date, { timeZone: "UTC", month: 'short', day: 'numeric', year: 'numeric' })}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-600 dark:text-slate-400 max-w-[240px] truncate">{n.reason || "No reason provided"}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={n.status === "ACKNOWLEDGED" ? "secondary" : "outline"}
-                          className={cn(
-                            "text-[10px] font-bold uppercase",
-                            n.status === "PENDING" ? "border-amber-200 text-amber-700 bg-amber-50" : ""
-                          )}
-                        >
-                          {n.status}
-                        </Badge>
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right">
-                          {n.status === "PENDING" && (
-                            <form action={async () => {
-                              "use server"
-                              await acknowledgeAttendanceNotification(n.id)
-                            }}>
-                              <Button size="sm" variant="ghost" className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold text-xs">
-                                <CheckCircle className="h-4 w-4 mr-1.5" /> Acknowledge
-                              </Button>
-                            </form>
-                          )}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
+        <AttendanceNotificationsTable 
+          notifications={attendanceNotifications} 
+          isParent={isParent} 
+          isAdmin={isAdmin} 
+        />
       )}
 
       {/* ── DAILY LOG ── */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <Clock className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Daily Class Records</h3>
-        </div>
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                <TableHead className="font-bold">Date</TableHead>
-                {showStudentColumn && <TableHead className="font-bold">Student</TableHead>}
-                <TableHead className="font-bold">Course & Section</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendanceRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={showStudentColumn ? 4 : 3} className="text-center h-32 text-slate-500 italic">
-                    No classroom attendance records found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                attendanceRecords.map((record) => (
-                  <TableRow key={record.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <TableCell className="font-medium text-slate-600 dark:text-slate-400">
-                      {formatDate(record.date, { timeZone: "UTC", month: 'short', day: 'numeric' })}
-                    </TableCell>
-                    {showStudentColumn && (
-                      <TableCell className="font-bold text-slate-900 dark:text-white">{record.student?.user.name}</TableCell>
-                    )}
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{record.section?.course.name}</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">
-                          {record.section?.term?.name ?? ""}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={cn(
-                          "px-3 py-0.5 text-[10px] font-black uppercase tracking-tighter",
-                          record.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' :
-                          record.status === 'ABSENT' ? 'bg-rose-100 text-rose-700 hover:bg-rose-100' : 'bg-slate-100 text-slate-700'
-                        )}
-                      >
-                        {record.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
+      <AttendanceDailyLogTable 
+        records={attendanceRecords} 
+        showStudentColumn={showStudentColumn} 
+      />
     </div>
   )
 }

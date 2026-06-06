@@ -42,7 +42,7 @@ export function SuccessClientTable({ initialData }: { initialData: StudentData[]
     s.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const sorted = [...filtered].sort((a, b) => {
+  const sorted = filtered.toSorted((a, b) => {
     const valA = a[sortField]
     const valB = b[sortField]
     if (typeof valA === "string" && typeof valB === "string") {

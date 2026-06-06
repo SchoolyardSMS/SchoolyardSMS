@@ -17,12 +17,12 @@ import { Badge } from "@/components/ui/badge"
 
 interface UserSearchProps {
   onSelect: (user: any) => void
-  role?: "STUDENT" | "TEACHER" | "PARENT" | "ADMIN" | "STAFF"
+  userRole?: "STUDENT" | "TEACHER" | "PARENT" | "ADMIN" | "STAFF"
   placeholder?: string
   className?: string
 }
 
-export function UserSearch({ onSelect, role, placeholder = "Search for a user...", className }: UserSearchProps) {
+export function UserSearch({ onSelect, userRole, placeholder = "Search for a user...", className }: UserSearchProps) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<any[]>([])
@@ -36,14 +36,14 @@ export function UserSearch({ onSelect, role, placeholder = "Search for a user...
     }
     setLoading(true)
     try {
-      const res = await searchUsers(val, { role })
+      const res = await searchUsers(val, { role: userRole })
       setResults(res)
     } catch (err) {
       console.error("Search error:", err)
     } finally {
       setLoading(false)
     }
-  }, [role])
+  }, [userRole])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -52,6 +52,7 @@ export function UserSearch({ onSelect, role, placeholder = "Search for a user...
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-controls="user-search-popup"
           className={cn(
             "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             className

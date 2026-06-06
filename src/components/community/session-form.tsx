@@ -64,7 +64,7 @@ export function CommunitySessionForm({ upcomingDays, teachers, initialData, onSu
         <div className="space-y-1">
           <span className="block text-sm font-medium">Teacher</span>
           <UserSearch 
-            role="TEACHER" 
+            userRole="TEACHER" 
             placeholder="Search for a teacher..." 
             onSelect={(u) => setTeacherId(u.teacherId)} 
           />

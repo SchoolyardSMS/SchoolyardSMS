@@ -51,22 +51,20 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            :root {
-              --primary: ${primaryColor};
-              --school-primary: ${primaryColor};
-              --sidebar-primary: ${primaryColor};
-              --secondary: ${secondaryColor};
-            }
-            .dark {
-              --primary: ${primaryColor};
-              --school-primary: ${primaryColor};
-              --sidebar-primary: ${primaryColor};
-              --secondary: ${secondaryColor};
-            }
-          `
-        }} />
+        <style>{`
+          :root {
+            --primary: ${primaryColor};
+            --school-primary: ${primaryColor};
+            --sidebar-primary: ${primaryColor};
+            --secondary: ${secondaryColor};
+          }
+          .dark {
+            --primary: ${primaryColor};
+            --school-primary: ${primaryColor};
+            --sidebar-primary: ${primaryColor};
+            --secondary: ${secondaryColor};
+          }
+        `}</style>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <SessionProvider>
             <div className="flex-1 flex flex-col min-h-0 pb-20 md:pb-0">

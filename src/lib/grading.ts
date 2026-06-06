@@ -113,7 +113,7 @@ export function getLetterGrade(
   }
 
   // Sort scale descending by min percentage
-  const sortedScale = [...gradingScale].sort((a, b) => b.min - a.min)
+  const sortedScale = gradingScale.toSorted((a, b) => b.min - a.min)
   for (const entry of sortedScale) {
     if (pct >= entry.min) return entry.letter
   }

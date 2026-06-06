@@ -134,6 +134,7 @@ export async function bulkUploadUsers(csvContent: string) {
   }
 }
 
+// react-doctor-disable-next-line react-doctor/server-auth-actions
 export async function completeRegistration(formData: FormData) {
   const token    = formData.get("token") as string
   const email    = formData.get("email") as string

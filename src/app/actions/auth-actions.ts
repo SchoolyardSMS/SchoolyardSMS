@@ -6,6 +6,7 @@ import { sendPasswordResetEmail } from "@/lib/mail"
 import { headers } from "next/headers"
 import bcrypt from "bcryptjs"
 
+// react-doctor-disable-next-line react-doctor/server-auth-actions
 export async function forgotPassword(email: string) {
   if (!email) {
     return { error: "Email is required" }
@@ -50,6 +51,7 @@ export async function forgotPassword(email: string) {
   }
 }
 
+// react-doctor-disable-next-line react-doctor/server-auth-actions
 export async function resetPassword(formData: FormData) {
   const token = formData.get("token") as string
   const email = formData.get("email") as string

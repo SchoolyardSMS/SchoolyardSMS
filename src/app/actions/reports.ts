@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { assertRole } from "@/lib/rbac"
 
-const DEFAULT_LAYOUT = {
+const getDefaultLayout = () => ({
   sections: [
     { id: "header", type: "HEADER", config: { title: "Official Report Card", subtitle: "Schoolyard Academy", showLogo: true } },
     { id: "student_info", type: "STUDENT_INFO", config: { fields: ["name", "id", "gradeLevel"] } },
@@ -16,7 +16,7 @@ const DEFAULT_LAYOUT = {
     { id: "gpa", type: "GPA_SUMMARY", config: { label: "Cumulative Average" } },
     { id: "footer", type: "FOOTER", config: { text: "Official Enrollment Record - Schoolyard Academy" } }
   ]
-}
+})
 
 export async function createReportCardTemplate(name: string) {
   const session = await getServerSession(authOptions)
@@ -28,7 +28,7 @@ export async function createReportCardTemplate(name: string) {
   const template = await db.reportCardTemplate.create({
     data: {
       name,
-      layout: DEFAULT_LAYOUT,
+      layout: getDefaultLayout(),
       isDefault: templateCount === 0
     }
   })
@@ -87,7 +87,7 @@ export async function getActiveReportCardTemplate() {
   return {
     id: "system-default",
     name: "System Default",
-    layout: DEFAULT_LAYOUT
+    layout: getDefaultLayout()
   }
 }
 

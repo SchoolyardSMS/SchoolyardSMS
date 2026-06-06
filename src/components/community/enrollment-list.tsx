@@ -124,7 +124,7 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
           <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400">Force Enroll Student</h4>
         </div>
         <UserSearch 
-          role="STUDENT" 
+          userRole="STUDENT" 
           placeholder="Search for a student..." 
           onSelect={handleForceEnroll}
         />
