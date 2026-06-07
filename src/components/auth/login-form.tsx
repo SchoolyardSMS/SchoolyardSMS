@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner" 
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
 })
 

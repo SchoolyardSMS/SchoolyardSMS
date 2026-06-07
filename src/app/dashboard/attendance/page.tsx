@@ -155,7 +155,7 @@ export default async function AttendancePage({
         description="Monitor and manage student presence, absences, and parent notifications."
         icon={ClipboardCheck}
       >
-        {isParent && <ReportAttendanceDialog children={parentChildren} />}
+        {isParent && <ReportAttendanceDialog studentChildren={parentChildren} />}
         {isAdminOrTeacher && (
           <Button variant="outline" asChild className="border-slate-200 dark:border-slate-800">
             <a href="/api/reports/export/attendance" download>

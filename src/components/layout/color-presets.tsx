@@ -1,6 +1,6 @@
 "use client"
 
-export const colorPresets = [
+const colorPresets = [
   { name: "Indigo & Slate",  primary: "#4f46e5", secondary: "#64748b" },
   { name: "Crimson & Grey",  primary: "#dc143c", secondary: "#6b7280" },
   { name: "Navy & Gold",     primary: "#1e3a5f", secondary: "#f59e0b" },
@@ -14,13 +14,14 @@ interface ColorPresetsProps {
   secondaryRef: string
 }
 
+function applyPreset(primary: string, secondary: string) {
+  const p = document.querySelector<HTMLInputElement>('[name=primaryColor]')
+  const s = document.querySelector<HTMLInputElement>('[name=secondaryColor]')
+  if (p) p.value = primary
+  if (s) s.value = secondary
+}
+
 export function ColorPresets() {
-  function applyPreset(primary: string, secondary: string) {
-    const p = document.querySelector<HTMLInputElement>('[name=primaryColor]')
-    const s = document.querySelector<HTMLInputElement>('[name=secondaryColor]')
-    if (p) p.value = primary
-    if (s) s.value = secondary
-  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

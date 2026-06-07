@@ -15,7 +15,7 @@ export interface HierarchicalTerm {
   }
 }
 
-export function sortTermsHierarchically(terms: any[]): HierarchicalTerm[] {
+function sortTermsHierarchically(terms: any[]): HierarchicalTerm[] {
   const sorted: HierarchicalTerm[] = []
 
   const collectChildren = (parentId: string, depth: number) => {

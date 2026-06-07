@@ -134,10 +134,19 @@ export function StudentDirectoryList({
             <div className="flex items-center gap-4 relative">
               {bulkMode && isArchivable && (
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
                     toggleSelect(student.id)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      toggleSelect(student.id)
+                    }
                   }}
                   className="shrink-0 text-indigo-600 dark:text-indigo-400 cursor-pointer"
                 >
@@ -179,7 +188,15 @@ export function StudentDirectoryList({
             return (
               <div
                 key={student.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleSelect(student.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    toggleSelect(student.id)
+                  }
+                }}
                 className={`group block bg-white dark:bg-slate-900 rounded-xl border p-6 transition-all cursor-pointer select-none ${
                   isSelected 
                     ? "border-indigo-500 ring-2 ring-indigo-500/20 shadow-md" 

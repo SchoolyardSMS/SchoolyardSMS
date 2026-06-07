@@ -109,6 +109,11 @@ export function getNowET(): Date {
   return new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
 }
 
+const etDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false
+})
+
 /**
  * Parse a yyyy-mm-dd and hh:mm as America/New_York and return a UTC Date.
  */
@@ -121,10 +126,7 @@ export function parseDateAsET(dateStr: string, timeStr: string = "00:00"): Date 
   
   // Find what the ET would be if the UTC time was exactly our target numbers
   const dummy = new Date(targetUTC)
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false
-  }).formatToParts(dummy)
+  const parts = etDateTimeFormatter.formatToParts(dummy)
   
   const getPart = (type: string) => parseInt(parts.find(p => p.type === type)?.value || "0")
   const dummyET = Date.UTC(getPart('year'), getPart('month') - 1, getPart('day'), getPart('hour') === 24 ? 0 : getPart('hour'), getPart('minute'))
@@ -133,16 +135,18 @@ export function parseDateAsET(dateStr: string, timeStr: string = "00:00"): Date 
   return new Date(targetUTC + diff)
 }
 
+const etDateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric', month: 'numeric', day: 'numeric', hour12: false
+})
+
 /**
  * Returns a YYYY-MM-DD string in America/New_York for a given UTC Date.
  */
 export function toETDateValue(date: Date | string | null | undefined): string {
   if (!date) return ""
   const d = new Date(date)
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric', month: 'numeric', day: 'numeric', hour12: false
-  }).formatToParts(d)
+  const parts = etDateFormatter.formatToParts(d)
   
   const getPart = (type: string) => parts.find(p => p.type === type)?.value || ""
   const y = getPart('year')
@@ -151,16 +155,18 @@ export function toETDateValue(date: Date | string | null | undefined): string {
   return `${y}-${m}-${day}`
 }
 
+const etTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  hour: 'numeric', minute: 'numeric', hour12: false
+})
+
 /**
  * Returns an HH:MM (24h) string in America/New_York for a given UTC Date.
  */
 export function toETTimeValue(date: Date | string | null | undefined): string {
   if (!date) return ""
   const d = new Date(date)
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    hour: 'numeric', minute: 'numeric', hour12: false
-  }).formatToParts(d)
+  const parts = etTimeFormatter.formatToParts(d)
   
   const getPart = (type: string) => parts.find(p => p.type === type)?.value || ""
   let h = getPart('hour')

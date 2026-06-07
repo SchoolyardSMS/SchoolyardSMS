@@ -55,10 +55,10 @@ function formReducer(state: FormState, action: FormAction): FormState {
   }
 }
 
-export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps) {
+export function ReportAttendanceDialog({ studentChildren }: ReportAttendanceDialogProps) {
   const [state, dispatch] = useReducer(formReducer, {
     open: false,
-    studentId: children[0]?.id || "",
+    studentId: studentChildren[0]?.id || "",
     type: "SICK",
     date: new Date().toISOString().split('T')[0],
     reason: "",
@@ -99,7 +99,7 @@ export function ReportAttendanceDialog({ children }: ReportAttendanceDialogProps
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="" disabled>Select a child</option>
-              {children.map((child) => (
+              {studentChildren.map((child) => (
                 <option key={child.id} value={child.id}>
                   {child.user.name}
                 </option>

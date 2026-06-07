@@ -45,7 +45,18 @@ export function UserMenu({ name, email, role }: UserMenuProps) {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div 
+            role="button"
+            tabIndex={0}
+            className="fixed inset-0 z-10" 
+            onClick={() => setOpen(false)} 
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                setOpen(false)
+              }
+            }}
+          />
           <div className="absolute bottom-full left-0 right-0 mb-1 z-20 rounded-lg border border-sidebar-border bg-sidebar shadow-lg overflow-hidden">
             <div className="px-3 py-2 border-b border-sidebar-border">
               <p className="text-xs text-sidebar-foreground/60 truncate">{email}</p>

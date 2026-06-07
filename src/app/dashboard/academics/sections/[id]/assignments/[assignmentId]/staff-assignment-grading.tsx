@@ -2,6 +2,21 @@ import { Button } from "@/components/ui/button"
 import { FileText } from "lucide-react"
 import { updateAssignmentGrade } from "@/app/actions/academics"
 
+function letterGrade(score: number, max: number): string {
+  const pct = (score / max) * 100
+  if (pct >= 93) return "A"
+  if (pct >= 90) return "A-"
+  if (pct >= 87) return "B+"
+  if (pct >= 83) return "B"
+  if (pct >= 80) return "B-"
+  if (pct >= 77) return "C+"
+  if (pct >= 73) return "C"
+  if (pct >= 70) return "C-"
+  if (pct >= 67) return "D+"
+  if (pct >= 60) return "D"
+  return "F"
+}
+
 export function StaffAssignmentGrading({ 
   assignment, 
   enrollments, 
@@ -11,21 +26,6 @@ export function StaffAssignmentGrading({
   enrollments: any[],
   gradeMap: Map<string, any>
 }) {
-  function letterGrade(score: number, max: number): string {
-    const pct = (score / max) * 100
-    if (pct >= 93) return "A"
-    if (pct >= 90) return "A-"
-    if (pct >= 87) return "B+"
-    if (pct >= 83) return "B"
-    if (pct >= 80) return "B-"
-    if (pct >= 77) return "C+"
-    if (pct >= 73) return "C"
-    if (pct >= 70) return "C-"
-    if (pct >= 67) return "D+"
-    if (pct >= 60) return "D"
-    return "F"
-  }
-
   return (
     <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
       <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">

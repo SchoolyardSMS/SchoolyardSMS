@@ -19,7 +19,7 @@ import { updateUserProfile } from "@/app/actions/user"
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  email: z.email({ message: "Please enter a valid email address." }),
 })
 
 export function UserProfileForm({ initialData }: { initialData: { id: string, name: string, email: string, role: string } }) {

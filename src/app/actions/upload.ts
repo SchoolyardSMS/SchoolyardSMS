@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { DocumentType } from "@prisma/client"
@@ -16,7 +17,7 @@ export async function uploadAssignmentSubmission(formData: FormData) {
 
   // Mock file uploads for demo/serverless environments
   if (process.env.DISABLE_UPLOADS === "true") {
-    console.log("[UPLOAD MOCKED] Assignment submission would be uploaded")
+    after(() => console.log("[UPLOAD MOCKED] Assignment submission would be uploaded"))
     return { success: true, url: "/placeholder-file.svg" }
   }
 
@@ -73,7 +74,7 @@ export async function uploadBrandingFile(formData: FormData) {
 
   // Mock file uploads for demo/serverless environments
   if (process.env.DISABLE_UPLOADS === "true") {
-    console.log("[UPLOAD MOCKED] Branding file would be uploaded")
+    after(() => console.log("[UPLOAD MOCKED] Branding file would be uploaded"))
     return { success: true, url: "/placeholder-branding.svg" }
   }
 
@@ -103,7 +104,7 @@ export async function uploadMaterialFile(formData: FormData) {
 
   // Mock file uploads for demo/serverless environments
   if (process.env.DISABLE_UPLOADS === "true") {
-    console.log("[UPLOAD MOCKED] Material file would be uploaded")
+    after(() => console.log("[UPLOAD MOCKED] Material file would be uploaded"))
     return { success: true, url: "/placeholder-material.svg" }
   }
 

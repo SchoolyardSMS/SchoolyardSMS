@@ -5,6 +5,24 @@ import { Button } from "@/components/ui/button"
 import { updateSchoolSettings } from "@/app/actions/settings"
 import { toast } from "sonner"
 
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  const fd = new FormData(e.currentTarget)
+  const rolePermissions = fd.get("rolePermissions") as string
+  if (rolePermissions?.trim()) {
+    try { JSON.parse(rolePermissions) } catch {
+      toast.error("Role Permissions contains invalid JSON. Please fix it before saving.")
+      return
+    }
+  }
+  try {
+    await updateSchoolSettings(fd)
+    toast.success("Feature settings saved")
+  } catch (err: any) {
+    toast.error(err?.message || "Failed to save settings")
+  }
+}
+
 function ToggleRow({ name, label, description, defaultChecked }: { name: string; label: string; description: string; defaultChecked: boolean }) {
   return (
     <div className="flex items-center justify-between">
@@ -27,23 +45,6 @@ export function FeaturesSettingsClient({
   features: { lms: boolean; discipline: boolean; community: boolean }
   rolePermissionsJson: string
 }) {
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    const rolePermissions = fd.get("rolePermissions") as string
-    if (rolePermissions?.trim()) {
-      try { JSON.parse(rolePermissions) } catch {
-        toast.error("Role Permissions contains invalid JSON. Please fix it before saving.")
-        return
-      }
-    }
-    try {
-      await updateSchoolSettings(fd)
-      toast.success("Feature settings saved")
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save settings")
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

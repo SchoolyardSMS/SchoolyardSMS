@@ -17,7 +17,7 @@ export function RegistrarClient({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   
-  const [dob, setDob] = useState(student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : "")
+  const [dob, setDob] = useState(() => student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : "")
   const [grade, setGrade] = useState(student.gradeLevel.toString())
 
   const [selectedParentId, setSelectedParentId] = useState("")

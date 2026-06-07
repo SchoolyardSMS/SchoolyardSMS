@@ -67,15 +67,16 @@ export async function GET(req: NextRequest) {
 
     // Render each template section
     for (const section of sections) {
+      const config = section.config
       if (section.type === "HEADER") {
         // Premium Header Style
         doc.setFont("helvetica", "bold")
         doc.setFontSize(28)
         doc.setTextColor(15, 23, 42) // slate-900
-        doc.text((section.config.title || "REPORT CARD").toUpperCase(), 105, currentY + 10, { align: "center", charSpace: 1 })
+        doc.text((config.title || "REPORT CARD").toUpperCase(), 105, currentY + 10, { align: "center", charSpace: 1 })
         currentY += 18
         
-        const subtitle = section.config.subtitle === "Schoolyard Academy" ? schoolName : (section.config.subtitle || schoolName)
+        const subtitle = config.subtitle === "Schoolyard Academy" ? schoolName : (config.subtitle || schoolName)
         
         doc.setFontSize(10)
         doc.setFont("helvetica", "bold")
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
         currentY += 12
 
         // Logo Support (Upper Right)
-        if (section.config.showLogo && schoolSettings?.logoUrl) {
+        if (config.showLogo && schoolSettings?.logoUrl) {
            try {
            } catch (e) {
              console.error("Logo failed to load", e)

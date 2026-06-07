@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MarkdownEditor } from "@/components/ui/markdown-editor"
@@ -51,7 +51,7 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
   const [matTitle, setMatTitle] = useState("")
   const [matUrl, setMatUrl] = useState("")
   const [matType, setMatType] = useState<"LINK" | "FILE">("LINK")
-  const [file, setFile] = useState<File | null>(null)
+  const fileRef = useRef<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
   const handleCreateTopic = async () => {
@@ -70,14 +70,14 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
   const handleAddMaterial = async () => {
     if (!matTitle.trim() || !addingMaterialTo) return
     if (matType === "LINK" && !matUrl.trim()) return
-    if (matType === "FILE" && !file && !matUrl.trim()) return
+    if (matType === "FILE" && !fileRef.current && !matUrl.trim()) return
 
     setIsUploading(true)
     try {
       let finalUrl = matUrl
-      if (matType === "FILE" && file) {
+      if (matType === "FILE" && fileRef.current) {
         const formData = new FormData()
-        formData.append("file", file)
+        formData.append("file", fileRef.current)
         const res = await uploadMaterialFile(formData)
         finalUrl = res.url
       }
@@ -86,7 +86,7 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
       setAddingMaterialTo(null)
       setMatTitle("")
       setMatUrl("")
-      setFile(null)
+      fileRef.current = null
       toast.success("Material added")
     } catch (err) {
       toast.error("Failed to add material")
@@ -258,7 +258,7 @@ export function TopicsClient({ sectionId, isStaff, initialTopics }: TopicsClient
                   <input 
                     id="material-source"
                     type="file" 
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    onChange={(e) => fileRef.current = e.target.files?.[0] || null}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   {matUrl && <p className="text-[10px] text-muted-foreground">Current URL: {matUrl}</p>}

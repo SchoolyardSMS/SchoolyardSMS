@@ -29,12 +29,12 @@ export function CourseCard({ section, gradient }: CourseCardProps) {
           </div>
         </Link>
         
-        <p className="absolute bottom-4 left-6 text-xs font-bold opacity-90 flex items-center gap-2">
+        <div className="absolute bottom-4 left-6 text-xs font-bold opacity-90 flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm text-[10px]">
             {section.teacher.user.name.charAt(0)}
           </div>
           {section.teacher.user.name}
-        </p>
+        </div>
       </div>
 
       <div className="flex-1 p-6 pt-8 space-y-5 bg-transparent">

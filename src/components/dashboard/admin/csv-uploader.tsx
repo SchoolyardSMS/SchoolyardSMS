@@ -55,7 +55,7 @@ export function CsvUploader({ title, description, action, expectedHeaders }: Csv
             accept=".csv"
             aria-label="CSV file upload"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="flex-1 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
+            className="flex-1 text-sm text-slate-900 dark:text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
           />
           <Button onClick={handleUpload} disabled={!file || loading} className="w-24">
             {loading ? "Importing..." : "Upload"}

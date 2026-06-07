@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { X, Smartphone, Download } from "lucide-react"
 
 export function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const deferredPromptRef = useRef<any>(null)
 
   useEffect(() => {
     // Check if already installed
@@ -35,7 +35,7 @@ export function PWAInstallPrompt() {
 
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
-      setDeferredPrompt(e)
+      deferredPromptRef.current = e
       setShowPrompt(true)
     }
 
@@ -48,10 +48,10 @@ export function PWAInstallPrompt() {
       // On iOS, we just show the instructions (which are already in the UI)
       return
     }
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    await deferredPrompt.userChoice
-    setDeferredPrompt(null)
+    if (!deferredPromptRef.current) return
+    deferredPromptRef.current.prompt()
+    await deferredPromptRef.current.userChoice
+    deferredPromptRef.current = null
     setShowPrompt(false)
   }
 

@@ -19,9 +19,12 @@ interface AssignmentCalendarProps {
 
 const DAYS_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
+// Helper: get UTC date string "2026-05-01" from any Date
+const utcDateStr = (d: Date) => d.toISOString().split('T')[0]
+
 export function AssignmentCalendar({ initialAssignments, initialStart }: AssignmentCalendarProps) {
   const [weekOffset, setWeekOffset] = useState(0)
-  const [mobileDayIndex, setMobileDayIndex] = useState(new Date().getDay())
+  const [mobileDayIndex, setMobileDayIndex] = useState(() => new Date().getDay())
 
   const baseStart = new Date(initialStart)
   const start = new Date(baseStart)
@@ -35,8 +38,6 @@ export function AssignmentCalendar({ initialAssignments, initialStart }: Assignm
 
   const now = new Date()
 
-  // Helper: get UTC date string "2026-05-01" from any Date
-  const utcDateStr = (d: Date) => d.toISOString().split('T')[0]
   const todayUtc = utcDateStr(now)
 
   // Pre-group assignments by UTC date key for O(1) lookup per day

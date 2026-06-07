@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useReducer } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { checkSchoolWideGradesSubmission, runSchoolWideReset } from "@/app/actions/reset-grades"
@@ -9,19 +9,24 @@ import { AlertTriangle, CheckCircle2, Loader2, Play, Users, ShieldAlert, Chevron
 
 export function SchoolWideReset({ terms }: { terms: any[] }) {
   const router = useRouter()
-  const [selectedTermId, setSelectedTermId] = useState(terms[0]?.id || "")
-  const [checking, setChecking] = useState(false)
-  const [resetting, setResetting] = useState(false)
-  const [statusResult, setStatusResult] = useState<any | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [state, dispatch] = useReducer(
+    (s: any, a: any) => ({ ...s, ...a }),
+    {
+      selectedTermId: terms[0]?.id || "",
+      checking: false,
+      resetting: false,
+      statusResult: null as any | null,
+      showConfirmModal: false
+    }
+  )
 
   const handleCheckStatus = async () => {
-    if (!selectedTermId) return
-    setChecking(true)
+    if (!state.selectedTermId) return
+    dispatch({ checking: true })
     try {
-      const res = await checkSchoolWideGradesSubmission(selectedTermId)
+      const res = await checkSchoolWideGradesSubmission(state.selectedTermId)
       if (res.success) {
-        setStatusResult(res)
+        dispatch({ statusResult: res })
         if (res.allFinished) {
           toast.success("Audit complete: All teachers have posted grades!")
         } else {
@@ -34,18 +39,17 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
       console.error(e)
       toast.error("Failed to audit grades status")
     } finally {
-      setChecking(false)
+      dispatch({ checking: false })
     }
   }
 
   const handleExecuteReset = async () => {
-    setResetting(true)
+    dispatch({ resetting: true })
     try {
-      const res = await runSchoolWideReset(selectedTermId)
+      const res = await runSchoolWideReset(state.selectedTermId)
       if (res.success) {
         toast.success("School-wide grade reset complete! Active grades snapshotted and assignments archived.")
-        setShowConfirmModal(false)
-        setStatusResult(null)
+        dispatch({ showConfirmModal: false, statusResult: null })
         router.refresh()
       } else {
         toast.error(res.error || "Failed to execute reset")
@@ -54,11 +58,11 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
       console.error(e)
       toast.error("Failed to execute reset")
     } finally {
-      setResetting(false)
+      dispatch({ resetting: false })
     }
   }
 
-  const selectedTermName = terms.find(t => t.id === selectedTermId)?.name || ""
+  const selectedTermName = terms.find(t => t.id === state.selectedTermId)?.name || ""
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden mt-8">
@@ -83,10 +87,9 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
             <div className="relative">
               <select
                 id="reset-term-select"
-                value={selectedTermId}
+                value={state.selectedTermId}
                 onChange={(e) => {
-                  setSelectedTermId(e.target.value)
-                  setStatusResult(null)
+                  dispatch({ selectedTermId: e.target.value, statusResult: null })
                 }}
                 className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 pr-10 rounded-xl text-xs font-bold focus:outline-none cursor-pointer"
               >
@@ -102,10 +105,10 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
           </div>
           <Button
             onClick={handleCheckStatus}
-            disabled={checking || !selectedTermId}
+            disabled={state.checking || !state.selectedTermId}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs h-10 px-5 shadow-md shadow-indigo-600/10"
           >
-            {checking ? (
+            {state.checking ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                 Auditing Submissions...
@@ -117,10 +120,10 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
         </div>
 
         {/* Audit Results Dashboard */}
-        {statusResult && (
+        {state.statusResult && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Warning Alert if grades are incomplete */}
-            {!statusResult.allFinished ? (
+            {!state.statusResult.allFinished ? (
               <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 p-5 rounded-2xl flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
                 <div>
@@ -154,7 +157,7 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 font-medium">
-                  {statusResult.statusList.map((item: any) => (
+                  {state.statusResult.statusList.map((item: any) => (
                     <tr key={item.sectionId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                       <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                         {item.courseName} <span className="font-mono text-[10px] text-slate-400 ml-1">({item.courseCode})</span>
@@ -176,7 +179,7 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
                       </td>
                     </tr>
                   ))}
-                  {statusResult.statusList.length === 0 && (
+                  {state.statusResult.statusList.length === 0 && (
                     <tr>
                       <td colSpan={4} className="py-6 text-center text-slate-400 italic">
                         No active sections found for this term.
@@ -190,7 +193,7 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
             {/* Execute reset buttons */}
             <div className="flex justify-end pt-2">
               <Button
-                onClick={() => setShowConfirmModal(true)}
+                onClick={() => dispatch({ showConfirmModal: true })}
                 className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs px-6 shadow-md shadow-rose-600/10"
               >
                 <Play className="w-3.5 h-3.5 mr-2" />
@@ -202,7 +205,7 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
       </div>
 
       {/* Confirmation Modal */}
-      {showConfirmModal && (
+      {state.showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden shadow-2xl flex flex-col p-6 animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-4 mb-4">
@@ -221,7 +224,7 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
               <p>🔴 This archives all active assignments in all sections linked to this term.</p>
               <p>🔴 All students' current calculated averages will be permanently frozen as snapshots.</p>
               <p>🔴 All course active gradebooks start at 0% for the next quarter.</p>
-              {!statusResult?.allFinished && (
+              {!state.statusResult?.allFinished && (
                 <p className="text-rose-600 font-bold mt-2">⚠️ WARNING: You are proceeding despite incomplete submissions from teachers!</p>
               )}
             </div>
@@ -229,17 +232,17 @@ export function SchoolWideReset({ terms }: { terms: any[] }) {
             <div className="flex gap-2 justify-end mt-4">
               <Button
                 variant="ghost"
-                onClick={() => setShowConfirmModal(false)}
+                onClick={() => dispatch({ showConfirmModal: false })}
                 className="rounded-xl font-bold text-xs"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleExecuteReset}
-                disabled={resetting}
+                disabled={state.resetting}
                 className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-md shadow-rose-600/20 animate-pulse"
               >
-                {resetting ? (
+                {state.resetting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                     Resetting School-Wide...

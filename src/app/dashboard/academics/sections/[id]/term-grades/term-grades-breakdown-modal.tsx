@@ -4,6 +4,17 @@ import { getLetterGrade, calculateGrade } from "@/lib/grading"
 import { toast } from "sonner"
 import { calculateComposite } from "@/lib/term-grades-utils"
 
+// Helper outside modal to avoid repeating
+function resolveLetterGrade(score: string, scale: unknown): string {
+  const pct = parseFloat(score)
+  if (isNaN(pct) || !Array.isArray(scale)) return ""
+  const sorted = [...scale].filter(entry => typeof entry === "object" && entry !== null).sort((a: any, b: any) => b.min - a.min)
+  for (const entry of sorted) {
+    if (pct >= (entry as any).min) return (entry as any).letter
+  }
+  return "F"
+}
+
 export function TermGradesBreakdownModal({
   activeStudentBreakdown,
   setActiveStudentBreakdown,
@@ -31,16 +42,6 @@ export function TermGradesBreakdownModal({
 }) {
   if (!activeStudentBreakdown) return null
 
-  // Helper inside modal to avoid repeating
-  function resolveLetterGrade(score: string, scale: unknown): string {
-    const pct = parseFloat(score)
-    if (isNaN(pct) || !Array.isArray(scale)) return ""
-    const sorted = [...scale].filter(entry => typeof entry === "object" && entry !== null).sort((a: any, b: any) => b.min - a.min)
-    for (const entry of sorted) {
-      if (pct >= (entry as any).min) return (entry as any).letter
-    }
-    return "F"
-  }
 
   const student = activeStudentBreakdown.student
   const studentGrades = dbGrades.filter(g => g.studentId === student.id)

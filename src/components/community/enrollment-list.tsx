@@ -12,6 +12,24 @@ interface EnrollmentListProps {
   enrollments: any[]
 }
 
+const handleRemove = async (enrollmentId: string) => {
+  try {
+    await removeStudentEnrollment(enrollmentId)
+    toast.success("Enrollment removed.")
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
+const handleAttendance = async (enrollmentId: string, status: string) => {
+  try {
+    await updateCommunityAttendance(enrollmentId, status as any)
+    toast.success(`Marked as ${status.toLowerCase()}`)
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
 export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentListProps) {
   const handleForceEnroll = async (student: any) => {
     try {
@@ -22,23 +40,6 @@ export function CommunityEnrollmentList({ sessionId, enrollments }: EnrollmentLi
     }
   }
 
-  const handleRemove = async (enrollmentId: string) => {
-    try {
-      await removeStudentEnrollment(enrollmentId)
-      toast.success("Enrollment removed.")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
-
-  const handleAttendance = async (enrollmentId: string, status: string) => {
-    try {
-      await updateCommunityAttendance(enrollmentId, status as any)
-      toast.success(`Marked as ${status.toLowerCase()}`)
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
 
   return (
     <div className="space-y-4">

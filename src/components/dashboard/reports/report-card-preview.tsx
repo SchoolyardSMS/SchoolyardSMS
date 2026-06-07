@@ -8,7 +8,15 @@ export function ReportCardPreview({ sections, selectedSectionId, toggleSection, 
            {sections.map((section: any) => (
              <div 
                key={section.id} 
+               role="button"
+               tabIndex={0}
                onClick={() => toggleSection(section.id)}
+               onKeyDown={(e) => {
+                 if (e.key === "Enter" || e.key === " ") {
+                   e.preventDefault()
+                   toggleSection(section.id)
+                 }
+               }}
                className={`group relative p-4 border-2 border-transparent hover:border-indigo-200 rounded-md transition-all cursor-pointer ${selectedSectionId === section.id ? "border-indigo-400 bg-indigo-50/10" : ""}`}
              >
                {/* Visual representation based on type */}

@@ -238,8 +238,16 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
       {/* Sidebar Overlay (Mobile) */}
       {mobileMenuOpen && (
         <div 
+          role="button"
+          tabIndex={0}
           className="fixed inset-0 bg-black/50 z-[45] md:hidden backdrop-blur-sm" 
           onClick={() => setMobileMenuOpen(false)} 
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+            }
+          }}
         />
       )}
 

@@ -28,9 +28,11 @@ interface MessageFormProps {
   parentId?: string
 }
 
+const EMPTY_ARRAY: any[] = []
+
 export function MessageForm({ 
   type, 
-  sections = [], 
+  sections = EMPTY_ARRAY, 
   initialReceiver, 
   initialSubject = "", 
   initialBody = "", 

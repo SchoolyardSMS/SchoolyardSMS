@@ -146,7 +146,7 @@ export async function updateCalendarDay(dateStr: string, updates: { type?: DayTy
   return { success: true }
 }
 
-export async function getCalendarDays(start: Date, end: Date) {
+async function getCalendarDays(start: Date, end: Date) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     throw new Error("Unauthorized")

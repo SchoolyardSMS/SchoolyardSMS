@@ -9,6 +9,12 @@ import { createReportCardTemplate } from "@/app/actions/reports"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Layout, FileEdit, Plus, CheckCircle2 } from "lucide-react"
 
+async function createAction(formData: FormData) {
+  "use server"
+  const name = formData.get("name") as string
+  await createReportCardTemplate(name || "New Template")
+}
+
 export default async function TemplatesPage() {
   const session = await getServerSession(authOptions)
   if (session?.user?.role !== "ADMIN") redirect("/dashboard")
@@ -17,11 +23,6 @@ export default async function TemplatesPage() {
     orderBy: { updatedAt: "desc" }
   })
 
-  async function createAction(formData: FormData) {
-    "use server"
-    const name = formData.get("name") as string
-    await createReportCardTemplate(name || "New Template")
-  }
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">

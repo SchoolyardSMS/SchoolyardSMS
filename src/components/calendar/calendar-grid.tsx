@@ -6,6 +6,17 @@ import { generateCalendar, updateCalendarDay, declareSnowDay } from "@/app/actio
 import { toast } from "sonner"
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns"
 
+const handleDeclareSnowDay = async (date: Date) => {
+  try {
+    await declareSnowDay(date.toISOString())
+    toast.success("Snow day declared. Block schedule shifted.")
+    // Need full refresh to see shifted block days correctly
+    window.location.reload()
+  } catch (e: any) {
+    toast.error(e.message)
+  }
+}
+
 export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: CalendarDay[], readOnly?: boolean }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [days, setDays] = useState(initialDays)
@@ -69,15 +80,6 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
     }
   }
 
-  const handleDeclareSnowDay = async (date: Date) => {
-    try {
-      await declareSnowDay(date.toISOString())
-      toast.success("Snow day declared. Block schedule shifted.")
-      // Need full refresh to see shifted block days correctly
-      window.location.reload()
-    } catch (e: any) {
-      toast.error(e.message)
-    }
   }
 
   return (

@@ -5,25 +5,26 @@ import { enrollInSession, dropSession } from "@/app/actions/community"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
+const handleEnroll = async (sessionId: string) => {
+  try {
+    await enrollInSession(sessionId)
+    toast.success("Successfully enrolled!")
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
+const handleDrop = async (sessionId: string) => {
+  try {
+    await dropSession(sessionId)
+    toast.success("Successfully dropped!")
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
 export function StudentCommunityView({ studentId, upcomingDays, allSessions, myEnrollments }: any) {
   
-  const handleEnroll = async (sessionId: string) => {
-    try {
-      await enrollInSession(sessionId)
-      toast.success("Successfully enrolled!")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
-
-  const handleDrop = async (sessionId: string) => {
-    try {
-      await dropSession(sessionId)
-      toast.success("Successfully dropped!")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">

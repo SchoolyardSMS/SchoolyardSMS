@@ -6,6 +6,35 @@ import { Button } from "@/components/ui/button"
 import { updateSchoolSettings } from "@/app/actions/settings"
 import { toast } from "sonner"
 
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  const fd = new FormData(e.currentTarget)
+
+  // Validate JSON fields before submitting
+  const incidentTypes = fd.get("incidentTypes") as string
+  const attendanceStatuses = fd.get("attendanceStatuses") as string
+
+  if (incidentTypes?.trim()) {
+    try { JSON.parse(incidentTypes) } catch {
+      toast.error("Incident Types contains invalid JSON. Please fix it before saving.")
+      return
+    }
+  }
+  if (attendanceStatuses?.trim()) {
+    try { JSON.parse(attendanceStatuses) } catch {
+      toast.error("Attendance Statuses contains invalid JSON. Please fix it before saving.")
+      return
+    }
+  }
+
+  try {
+    await updateSchoolSettings(fd)
+    toast.success("Behavior settings saved")
+  } catch (err: any) {
+    toast.error(err?.message || "Failed to save settings")
+  }
+}
+
 export function BehaviorSettingsClient({
   attendanceThreshold,
   incidentTypesJson,
@@ -17,34 +46,6 @@ export function BehaviorSettingsClient({
 }) {
   const formRef = useRef<HTMLFormElement>(null)
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-
-    // Validate JSON fields before submitting
-    const incidentTypes = fd.get("incidentTypes") as string
-    const attendanceStatuses = fd.get("attendanceStatuses") as string
-
-    if (incidentTypes?.trim()) {
-      try { JSON.parse(incidentTypes) } catch {
-        toast.error("Incident Types contains invalid JSON. Please fix it before saving.")
-        return
-      }
-    }
-    if (attendanceStatuses?.trim()) {
-      try { JSON.parse(attendanceStatuses) } catch {
-        toast.error("Attendance Statuses contains invalid JSON. Please fix it before saving.")
-        return
-      }
-    }
-
-    try {
-      await updateSchoolSettings(fd)
-      toast.success("Behavior settings saved")
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save settings")
-    }
-  }
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">

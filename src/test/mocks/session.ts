@@ -50,7 +50,7 @@ export function studentSession(overrides: Record<string, unknown> = {}) {
   }
 }
 
-export function parentSession(overrides: Record<string, unknown> = {}) {
+function parentSession(overrides: Record<string, unknown> = {}) {
   return {
     user: {
       id: "parent-1",

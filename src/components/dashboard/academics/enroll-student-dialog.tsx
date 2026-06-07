@@ -22,7 +22,9 @@ interface EnrollStudentDialogProps {
   enrolledStudentIds: string[]
 }
 
-export function EnrollStudentDialog({ sectionId, allStudents = [], enrolledStudentIds = [] }: EnrollStudentDialogProps) {
+const EMPTY_ARRAY: any[] = []
+
+export function EnrollStudentDialog({ sectionId, allStudents = EMPTY_ARRAY, enrolledStudentIds = EMPTY_ARRAY }: EnrollStudentDialogProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])

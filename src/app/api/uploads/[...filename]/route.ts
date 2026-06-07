@@ -23,6 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   try {
+    // react-doctor-disable-next-line react-doctor/server-hoist-static-io
     const fileBuffer = await readFile(filePath)
     
     // Determine content type based on extension

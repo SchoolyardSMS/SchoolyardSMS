@@ -15,6 +15,7 @@ import { TermGradesBreakdownModal } from "./term-grades-breakdown-modal"
 import { resolveLetterGrade, parseTermGradeComments, calculateComposite, type EnrollmentRecord, type GradingScaleEntry, type GradeRecord, type TermGradeRecord, type AssignmentRecord } from "@/lib/term-grades-utils"
 
 const PAGE_SIZE = 30
+const EMPTY_ARRAY: any[] = []
 
 export function TermGradesClient({
   sectionId,
@@ -22,11 +23,11 @@ export function TermGradesClient({
   termId,
   termName,
   gradingScale,
-  assignments = [],
-  grades: dbGrades = [],
+  assignments = EMPTY_ARRAY,
+  grades: dbGrades = EMPTY_ARRAY,
   weightingConfig = null,
   selectedTerm = null,
-  allTerms = [],
+  allTerms = EMPTY_ARRAY,
 }: {
   sectionId: string
   enrollments: EnrollmentRecord[]

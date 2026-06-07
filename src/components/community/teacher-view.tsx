@@ -25,29 +25,30 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+const handleDuplicate = async (sessionId: string) => {
+  const newDayId = prompt("Enter the Calendar Day ID to duplicate to:")
+  if (!newDayId) return
+  try {
+    await duplicateCommunitySession(sessionId, newDayId)
+    toast.success("Session duplicated!")
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
+const handleDelete = async (id: string) => {
+  if (!confirm("Are you sure you want to delete this session?")) return
+  try {
+    await deleteCommunitySession(id)
+    toast.success("Session deleted")
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
 export function TeacherCommunityView({ upcomingDays, sessions, isAdmin, teachers }: any) {
   const [editingSession, setEditingSession] = useState<any>(null)
 
-  const handleDuplicate = async (sessionId: string) => {
-    const newDayId = prompt("Enter the Calendar Day ID to duplicate to:")
-    if (!newDayId) return
-    try {
-      await duplicateCommunitySession(sessionId, newDayId)
-      toast.success("Session duplicated!")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this session?")) return
-    try {
-      await deleteCommunitySession(id)
-      toast.success("Session deleted")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  }
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">

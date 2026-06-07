@@ -5,6 +5,24 @@ import { Button } from "@/components/ui/button"
 import { updateSchoolSettings } from "@/app/actions/settings"
 import { toast } from "sonner"
 
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  const fd = new FormData(e.currentTarget)
+  const gradingScale = fd.get("gradingScale") as string
+  if (gradingScale?.trim()) {
+    try { JSON.parse(gradingScale) } catch {
+      toast.error("Grading Scale contains invalid JSON. Please fix it before saving.")
+      return
+    }
+  }
+  try {
+    await updateSchoolSettings(fd)
+    toast.success("Academic settings saved")
+  } catch (err: any) {
+    toast.error(err?.message || "Failed to save settings")
+  }
+}
+
 export function AcademicSettingsClient({
   activeTerm,
   passingGrade,
@@ -16,23 +34,6 @@ export function AcademicSettingsClient({
   gpaScale: string
   gradingScaleJson: string
 }) {
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    const gradingScale = fd.get("gradingScale") as string
-    if (gradingScale?.trim()) {
-      try { JSON.parse(gradingScale) } catch {
-        toast.error("Grading Scale contains invalid JSON. Please fix it before saving.")
-        return
-      }
-    }
-    try {
-      await updateSchoolSettings(fd)
-      toast.success("Academic settings saved")
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to save settings")
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

@@ -4,6 +4,10 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const cleanSubject = (s: string) => {
+  return s.replace(/(\[|\()?(\*|\s)*External(\*|\s)*(\]|\))?|re:|fwd:/gi, "").trim()
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Basic Webhook Security
@@ -162,9 +166,6 @@ export async function POST(req: NextRequest) {
     // 4. Create Internal Message
     const incomingMessageId = headers["Message-ID"] || headers["message-id"]
     
-    const cleanSubject = (s: string) => {
-      return s.replace(/(\[|\()?(\*|\s)*External(\*|\s)*(\]|\))?|re:|fwd:/gi, "").trim()
-    }
     const baseSubject = cleanSubject(emailData.subject || "No Subject")
     const displaySubject = emailData.subject?.toLowerCase().includes("re:") ? `Re: ${baseSubject}` : baseSubject
 

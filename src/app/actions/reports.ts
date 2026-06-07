@@ -59,7 +59,7 @@ export async function updateReportCardTemplate(id: string, data: { name?: string
   return template
 }
 
-export async function deleteReportCardTemplate(id: string) {
+async function deleteReportCardTemplate(id: string) {
   const session = await getServerSession(authOptions)
   assertRole(session, ["ADMIN"])
 

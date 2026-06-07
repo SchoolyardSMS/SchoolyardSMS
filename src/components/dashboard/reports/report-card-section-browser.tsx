@@ -21,7 +21,15 @@ export function ReportCardSectionBrowser({
         {sections.map((section: any, index: number) => (
           <div 
             key={section.id}
+            role="button"
+            tabIndex={0}
             onClick={() => toggleSection(section.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                toggleSection(section.id)
+              }
+            }}
             className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-all ${
               selectedSectionId === section.id 
                 ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 border" 

@@ -8,6 +8,21 @@ import { submitAssignment } from "@/app/actions/academics"
 import { useState } from "react"
 import { MarkdownContent } from "@/components/ui/markdown-content"
 
+function letterGrade(score: number, max: number): string {
+  const pct = (score / max) * 100
+  if (pct >= 93) return "A"
+  if (pct >= 90) return "A-"
+  if (pct >= 87) return "B+"
+  if (pct >= 83) return "B"
+  if (pct >= 80) return "B-"
+  if (pct >= 77) return "C+"
+  if (pct >= 73) return "C"
+  if (pct >= 70) return "C-"
+  if (pct >= 67) return "D+"
+  if (pct >= 60) return "D"
+  return "F"
+}
+
 export function StudentAssignmentView({ assignment, myStudentProfile, myDocuments, grade, isSubmitted, submissionRecord, typeConfig }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   
@@ -18,20 +33,6 @@ export function StudentAssignmentView({ assignment, myStudentProfile, myDocument
   const isClosed = assignment.status === "CLOSED"
   const tc = typeConfig[assignment.type] ?? typeConfig.OTHER
 
-  function letterGrade(score: number, max: number): string {
-    const pct = (score / max) * 100
-    if (pct >= 93) return "A"
-    if (pct >= 90) return "A-"
-    if (pct >= 87) return "B+"
-    if (pct >= 83) return "B"
-    if (pct >= 80) return "B-"
-    if (pct >= 77) return "C+"
-    if (pct >= 73) return "C"
-    if (pct >= 70) return "C-"
-    if (pct >= 67) return "D+"
-    if (pct >= 60) return "D"
-    return "F"
-  }
 
   const handleSubmit = async (status: string = "COMPLETED") => {
     setIsSubmitting(true)

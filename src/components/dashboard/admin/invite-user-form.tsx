@@ -28,7 +28,9 @@ function SubmitButton() {
   )
 }
 
-export function InviteUserForm({ students = [] }: { students?: any[] }) {
+const EMPTY_ARRAY: any[] = []
+
+export function InviteUserForm({ students = EMPTY_ARRAY }: { students?: any[] }) {
   const [role, setRole] = useState("STUDENT")
   const [selectedGrade, setSelectedGrade] = useState("9")
 

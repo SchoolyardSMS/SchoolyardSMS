@@ -141,9 +141,9 @@ export function ProfileView({ user, student, teacher, parent }: ProfileViewProps
 
                  <div className="space-y-1">
                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Status</p>
-                   <p className="font-medium inline-flex items-center gap-1 text-emerald-600">
+                   <div className="font-medium inline-flex items-center gap-1 text-emerald-600">
                      Active Account <div className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
-                   </p>
+                   </div>
                  </div>
               </div>
             </div>
