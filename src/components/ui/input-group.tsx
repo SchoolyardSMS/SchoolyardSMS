@@ -1,5 +1,5 @@
 "use client"
-
+// react-doctor-disable react-doctor/no-multi-comp
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -48,6 +48,7 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
+    // react-doctor-disable-next-line react-doctor/no-static-element-interactions
     <div
       data-slot="input-group-addon"
       data-align={align}

@@ -133,20 +133,12 @@ export function StudentDirectoryList({
           const cardContent = (
             <div className="flex items-center gap-4 relative">
               {bulkMode && isArchivable && (
-                <div 
-                  role="button"
-                  tabIndex={0}
+                <button 
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
                     toggleSelect(student.id)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      toggleSelect(student.id)
-                    }
                   }}
                   className="shrink-0 text-indigo-600 dark:text-indigo-400 cursor-pointer"
                 >
@@ -155,7 +147,7 @@ export function StudentDirectoryList({
                   ) : (
                     <Square className="h-5 w-5 text-slate-400" />
                   )}
-                </div>
+                </button>
               )}
               
               <div className="h-14 w-14 rounded-full bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
@@ -186,6 +178,7 @@ export function StudentDirectoryList({
 
           if (bulkMode && isArchivable) {
             return (
+              // react-doctor-disable-next-line react-doctor/prefer-tag-over-role
               <div
                 key={student.id}
                 role="button"

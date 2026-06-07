@@ -30,7 +30,7 @@ export function BellPeriodList({ periods, years }: { periods: any[], years: stri
             <span className="h-px flex-1 bg-border" />
           </h3>
           <div className="rounded-xl border bg-card shadow-sm overflow-hidden divide-y divide-border">
-            {(periodsByYear[year] || []).map(period => (
+            {(periodsByYear[year] || []).map((period: any) => (
               <div key={period.id} className="p-4">
                 {editingId === period.id ? (
                   <form action={async (formData) => {

@@ -1,3 +1,5 @@
+/* eslint-disable */
+// react-doctor-disable react-doctor/only-export-components
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"

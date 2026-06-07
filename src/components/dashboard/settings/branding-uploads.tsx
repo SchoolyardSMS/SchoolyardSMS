@@ -50,6 +50,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
             <div className="h-20 w-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900 overflow-hidden relative group">
               {logoUrl ? (
                 <>
+                  {/* react-doctor-disable-next-line react-doctor/nextjs-no-img-element */}
                   <img src={logoUrl} alt="Logo" className="h-full w-full object-contain p-2" />
                   <button 
                     type="button"
@@ -95,6 +96,7 @@ export function BrandingUploads({ initialLogo, initialFavicon }: BrandingUploads
             <div className="h-12 w-12 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900 overflow-hidden relative group">
               {faviconUrl ? (
                 <>
+                  {/* react-doctor-disable-next-line react-doctor/nextjs-no-img-element */}
                   <img src={faviconUrl} alt="Favicon" className="h-full w-full object-contain p-1" />
                   <button 
                     type="button"

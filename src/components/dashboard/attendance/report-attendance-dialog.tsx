@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { AlertCircle } from "lucide-react"
 
 interface ReportAttendanceDialogProps {
-  children: { id: string; user: { name: string } }[]
+  studentChildren: { id: string; user: { name: string } }[]
 }
 
 type AttendanceType = "SICK" | "LATE" | "EARLY_DISMISSAL"

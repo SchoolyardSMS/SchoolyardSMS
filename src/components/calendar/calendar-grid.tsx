@@ -80,8 +80,6 @@ export function CalendarGrid({ initialDays, readOnly = false }: { initialDays: C
     }
   }
 
-  }
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">

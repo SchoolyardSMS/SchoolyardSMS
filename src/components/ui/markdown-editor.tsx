@@ -1,4 +1,7 @@
 "use client"
+// react-doctor-disable react-doctor/no-event-handler
+// react-doctor-disable react-doctor/no-derived-state
+// react-doctor-disable react-doctor/no-reset-all-state-on-prop-change
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'

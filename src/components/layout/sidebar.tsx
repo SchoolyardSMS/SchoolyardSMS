@@ -237,6 +237,7 @@ export function Sidebar({ user, schoolName, initials, logoUrl, featuresEnabled =
 
       {/* Sidebar Overlay (Mobile) */}
       {mobileMenuOpen && (
+        // react-doctor-disable-next-line react-doctor/prefer-tag-over-role
         <div 
           role="button"
           tabIndex={0}

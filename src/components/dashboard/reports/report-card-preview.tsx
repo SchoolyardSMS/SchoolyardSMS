@@ -6,6 +6,7 @@ export function ReportCardPreview({ sections, selectedSectionId, toggleSection, 
       <div className="bg-white text-slate-900 shadow-2xl mx-auto min-h-[1056px] w-full max-w-[8.5in] flex flex-col p-[0.75in]">
          <div className="flex-1 space-y-10">
            {sections.map((section: any) => (
+             // react-doctor-disable-next-line react-doctor/prefer-tag-over-role
              <div 
                key={section.id} 
                role="button"

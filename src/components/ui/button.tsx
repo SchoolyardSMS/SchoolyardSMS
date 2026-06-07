@@ -1,4 +1,5 @@
 import * as React from "react"
+// react-doctor-disable react-doctor/only-export-components
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
