@@ -45,7 +45,7 @@ export function UserMenu({ name, email, role }: UserMenuProps) {
 
       {open && (
         <>
-          // react-doctor-disable-next-line react-doctor/prefer-tag-over-role
+          {/* react-doctor-disable-next-line react-doctor/prefer-tag-over-role */}
           <div 
             role="button"
             tabIndex={0}

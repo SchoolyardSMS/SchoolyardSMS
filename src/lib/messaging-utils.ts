@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 
 export async function resolveAudienceRecipients(audience: string) {
-  let recipients: { id: string, email: string }[] = []
+  const recipients: { id: string, email: string }[] = []
 
   if (audience === "PARENTS") {
     const parents = await db.user.findMany({ where: { role: "PARENT" }, select: { id: true, email: true } })

@@ -22,6 +22,11 @@ const eslintConfig = defineConfig([
       "react-hooks/immutability": "off",
       "jsx-a11y/role-has-required-aria-props": "off",
       "@next/next/no-img-element": "off",
+    },
+    settings: {
+      react: {
+        version: "19.2.7"
+      }
     }
   },
   // Override default ignores of eslint-config-next.
@@ -35,6 +40,11 @@ const eslintConfig = defineConfig([
     "node_modules/**",
     ".unlighthouse/**",
     "docs/**",
+    "eslint.config.mjs",
+    "postcss.config.mjs",
+    "vitest.config.ts",
+    "next.config.ts",
+    "prisma.config.ts",
   ]),
 ]);
 
