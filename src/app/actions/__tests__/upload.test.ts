@@ -20,6 +20,11 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }))
 
+// Mock next/server
+vi.mock("next/server", () => ({
+  after: vi.fn((cb) => cb()),
+}))
+
 // Mock fs/promises
 vi.mock("fs/promises", () => ({
   mkdir: vi.fn().mockResolvedValue(undefined),
