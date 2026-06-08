@@ -27,7 +27,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "🌱 Starting demo database reset..."
-          bunx prisma db push --force-reset --skip-generate
+          bunx prisma db push --force-reset
           bunx prisma db seed
           echo "✅ Demo database reset completed!"
 
